@@ -1,4 +1,5 @@
-import React, {PropsWithChildren, ReactNode, useEffect, useState} from "react";
+import React, {PropsWithChildren, ReactNode, useEffect, useState, useContext} from "react";
+import ConversationContext from "../contexts/ConversationContext";
 import { View, Box, Text, HStack, Button, Pressable, VStack, Center, Spacer } from 'native-base';
 import { Dimensions, Image } from "react-native";
 import { SvgXml } from "react-native-svg";
@@ -6,6 +7,7 @@ import DartChatLogoXML from "../assets/DartChatLogoXML";
 import { logOut } from "../firebase/auth";
 import { Entypo } from '@expo/vector-icons'; 
 import { FontAwesome } from '@expo/vector-icons'; 
+import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { UIScreen } from "../types/types";
 import IconButton from "./generics/IconButton";
@@ -15,9 +17,11 @@ export default function NavContainer({ children, navState, navSwitch }:
         children: ReactNode, 
         navState: UIScreen,
         navSwitch: (newScreen: UIScreen) => void}>): JSX.Element {
+    const { exitConvo } = useContext(ConversationContext)
     const screenHeight = Dimensions.get('window').height;
 
     const handleNewMessage = () => {
+        exitConvo();
         navSwitch('messaging');
     }
 
@@ -47,7 +51,7 @@ export default function NavContainer({ children, navState, navSwitch }:
                         <Spacer />
                         <Pressable opacity={navState === 'social' ? 1 : 0.5}
                             onPress={() => navSwitch('social')}>
-                        <   FontAwesome name="address-book" size={25} color="white" />
+                            <Ionicons name="people" size={25} color="white" />
                         </Pressable>
                     </HStack>
                 </Center>

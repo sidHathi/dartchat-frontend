@@ -2,17 +2,20 @@ import React, { useState, useEffect, createContext, PropsWithChildren, ReactNode
 import { UserData } from '../types/types';
 import AuthUIController from './AuthUI/AuthUIController';
 import auth from '@react-native-firebase/auth';
+import IdentitySetup from './IdentityManagement/IdentitySetup';
 
 type AuthContextType = {
-    user: UserData | undefined;
-    isAuthenticated: boolean;
-    logOut: () => void;
+    user: UserData | undefined,
+    isAuthenticated: boolean,
+    logOut: () => void,
+    modifyUser: (user: UserData) => void;
 };
 
-export const AuthContext = createContext<AuthContextType>({
+export const AuthIdentityContext = createContext<AuthContextType>({
     user: undefined,
     isAuthenticated: false,
     logOut: () => {},
+    modifyUser: () => {},
 });
 
 export default function AuthIdentityContainer(props: PropsWithChildren<{children: ReactNode}>): JSX.Element {
@@ -24,6 +27,11 @@ export default function AuthIdentityContainer(props: PropsWithChildren<{children
     const logOut = () => {
         setUser(undefined);
         setIsAuthenticated(false);
+    };
+
+    const modifyUser = (user: UserData) => {
+        if (!isAuthenticated) return;
+        setUser(user);
     };
 
     useEffect(() => {
@@ -39,7 +47,18 @@ export default function AuthIdentityContainer(props: PropsWithChildren<{children
         });
     }, []);
 
-    return <AuthContext.Provider value={{user, isAuthenticated, logOut}}>
-        {isAuthenticated ? children : <AuthUIController />}
-    </AuthContext.Provider>
+    const isSetup = () => {
+        if (user && user.handle && user.secureKey) {
+            return true;
+        }
+        return false;
+    }
+
+    return <AuthIdentityContext.Provider value={{user, isAuthenticated, logOut, modifyUser}}>
+        {isAuthenticated ? 
+            isSetup() ? 
+                children :
+            <IdentitySetup /> : 
+        <AuthUIController />}
+    </AuthIdentityContext.Provider>
 }

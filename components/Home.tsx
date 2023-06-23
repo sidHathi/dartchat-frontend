@@ -1,9 +1,11 @@
 import React, {useState} from "react";
-import { UIState, UIScreen } from "../types/types";
+import { UIState, UIScreen, Conversation } from "../types/types";
 import { View, Box } from "native-base";
 import NavContainer from "./NavContainer";
 import ConversationsController from "./ConverstionsController";
 import MessagingContainer from "./MessagingUI/MessagingContainer";
+import ChatDisplay from "./MessagingUI/ChatDisplay";
+import { ConversationContextProvider } from "../contexts/ConversationContext";
 
 export default function Home(): JSX.Element {
     const [uiState, setUiState] = useState<UIState>({
@@ -13,7 +15,7 @@ export default function Home(): JSX.Element {
 
     const handleNavSwitch = (newScreen: UIScreen) => {
         setUiState({...uiState, screen: newScreen});
-    }
+    };
 
     const NavScreen = (): JSX.Element => <>
         <NavContainer navState={uiState.screen} navSwitch={handleNavSwitch}>
@@ -34,5 +36,7 @@ export default function Home(): JSX.Element {
         }
     }
 
-    return getScreen();
+    return <ConversationContextProvider>
+        {getScreen()}
+    </ConversationContextProvider>;
 }

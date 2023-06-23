@@ -1,6 +1,10 @@
 export type UserData = {
-    id: string;
-    email: string;
+    id: string,
+    email: string,
+    handle?: string,
+    secureKey?: string,
+    displayName?: string,
+    phone?: string,
 };
 
 export type UIScreen = 'messaging' |
@@ -16,24 +20,30 @@ export type UIState = {
 export type UserConversationProfile = {
     id: string,
     displayName: string,
-    profilePic: string,
+    profilePic: any,
 };
 
 export type Message = {
+    id: string,
     content: string,
     media?: string[],
-    metadata: {
-        timestamp: Date,
-        senderId: string,
-        likes: string[],
-    }
+    timestamp: Date,
+    senderId: string,
+    likes: string[],
+    replyRef?: ReplyRef
 };
 
-export type ConversationUI = {
-    settings: JSON,
-    participants: UserConversationProfile[],
-    permissions?: JSON,
-    name?: string,
-    avatar?: string,
-    messages: Message[],
+export type ReplyRef = {
+    id: string,
+    content: string,
+    senderId: string,
+    media?: string[],
 }
+
+export type Conversation = {
+    settings: any,
+    participants: UserConversationProfile[],
+    name?: string,
+    avatar?: any,
+    messages: Message[],
+};
