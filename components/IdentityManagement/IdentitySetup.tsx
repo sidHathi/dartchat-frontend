@@ -4,9 +4,10 @@ import { View, Box, VStack, Button, Input, Heading, Text, Center, FormControl} f
 import DartChatLogoDarkXML from '../../assets/DartChatLogoDarkXML';
 import { SvgXml } from "react-native-svg";
 import { AuthIdentityContext } from '../AuthIdentityContainer';
+import { AxiosError } from 'axios';
 
 export default function IdentitySetup(): JSX.Element {
-    const { user, modifyUser } = useContext(AuthIdentityContext);
+    const { isAuthenticated, user, createUser } = useContext(AuthIdentityContext);
 
     const [handle, setHandle] = useState<string | undefined>(undefined);
     const [secureKey, setSecureKey] = useState<string | undefined>(undefined);
@@ -16,7 +17,8 @@ export default function IdentitySetup(): JSX.Element {
     const [error, setError] = useState<string | undefined>(undefined);
 
     const handleSubmit = () => {
-        if (!user) return;
+        // console.log('submitting');
+        if (!isAuthenticated || !user) return;
         if (!secureKey || secureKey.length < 6) {
             setError('Secure key must be 6 digits long');
             return;
@@ -24,12 +26,19 @@ export default function IdentitySetup(): JSX.Element {
             setError('Encryption keys do not match');
             return;
         }
-        modifyUser({
+        createUser({
             ...user,
             handle,
             secureKey,
             displayName,
             phone,
+        })
+        .catch((err: AxiosError) => {
+            if (err.isAxiosError && err.response?.status === 409) {
+                setError(JSON.stringify(err.response.data) || 'Server error');
+            } else {
+                setError(err.message);
+            }
         });
     }
 
@@ -127,10 +136,7 @@ export default function IdentitySetup(): JSX.Element {
                         paddingX='20px'
                         marginRight='8px'
                         // backgroundColor='#f1f1f1'
-                        isRequired
                         variant="underlined"
-                        keyboardType='numeric'
-                        maxLength={6}
                     />
                     </Box>
 
@@ -148,10 +154,7 @@ export default function IdentitySetup(): JSX.Element {
                         paddingX='20px'
                         marginRight='8px'
                         // backgroundColor='#f1f1f1'
-                        isRequired
                         variant="underlined"
-                        keyboardType='numeric'
-                        maxLength={6}
                     />
                     </Box>
                 </VStack>

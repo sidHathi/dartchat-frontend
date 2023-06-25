@@ -33,7 +33,7 @@ export default function NavContainer({ children, navState, navSwitch }:
                         <SvgXml xml={DartChatLogoXML} height='42' width='110'/>
                     </Center>
                     <Spacer />
-                    <IconButton label='profile' size={36} additionalProps={{paddingTop: '6px'}} onPress={logOut}/>
+                    <IconButton label='profile' size={36} additionalProps={{marginTop: '6px'}} onPress={logOut}/>
                 </HStack>
             </Box>
         </Box>

@@ -23,7 +23,7 @@ export default function AuthUIController(): JSX.Element {
         const { idToken } = userInfo;
         const credential = auth.GoogleAuthProvider.credential(idToken);
         return auth().signInWithCredential(credential);
-        console.log(userInfo);
+        // console.log(userInfo);
         // setState({ userInfo });
       } catch (error: any) {
         console.log(error);
