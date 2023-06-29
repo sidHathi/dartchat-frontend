@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Text, Input, Box, Button, HStack, Spacer, Center } from 'native-base';
 import { Image, Pressable } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ export default function ProfilesSearch({
         selectedProfiles: UserConversationProfile[];
         setSelectedProfiles: (selectedProfiles: UserConversationProfile[]) => void;
     }): JSX.Element {
+    const { user } = useContext(AuthIdentityContext);
     const { profilesApi } = useRequest();
 
     const [queryString, setQueryString] = useState<string | undefined>(undefined);
@@ -28,7 +30,9 @@ export default function ProfilesSearch({
         return profilesApi.findProfile(qString)
             .then((matches) => {
                 if (matches.length > 0) {
-                    setMatchingProfiles(matches);
+                    setMatchingProfiles(matches.filter(profile => {
+                        return profile.id !== user?.id
+                    }));
                 } else {
                     setMatchingProfiles([]);
                 }

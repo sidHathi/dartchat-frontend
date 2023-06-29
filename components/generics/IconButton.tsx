@@ -16,7 +16,8 @@ type IconLabel = 'profile' |
     'heartEmpty'|
     'reply' |
     'send' |
-    'cancel';
+    'cancel' |
+    'delete';
 
 export default function IconButton({label, size, color, onPress, shadow, additionalProps}: {
         label: IconLabel,
@@ -51,6 +52,8 @@ export default function IconButton({label, size, color, onPress, shadow, additio
                 return <MaterialCommunityIcons name="send-circle" size={size} color={color || 'white'} />
             case 'cancel':
                 return <MaterialIcons name="cancel" size={size} color={color || 'white'} />
+            case 'delete':
+                return <FontAwesome name="trash-o" size={size} color={color || 'white'} />
             default:
                 return <>
                 </>

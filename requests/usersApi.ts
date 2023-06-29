@@ -1,5 +1,6 @@
 import { UserData } from "../types/types";
 import { ApiService } from "./request";
+import { parseUserData } from "../utils/requestUtils";
 
 export type UsersApi = {
     getCurrentUser: () => Promise<UserData | never>;
@@ -14,12 +15,11 @@ export default function usersApi(apiService: ApiService): UsersApi {
             url: '/users/me'
         }).then((res) => {
             if (res && res.data) {
-                return res.data as UserData
+                return parseUserData(res.data)
             }
             return Promise.reject(res);
         })
         .catch((err) => {
-            // console.error(err);
             return Promise.reject(err);
         });
     };
@@ -31,12 +31,11 @@ export default function usersApi(apiService: ApiService): UsersApi {
             data: newUser
         }).then((res) => {
             if (res && res.data) {
-                return res.data as UserData
+                return parseUserData(res.data)
             }
             return Promise.reject(res);
         })
         .catch((err) => {
-            // console.error(err);
             return Promise.reject(err);
         });
     };
@@ -44,11 +43,11 @@ export default function usersApi(apiService: ApiService): UsersApi {
     const updateUser = (updatedUser: UserData): Promise<UserData | never> => {
         return apiService.request({
             method: 'PUT',
-            url: '/users/update',
+            url: '/users/me/update',
             data: updatedUser
         }).then((res) => {
             if (res && res.data) {
-                return res.data as UserData
+                return parseUserData(res.data)
             }
             return Promise.reject(res);
         })

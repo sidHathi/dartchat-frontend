@@ -3,7 +3,7 @@ import React, { useState, useContext } from 'react';
 import { View, Box, VStack, Button, Input, Heading, Text, Center, FormControl} from 'native-base';
 import DartChatLogoDarkXML from '../../assets/DartChatLogoDarkXML';
 import { SvgXml } from "react-native-svg";
-import { AuthIdentityContext } from '../AuthIdentityContainer';
+import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { AxiosError } from 'axios';
 
 export default function IdentitySetup(): JSX.Element {

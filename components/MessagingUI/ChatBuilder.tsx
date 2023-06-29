@@ -1,39 +1,67 @@
 import React, { useContext, useState, useEffect } from "react";
-import ConversationContext from "../../contexts/ConversationContext";
-import { AuthIdentityContext } from "../AuthIdentityContainer";
+import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Conversation, UserConversationProfile } from "../../types/types";
 import ProfilesSearch from "./ProfileSearch";
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'react-native';
-
+import CurrentConversationContext from "../../contexts/CurrentConversationContext";
+import ConversationsContext from "../../contexts/ConverstionsContext";
 import { View, Box, Button, Center, Heading, Text, Input, VStack, HStack, Pressable, Flex } from 'native-base';
-import { ScrollView } from "react-native";
+import { ScrollView, Image } from "react-native";
+import uuid from 'react-native-uuid'
 
 export default function ChatBuilder({exit}: {
         exit: () => void
     }): JSX.Element {
-    const { newConvo } = useContext(ConversationContext);
+    const { createNewConversation } = useContext(ConversationsContext)
+    const { setConvo } = useContext(CurrentConversationContext);
     const { user } = useContext(AuthIdentityContext);
     const [isGroup, setIsGroup] = useState(false);
     const [userQuery, setUserQuery] = useState<string | undefined>(undefined);
     const [groupName, setGroupName] = useState<string | undefined>(undefined);
     const [userDispName, setUserDispName] = useState<string | undefined>(undefined);
     const [selectedProfiles, setSelectedProfiles] = useState<UserConversationProfile[]>([]);
+    const [error, setError] = useState<string | undefined>(undefined);
+
+    const checkParticipantValidity = () => {
+        if (isGroup) {
+            return true;
+        } else if (selectedProfiles.length < 1) {
+            setError('Please select a recipient');
+            return false;
+        }
+        return true;
+    };
+
+    const getGroupName = () => {
+        if (groupName) return groupName;
+        if (selectedProfiles.length == 1) {
+            return selectedProfiles[0].displayName;
+        }
+        return `${userDispName || user?.displayName || user?.handle || user?.email || 'Unnamed chat'} + ${selectedProfiles.length} others`;
+    };
 
     const handleSubmit = () => {
-        if (!user) return;
+        console.log('attempting to create chat')
+        if (!user || !checkParticipantValidity()) return;
         const participants: UserConversationProfile[] = [
+            ...selectedProfiles,
             {
                 displayName: userDispName || user.displayName || user.handle || user.email,
                 id: user.id || 'test',
                 profilePic: ''
             }
         ]
-        if (isGroup) {
-            newConvo(participants, groupName);
-        } else {
-            newConvo(participants);
-        }
+        const newConvo = {
+            id: uuid.v4() as string,
+            settings: {},
+            participants: participants,
+            name: getGroupName(),
+            messages: []
+        };
+
+        console.log('creating chat')
+        createNewConversation(newConvo);
+        setConvo(newConvo);
     };
 
     useEffect(() => {
@@ -170,6 +198,14 @@ export default function ChatBuilder({exit}: {
                         </Box>
                     }
                 </VStack>
+                {
+                    error &&
+                    <Center w='100%'>
+                        <Text color='red.500' fontSize='xs' mb='4px'>
+                            {error}
+                        </Text>
+                    </Center>
+                }
                 <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={handleSubmit} variant='solid' color='white' marginY='12px'>
                     Create Chat
                 </Button>

@@ -1,5 +1,5 @@
 import React, {PropsWithChildren, ReactNode, useEffect, useState, useContext} from "react";
-import ConversationContext from "../contexts/ConversationContext";
+import ConversationContext from "../contexts/CurrentConversationContext";
 import { View, Box, Text, HStack, Button, Pressable, VStack, Center, Spacer } from 'native-base';
 import { Dimensions, Image } from "react-native";
 import { SvgXml } from "react-native-svg";

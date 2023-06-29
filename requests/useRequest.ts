@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { apiService } from "./request";
 import profilesApi from "./profilesApi";
 import usersApi from "./usersApi";
+import conversationsApi from "./conversationsApi";
 import { REACT_APP_API_URL } from '@env';
 
 export default function useRequest() {
@@ -12,6 +13,7 @@ export default function useRequest() {
 
     return {
         profilesApi: profilesApi(apiService),
-        usersApi: usersApi(apiService)
+        usersApi: usersApi(apiService),
+        conversationsApi: conversationsApi(apiService)
     }
 }

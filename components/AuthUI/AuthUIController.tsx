@@ -19,12 +19,12 @@ export default function AuthUIController(): JSX.Element {
     const googleSignIn = async () => {
       try {
         await GoogleSignin.hasPlayServices();
-        const userInfo = await GoogleSignin.signIn();
-        const { idToken } = userInfo;
-        const credential = auth.GoogleAuthProvider.credential(idToken);
-        return auth().signInWithCredential(credential);
-        // console.log(userInfo);
-        // setState({ userInfo });
+        GoogleSignin.signIn().then(data => {
+            const credential = auth.GoogleAuthProvider.credential(data.idToken);
+            auth().signInWithCredential(credential);
+          }).catch(error => {
+            console.log('GOOGLE SIGN IN ERROR=', error)
+          });
       } catch (error: any) {
         console.log(error);
       }

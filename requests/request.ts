@@ -35,7 +35,6 @@ export const apiService: ApiService = {
             return Promise.reject();
         }
 
-        console.log(await auth().currentUser?.getIdToken());
         const headers = {
             'Authorization': `Bearer ${await auth().currentUser?.getIdToken()}`
         };
