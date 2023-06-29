@@ -1,25 +1,19 @@
-import React, {useState} from "react";
+import React, { useState, useContext } from "react";
 import { UIState, UIScreen, Conversation } from "../types/types";
-import { View, Box } from "native-base";
+import UIContext from "../contexts/UIContext";
 import NavContainer from "./NavContainer";
-import ConversationsController from "./ConverstionsController";
+import ChatSelector from "./ChatSelectionUI/ChatSelector";
 import MessagingContainer from "./MessagingUI/MessagingContainer";
 import ChatDisplay from "./MessagingUI/ChatDisplay";
-import { ConversationContextProvider } from "../contexts/ConversationContext";
+import { CCContextProvider } from "../contexts/CurrentConversationContext";
+import UserConversationsController from "./UserConversationsController";
 
 export default function Home(): JSX.Element {
-    const [uiState, setUiState] = useState<UIState>({
-        screen: 'conversations',
-        selectedConversation: undefined
-    });
-
-    const handleNavSwitch = (newScreen: UIScreen) => {
-        setUiState({...uiState, screen: newScreen});
-    };
+    const { uiState, navSwitch } = useContext(UIContext);
 
     const NavScreen = (): JSX.Element => <>
-        <NavContainer navState={uiState.screen} navSwitch={handleNavSwitch}>
-            <ConversationsController />
+        <NavContainer navState={uiState.screen} navSwitch={navSwitch}>
+            <ChatSelector openChat={() => navSwitch('messaging')}/>
         </NavContainer>
     </>
 
@@ -30,13 +24,15 @@ export default function Home(): JSX.Element {
             case 'social':
                 return <NavScreen />
             case 'messaging':
-                return <MessagingContainer exit={() => handleNavSwitch('conversations')}/>
+                return <MessagingContainer exit={() => navSwitch('conversations')}/>
             default:
                 return <></>
         }
     }
 
-    return <ConversationContextProvider>
-        {getScreen()}
-    </ConversationContextProvider>;
+    return <CCContextProvider>
+        <UserConversationsController>
+            {getScreen()}
+        </UserConversationsController>
+    </CCContextProvider>;
 }

@@ -1,5 +1,5 @@
 import React, {PropsWithChildren, ReactNode, useEffect, useState, useContext} from "react";
-import ConversationContext from "../contexts/ConversationContext";
+import ConversationContext from "../contexts/CurrentConversationContext";
 import { View, Box, Text, HStack, Button, Pressable, VStack, Center, Spacer } from 'native-base';
 import { Dimensions, Image } from "react-native";
 import { SvgXml } from "react-native-svg";
@@ -33,7 +33,7 @@ export default function NavContainer({ children, navState, navSwitch }:
                         <SvgXml xml={DartChatLogoXML} height='42' width='110'/>
                     </Center>
                     <Spacer />
-                    <IconButton label='profile' size={36} additionalProps={{paddingTop: '6px'}} onPress={logOut}/>
+                    <IconButton label='profile' size={36} additionalProps={{marginTop: '6px'}} onPress={logOut}/>
                 </HStack>
             </Box>
         </Box>

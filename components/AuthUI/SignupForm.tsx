@@ -24,11 +24,11 @@ export default function SignupForm(): JSX.Element {
 
     return <VStack marginY='8px'>
     <Input w='100%' borderColor='#777' borderRadius='40px' paddingY='8px' paddingX='16px' color='white' placeholder='Email' marginY='8px'
-    value={email} onChange={handleEmailChange}>
+    value={email} onChange={handleEmailChange} autoCapitalize='none'>
     </Input>
-    <Input w='100%' borderColor='#777' borderRadius='40px' marginY='8px'  paddingY='8px' paddingX='16px' color='white' placeholder='Password' type='password' value={password} onChange={handlePasswordChange}>
+    <Input w='100%' borderColor='#777' borderRadius='40px' marginY='8px'  paddingY='8px' paddingX='16px' color='white' placeholder='Password' type='password' value={password} onChange={handlePasswordChange} autoCapitalize='none'>
     </Input>
-    <Input w='100%' borderColor='#777' borderRadius='40px' marginY='8px'  paddingY='8px' paddingX='16px' color='white' placeholder='Confirm password' type='password' value={confirm} onChange={handleConfirmChange}>
+    <Input w='100%' borderColor='#777' borderRadius='40px' marginY='8px'  paddingY='8px' paddingX='16px' color='white' placeholder='Confirm password' type='password' value={confirm} onChange={handleConfirmChange} autoCapitalize='none'>
     </Input>
     {error &&
         <Center>

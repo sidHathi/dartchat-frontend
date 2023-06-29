@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
-import { Box, HStack, Spacer, VStack, Text, Pressable } from 'native-base';
+import { Box, HStack, Spacer, VStack, Text, Pressable, Center } from 'native-base';
 import IconButton from "../generics/IconButton";
 import { Message, UserConversationProfile } from "../../types/types";
-import { AuthIdentityContext } from "../AuthIdentityContainer";
+import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Dimensions } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
 
@@ -31,6 +31,8 @@ export default function MessageDisplay({
         handleSelect();
     };
 
+    const isSystemMessage = message.senderId === 'system';
+
     return <Box w='100%' paddingBottom='8px' paddingX='18px'>
         {
             message.replyRef &&
@@ -41,7 +43,10 @@ export default function MessageDisplay({
                 </Box>
                 <Box paddingX='15px' paddingY='4px' borderRadius='12px' backgroundColor='#f7f7f7' marginBottom='6px' opacity='0.7'>
                     <VStack>
-                        <Text color='coolGray.600' fontSize='9px'>{participants[message.replyRef.senderId].displayName}</Text>
+                        {
+                            !isSystemMessage &&
+                            <Text color='coolGray.600' fontSize='9px'>{participants[message.replyRef.senderId]?.displayName}</Text>
+                        }
                         <Text fontSize='xs' noOfLines={1} isTruncated>{message.replyRef.content}</Text>
                     </VStack>
                 </Box>
@@ -50,24 +55,33 @@ export default function MessageDisplay({
             </Pressable>
         }
         <HStack space={1} w='100%'>
-            <IconButton label='profile' size={28} additionalProps={{paddingTop: '6px', marginRight: '4px'}}/>
+            {
+                !isSystemMessage ?
+                <IconButton label='profile' size={28} additionalProps={{paddingTop: '6px', marginRight: '4px'}}/> :
+                <Spacer />
+            }
             <VStack maxWidth={`${screenWidth - 110} px`}>
                 <Pressable onPress={handleMessageTap}>
-                    <Box paddingX='18px' paddingY='4px' borderRadius='12px' backgroundColor='#f7f7f7' w='100%' margin='0px' shadow={
-                        selected ? '3' : 'none'
+                    <Box paddingX='18px' paddingY='4px' borderRadius='12px' backgroundColor={isSystemMessage ? 'transparent' : '#f7f7f7'} w='100%' margin='0px' shadow={
+                        (selected && !isSystemMessage) ? '3' : 'none'
                     }>
                         <VStack>
-                            <Text color='coolGray.600' fontSize='10px'>{participants[message.senderId].displayName}</Text>
-                            <Text fontSize='sm'>{message.content}</Text>
+                            {
+                                !isSystemMessage &&
+                                <Text color='coolGray.600' fontSize='10px'>{participants[message.senderId]?.displayName}</Text>
+                            }
+                            <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'}>{message.content}</Text>
                         </VStack>
                     </Box>
                 </Pressable>
                 {
                     selected &&
                     <VStack space={1} py='6px'>
-                        <Text fontSize='xs' color='gray.500'>
-                            Sent {message.timestamp.toLocaleTimeString()}
-                        </Text>
+                        <Center w='100%'>
+                            <Text fontSize='xs' color='gray.500'>
+                                Sent {message && message.timestamp && message.timestamp.toLocaleTimeString()}
+                            </Text>
+                        </Center>
                         {message.likes.length > 0 &&
                         <Box>
                             <HStack space={2}>
@@ -90,19 +104,21 @@ export default function MessageDisplay({
                 }
             </VStack>
             <Spacer />
-            <VStack paddingTop='8px' space={4}>
+            <VStack paddingTop={isSystemMessage ? '6px': '12px'} space={3} mb={isSystemMessage ? '12px': '0px'}>
                 {   
                     user && message.likes.includes(user.id) ?
                     <IconButton label='heartFill' color='red' size={20} onPress={handleLike} /> :
-                    <IconButton label='heartEmpty' color='gray' size={20} onPress={handleLike} /> 
+                        message.likes.length > 0 ?
+                        <IconButton label='heartFill' color='gray' size={20} onPress={handleLike} shadow='none' /> :
+                        <IconButton label='heartEmpty' color='gray' size={20} onPress={handleLike} shadow='none' /> 
                 }
                 {
-                    selected &&
+                    selected && !isSystemMessage &&
                     <IconButton
                         label='reply'
                         size={20}
                         onPress={handleReply}
-                        color='gray.800'
+                        color='gray'
                     />
                 }
             </VStack>

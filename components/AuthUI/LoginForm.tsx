@@ -18,10 +18,10 @@ export default function LoginForm(): JSX.Element {
 
     return <VStack marginTop='8px'>
         <FormControl>
-            <Input w='100%' borderColor='#777' borderRadius='40px'  paddingY='8px' paddingX='16px' color='white' placeholder='Email' marginY='8px'
+            <Input w='100%' borderColor='#777' borderRadius='40px'  paddingY='8px' paddingX='16px' color='white' placeholder='Email' marginY='8px' autoCapitalize='none'
             value={email} onChange={handleEmailChange}>
             </Input>
-            <Input w='100%' borderColor='#777' borderRadius='40px' marginY='8px'  paddingY='8px' paddingX='16px' color='white' placeholder='Password' type='password' value={password} onChange={handlePasswordChange}>
+            <Input w='100%' borderColor='#777' borderRadius='40px'  autoCapitalize='none' marginY='8px'  paddingY='8px' paddingX='16px' color='white' placeholder='Password' type='password' value={password} onChange={handlePasswordChange}>
             </Input>
             {error &&
                 <Center>

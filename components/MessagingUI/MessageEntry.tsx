@@ -3,9 +3,9 @@ import { Box, Input, HStack } from 'native-base';
 import IconButton from "../generics/IconButton";
 import { Dimensions } from "react-native";
 import { Message, ReplyRef } from '../../types/types';
-import { AuthIdentityContext } from "../AuthIdentityContainer";
-import ConversationContext from "../../contexts/ConversationContext";
+import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import uuid from 'react-native-uuid';
+import CurrentConversationContext from "../../contexts/CurrentConversationContext";
 
 export default function MessageEntry({replyMessage, onSend}: {
     replyMessage?: Message,
@@ -13,7 +13,7 @@ export default function MessageEntry({replyMessage, onSend}: {
 }): JSX.Element {
     const screenWidth = Dimensions.get('window').width;
 
-    const { handleNewMessage } = useContext(ConversationContext);
+    const { sendNewMessage } = useContext(CurrentConversationContext);
     const { user } = useContext(AuthIdentityContext);
 
     const [messageText, setMessageText] = useState<string | undefined>(undefined);
@@ -37,7 +37,7 @@ export default function MessageEntry({replyMessage, onSend}: {
             likes: [],
             replyRef
         }
-        handleNewMessage(message);
+        sendNewMessage(message);
         setMessageText(undefined);
         onSend && onSend();
         return;
