@@ -7,6 +7,8 @@ import useRequest from '../requests/useRequest';
 import { getUserData } from '../utils/identityUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import SocketContext from '../contexts/SocketContext';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { setConversations } from '../redux/slices/userConversationsSlice';
 
 export default function AuthIdentityController(props: PropsWithChildren<{children: ReactNode}>): JSX.Element {
     const { children } = props;
@@ -16,6 +18,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     const [user, setUser] = useState<UserData | undefined>(undefined);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [needsSetup, setNeedsSetup] = useState(true);
+    const dispatch = useAppDispatch();
 
     const logOut = () => {
         setUser(undefined);
@@ -65,6 +68,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                     setNeedsSetup(false);
                     console.log('joining rooms');
                     console.log(serverUser.conversations);
+                    dispatch(setConversations(serverUser.conversations || []));
                     if (socket) {
                         try {
                             socket?.emit('joinRoom', serverUser.conversations?.map(c => c.cid) || []);

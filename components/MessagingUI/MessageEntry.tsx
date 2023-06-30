@@ -5,16 +5,21 @@ import { Dimensions } from "react-native";
 import { Message, ReplyRef } from '../../types/types';
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import uuid from 'react-native-uuid';
-import CurrentConversationContext from "../../contexts/CurrentConversationContext";
+import SocketContext from "../../contexts/SocketContext";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
+import { handleNewMessage } from "../../redux/slices/userConversationsSlice";
 
 export default function MessageEntry({replyMessage, onSend}: {
     replyMessage?: Message,
     onSend?: () => void,
 }): JSX.Element {
     const screenWidth = Dimensions.get('window').width;
+    const dispatch = useAppDispatch();
 
-    const { sendNewMessage } = useContext(CurrentConversationContext);
     const { user } = useContext(AuthIdentityContext);
+    const { socket } = useContext(SocketContext);
+    const { currentConvo } = useAppSelector(chatSelector);
 
     const [messageText, setMessageText] = useState<string | undefined>(undefined);
 
@@ -37,9 +42,12 @@ export default function MessageEntry({replyMessage, onSend}: {
             likes: [],
             replyRef
         }
-        sendNewMessage(message);
-        setMessageText(undefined);
-        onSend && onSend();
+        if (socket && currentConvo) {
+            dispatch(sendNewMessage({socket, message}));
+            dispatch(handleNewMessage({cid: currentConvo.id, message: message, messageForCurrent: true}));
+            setMessageText(undefined);
+            onSend && onSend();
+        }
         return;
     }
 

@@ -7,18 +7,24 @@ import MessageEntry from './MessageEntry';
 import IconButton from '../generics/IconButton';
 import { Dimensions, LayoutChangeEvent } from 'react-native';
 import { logOut } from '../../firebase/auth';
-import ConversationContext from '../../contexts/CurrentConversationContext';
 import MessageDisplay from './MessageDisplay';
 import ReplyMessageDisplay from './ReplyMessageDisplay';
+import ConversationsContext from '../../contexts/ConversationsContext';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { userConversationsSelector } from '../../redux/slices/userConversationsSlice';
+import { chatSelector, sendNewLike, setNeedsScroll } from '../../redux/slices/chatSlice';
+import SocketContext from '../../contexts/SocketContext';
 
 export default function ChatDisplay({exit}: {
     exit: () => void
 }): JSX.Element {
+    const dispatch = useAppDispatch();
+    const { socket } = useContext(SocketContext);
     const chatScroll = useRef<ScrollView | null>(null); 
     const screenHeight = Dimensions.get('window').height;
 
     const { user } = useContext(AuthIdentityContext);
-    const { currentConvo, sendNewLike } = useContext(ConversationContext);
+    const { currentConvo, needsScroll } = useAppSelector(chatSelector);
     const [profiles, setProfiles] = useState<{[id: string]: UserConversationProfile}>({});
     const [selectedMiD, setSelectedMiD] = useState<string | undefined>(undefined);
     const [replyMessage, setReplyMessage] = useState<Message | undefined>(undefined);
@@ -28,7 +34,8 @@ export default function ChatDisplay({exit}: {
     const [messageLocMap, setMessageLocMap] = useState<{
         [id: string]: number
     }>({});
-    const [initialized, setInitialized] = useState(false)
+    const [initialized, setInitialized] = useState(false);
+    const [numMessages, setNumMessages] = useState(0)
 
     useEffect(() => {
         const asyncInit = async () => {
@@ -45,7 +52,14 @@ export default function ChatDisplay({exit}: {
         setProfiles(Object.fromEntries(
             currentConvo.participants.map(p => [p.id, p])
         ));
-    }, [currentConvo]);
+    }, []);
+
+    useEffect(() => {
+        if (needsScroll && chatScroll.current) {
+            setShouldScroll(true);
+            dispatch(setNeedsScroll(false));
+        }
+    }, [numMessages, needsScroll])
 
     const modifyMessageLocMap = (id: string, yLoc: number) => {
         setMessageLocMap({
@@ -109,6 +123,7 @@ export default function ChatDisplay({exit}: {
                     {
                         currentConvo && currentConvo.messages.map(
                             (message, idx) => {
+                                if (idx > numMessages) setNumMessages(idx);
                                 return <View onLayout={
                                     (event: LayoutChangeEvent) => {
                                         const {y} = event.nativeEvent.layout;
@@ -135,10 +150,11 @@ export default function ChatDisplay({exit}: {
                                                     setSelectedMiD(undefined);
                                                 }
                                             }}
-                                            handleLike={() => user && sendNewLike(
-                                                message.id,
-                                                user.id
-                                            )}
+                                            handleLike={() => user && socket && dispatch(sendNewLike({
+                                                socket,
+                                                messageId: message.id,
+                                                userId: user.id
+                                            }))}
                                             handleReply={() => setReplyMessage(message)} 
                                             handleReplySelect={() => {
                                                 goToReply(message)

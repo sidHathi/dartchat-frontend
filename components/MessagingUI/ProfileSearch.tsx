@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, PropsWithChildren, ReactNode } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
-import { Text, Input, Box, Button, HStack, Spacer, Center } from 'native-base';
+import { Text, Input, Box, Button, HStack, Spacer, Center, FormControl } from 'native-base';
 import { Image, Pressable } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
 
 import useRequest from "../../requests/useRequest";
 import { UserConversationProfile, UserProfile } from "../../types/types";
+
+const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => <Box w='100%' bgColor={searchSelected ? '#fefefe': 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px'>
+        {children}
+    </Box>
 
 export default function ProfilesSearch({
         isGroup,
@@ -16,12 +20,20 @@ export default function ProfilesSearch({
         selectedProfiles: UserConversationProfile[];
         setSelectedProfiles: (selectedProfiles: UserConversationProfile[]) => void;
     }): JSX.Element {
+    const inputRef = useRef<any | null>(null);
     const { user } = useContext(AuthIdentityContext);
     const { profilesApi } = useRequest();
 
     const [queryString, setQueryString] = useState<string | undefined>(undefined);
     const [matchingProfiles, setMatchingProfiles] = useState<UserProfile[]>([]);
     const [searchSelected, setSearchSelected] = useState(false);
+    const [cursor, setCursor] = useState<any>(null);
+
+    useEffect(() => {
+        if (inputRef.current && cursor) {
+            inputRef.current.cursor = cursor;
+        }
+    }, [cursor])
 
     const maxSelected = () => !isGroup && selectedProfiles.length > 0;
 
@@ -66,7 +78,7 @@ export default function ProfilesSearch({
         }
     };
 
-    const QueryInput = (): JSX.Element => {
+    const queryInput = (): JSX.Element => {
         if (maxSelected()) return <></>
         return (
             <Box w='100%' opacity={
@@ -74,12 +86,14 @@ export default function ProfilesSearch({
                 0.5 :
                 1
             }>
+                <FormControl>
                 <Text fontSize='xs' color='coolGray.600'>
                     {isGroup ? 'Add Participants' : 'Select recipient'}
                 </Text>
                 <Input
+                    ref={inputRef}
                     key='profileSearchInput'
-                    autoFocus={true}
+                    // autoFocus={true}
                     placeholder='Email, phone number, or username'
                     value={!maxSelected() ? queryString: ''}
                     onChangeText={handleQueryInput}
@@ -91,18 +105,23 @@ export default function ProfilesSearch({
                     mt='4px'
                     autoCapitalize='none'
                     backgroundColor='#f1f1f1'
+                    isFocused={searchSelected}
                     onPressOut={() => {
                         if (queryString && queryString.length > 0){
                             setSearchSelected(true)
                         }
                     }}
+                    onChange={(e: any) => {
+                        setCursor(e.target.value)
+                    }}
                     // variant="underlined"
                 />
+                </FormControl>
             </Box>
         );
     };
 
-    const ProfileSuggestion = ({profile, onSelect}: {
+    const profileSuggestion = ({profile, onSelect}: {
         profile: UserProfile,
         onSelect: () => void
     }): JSX.Element => (
@@ -129,32 +148,32 @@ export default function ProfilesSearch({
             </HStack>
         </Button>
     );
+    
 
     return <>
-        {
-            searchSelected && !maxSelected() ?
-            <Box w='100%' bgColor='#fefefe' px='12px' py='12px' shadow='9' borderRadius='12px'>
-                <QueryInput />
-                <Box w='100%'>
-                    <Center w='100%' my='12px'>
-                    {
-                        matchingProfiles.length > 0?
-                        matchingProfiles.map((profile, index) => {
-                            return <ProfileSuggestion 
-                                key={index}
-                                profile={profile}
-                                onSelect={() => handleAddProfile(profile)}
-                            />
-                        })
-                        :
-                        <Text fontSize='xs' color='coolGray.600'>
-                            No results found
-                        </Text>
-                    }
-                    </Center>
-                </Box>
+        <SearchContainer searchSelected={searchSelected}>
+            {queryInput()}
+            {searchSelected &&
+            <Box w='100%'>
+                <Center w='100%' my='12px'>
+                {
+                    matchingProfiles.length > 0?
+                    matchingProfiles.map((profile, index) => 
+                        <Box key={index} w='100%'>
+                            { profileSuggestion({
+                                profile: profile,
+                                onSelect: () => handleAddProfile(profile)
+                            }) }
+                        </Box>
+                    )
+                    :
+                    <Text fontSize='xs' color='coolGray.600'>
+                        No results found
+                    </Text>
+                }
+                </Center>
             </Box>
-            : <QueryInput />
-        }
+            }
+        </SearchContainer>
     </>;
 }

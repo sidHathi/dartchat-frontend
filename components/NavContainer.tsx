@@ -1,5 +1,4 @@
 import React, {PropsWithChildren, ReactNode, useEffect, useState, useContext} from "react";
-import ConversationContext from "../contexts/CurrentConversationContext";
 import { View, Box, Text, HStack, Button, Pressable, VStack, Center, Spacer } from 'native-base';
 import { Dimensions, Image } from "react-native";
 import { SvgXml } from "react-native-svg";
@@ -11,17 +10,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { UIScreen } from "../types/types";
 import IconButton from "./generics/IconButton";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { exitConvo as reduxExit } from "../redux/slices/chatSlice";
 
 export default function NavContainer({ children, navState, navSwitch }: 
     PropsWithChildren<{
         children: ReactNode, 
         navState: UIScreen,
         navSwitch: (newScreen: UIScreen) => void}>): JSX.Element {
-    const { exitConvo } = useContext(ConversationContext)
+    const dispatch = useAppDispatch();
     const screenHeight = Dimensions.get('window').height;
 
     const handleNewMessage = () => {
-        exitConvo();
+        dispatch(reduxExit());
         navSwitch('messaging');
     }
 

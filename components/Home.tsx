@@ -30,9 +30,7 @@ export default function Home(): JSX.Element {
         }
     }
 
-    return <CCContextProvider>
-        <UserConversationsController>
-            {getScreen()}
-        </UserConversationsController>
-    </CCContextProvider>;
+    return <UserConversationsController>
+        {getScreen()}
+    </UserConversationsController>;
 }
