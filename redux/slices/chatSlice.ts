@@ -1,14 +1,18 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Conversation, Message, UserConversationProfile, SocketEvent } from "../../types/types";
+import { createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
+import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer } from "../../types/types";
 import { RootState } from "../store";
 import { Socket } from "socket.io-client";
 import uuid from 'react-native-uuid';
+import { ConversationsApi } from "../../requests/conversationsApi";
 
 const initialState: {
     currentConvo?: Conversation;
     needsScroll: boolean;
+    requestLoading: boolean;
+    requestCursor?: string;
 } = {
     needsScroll: false,
+    requestLoading: false,
 };
 
 export const chatSlice = createSlice({
@@ -19,6 +23,21 @@ export const chatSlice = createSlice({
             {...state, currentConvo: action.payload}
         ),
         exitConvo: (state) => ({ ...state, currentConvo: undefined }),
+        addMessageHistory: (state, action: PayloadAction<Message[]>) => {
+            if (!state.currentConvo) return state;
+            const mIds = state.currentConvo.messages.map((m) => m.id);
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    messages: [
+                        ...state.currentConvo.messages,
+                        ...action.payload.filter((m) =>
+                        !mIds.includes(m.id))
+                    ]
+                }
+            };
+        },
         sendNewMessage: (state, action: PayloadAction<{
             socket: Socket, message: Message
         }>) => {
@@ -29,7 +48,7 @@ export const chatSlice = createSlice({
                     ...state,
                     currentConvo: {
                             ...state.currentConvo,
-                            messages: [...state.currentConvo.messages, message]
+                            messages: [message, ...state.currentConvo.messages]
                         }
                 });
             }
@@ -46,7 +65,7 @@ export const chatSlice = createSlice({
                 needsScroll: true,
                 currentConvo: {
                   ...state.currentConvo,
-                    messages: [...state.currentConvo.messages, message]
+                    messages: [message, ...state.currentConvo.messages]
                 }
             });
         },
@@ -168,14 +187,24 @@ export const chatSlice = createSlice({
                 needsScroll: action.payload
             })
         },
+        setRequestLoading: (state, action: PayloadAction<boolean>) => {
+            return ({
+               ...state,
+                requestLoading: action.payload
+            })
+        },
+        setRequestCursor: (state, action: PayloadAction<string | undefined>) => {
+            return ({
+              ...state,
+                requestCursor: action.payload
+            })
+        },
     }
 });
-
-const chatReducer = chatSlice.reducer;
-
 export const { 
     setConvo,
     exitConvo,
+    addMessageHistory,
     sendNewMessage,
     receiveNewMessage,
     sendNewLike,
@@ -184,7 +213,47 @@ export const {
     addParticipant,
     removeParticipant,
     updateAvatar,
-    setNeedsScroll
+    setNeedsScroll,
+    setRequestLoading,
+    setRequestCursor
  } = chatSlice.actions;
+
+export const pullConversation = (cid: string, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch) => {
+    try {
+        dispatch(setRequestLoading(true));
+
+        const cursorContainer: CursorContainer = { cursor: null };
+        const apiConvo = await api.getConversation(cid, cursorContainer);
+        if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
+            dispatch(setRequestCursor(cursorContainer.cursor));
+        } else {
+            dispatch(setRequestCursor(undefined));
+        }
+        dispatch(setConvo(apiConvo));
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+};
+
+export const loadAdditionalMessages = (api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo, requestCursor } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true))
+    const cursorContainer: CursorContainer = { cursor: requestCursor || null };
+    const additionalMessages: Message[] = await api.getConversationMessages(currentConvo.id, cursorContainer);
+    console.log(cursorContainer.cursor);
+    if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
+        dispatch(setRequestCursor(cursorContainer.cursor));
+    } else {
+        dispatch(setRequestCursor(undefined));
+    }
+    dispatch(addMessageHistory(additionalMessages));
+    dispatch(setRequestLoading(false));
+};
+
+const chatReducer = chatSlice.reducer;
 export const chatSelector = (state: RootState) => state.chatReducer;
 export default chatReducer;

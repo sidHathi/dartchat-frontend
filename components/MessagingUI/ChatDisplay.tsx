@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Conversation, Message, UserConversationProfile } from '../../types/types';
-import {Box, VStack, HStack, Spacer, Heading, Pressable} from 'native-base';
-import { View, ScrollView } from 'react-native';
+import {Box, VStack, HStack, Spacer, Heading, Pressable, Center} from 'native-base';
+import { View, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import MessageEntry from './MessageEntry';
 import IconButton from '../generics/IconButton';
 import { Dimensions, LayoutChangeEvent } from 'react-native';
@@ -12,40 +12,24 @@ import ReplyMessageDisplay from './ReplyMessageDisplay';
 import ConversationsContext from '../../contexts/ConversationsContext';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { userConversationsSelector } from '../../redux/slices/userConversationsSlice';
-import { chatSelector, sendNewLike, setNeedsScroll } from '../../redux/slices/chatSlice';
+import { chatSelector, loadAdditionalMessages, sendNewLike, setNeedsScroll } from '../../redux/slices/chatSlice';
 import SocketContext from '../../contexts/SocketContext';
+import Spinner from 'react-native-spinkit';
+import useRequest from '../../requests/useRequest';
+import ChatHeader from './ChatHeader';
+import MessageList from './MessageList';
 
 export default function ChatDisplay({exit}: {
     exit: () => void
 }): JSX.Element {
-    const dispatch = useAppDispatch();
-    const { socket } = useContext(SocketContext);
-    const chatScroll = useRef<ScrollView | null>(null); 
     const screenHeight = Dimensions.get('window').height;
 
-    const { user } = useContext(AuthIdentityContext);
-    const { currentConvo, needsScroll } = useAppSelector(chatSelector);
-    const [profiles, setProfiles] = useState<{[id: string]: UserConversationProfile}>({});
-    const [selectedMiD, setSelectedMiD] = useState<string | undefined>(undefined);
+    const { currentConvo } = useAppSelector(chatSelector);
+    const [selectedMid, setSelectedMid] = useState<string | undefined>(undefined);
     const [replyMessage, setReplyMessage] = useState<Message | undefined>(undefined);
     const [messageEntryHeight, setMessageEntryHeight] = useState(90);
     const [heightDif, setHeightDif] = useState(0);
-    const [shouldScroll, setShouldScroll] = useState(false);
-    const [messageLocMap, setMessageLocMap] = useState<{
-        [id: string]: number
-    }>({});
-    const [initialized, setInitialized] = useState(false);
-    const [numMessages, setNumMessages] = useState(0)
-
-    useEffect(() => {
-        const asyncInit = async () => {
-            await new Promise((r) => setTimeout(r as any, 1000));
-            setInitialized(true);
-        }
-        if (initialized) return;
-        if (chatScroll.current && !initialized) chatScroll.current.scrollToEnd();
-        asyncInit();
-    }, [messageLocMap]);
+    const [profiles, setProfiles] = useState<{[id: string]: UserConversationProfile}>({});
 
     useEffect(() => {
         if (!currentConvo) return;
@@ -54,41 +38,14 @@ export default function ChatDisplay({exit}: {
         ));
     }, []);
 
-    useEffect(() => {
-        if (needsScroll && chatScroll.current) {
-            setShouldScroll(true);
-            dispatch(setNeedsScroll(false));
-        }
-    }, [numMessages, needsScroll])
-
-    const modifyMessageLocMap = (id: string, yLoc: number) => {
-        setMessageLocMap({
-            ...messageLocMap,
-            [id]: yLoc
-        })
-    };
-
-    const goToReply = (message: Message) => {
-        setSelectedMiD(undefined);
-        if (message.replyRef && chatScroll.current && (message.id in messageLocMap)) {
-            chatScroll.current.scrollTo({x: 0, y: messageLocMap[message.replyRef.id] - (screenHeight/3), animated: true});
-            setSelectedMiD(message.replyRef.id);
-        }
-    }
-
     return <Box w='100%' h={screenHeight} backgroundColor='#222'>
     <Box backgroundColor='#fefefe' h='90px' overflow='hidden' zIndex='1001'>
-        <Box backgroundColor='#222' borderBottomRightRadius='24px' h='90px' zIndex='999'>
-            <HStack paddingTop='50px' marginX='6px'>
-                <IconButton label='back' size={24} additionalProps={{marginX: '4px', mt: '5px'}} onPress={exit}/>
-                <Heading fontSize='md' color='white' paddingTop='8px'>
-                    {currentConvo?.name || 'Chat'}
-                </Heading>
-                <Spacer />
-                <IconButton label='settings' size={24} additionalProps={{marginX: '6px', mt: '5px'}}/>
-                <IconButton label='profile' size={33} additionalProps={{marginX: '6px'}} onPress={logOut}/>
-            </HStack>
-        </Box>
+       <ChatHeader 
+            convoName={currentConvo?.name || 'Chat'}
+            onSettingsOpen={() => {return;}}
+            onProfileOpen={logOut}
+            onConvoExit={exit} 
+        />
     </Box>
     <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor='#fefefe' borderTopLeftRadius='24px' shadow='9' zIndex='1000'>
             <VStack w='100%' h='100%' space={1}>
@@ -99,74 +56,11 @@ export default function ChatDisplay({exit}: {
                         flexDirection: 'column',
                         backgroundColor: 'transparent',
                     }}>
-                <ScrollView
-                    ref={chatScroll}
-                    style={{
-                        flexGrow: 0,
-                        display: 'flex',
-                        marginTop: 'auto',
-                        marginBottom: 0,
-                        backgroundColor: 'transparent',
-                    }}
-                    onContentSizeChange={() => {
-                        if (shouldScroll) {
-                            chatScroll.current && chatScroll.current.scrollToEnd()
-                            setShouldScroll(false);
-                        }
-                        setInitialized(true);
-                    }}
-                    onScroll={() => {setInitialized(true)}}
-                    onTouchStart={() => {setInitialized(true)}}
-                    onScrollBeginDrag={() => {setInitialized(true)}}
-                    onLayout={() => setInitialized(true)}>
-                {/* <VStack w='100%' minHeight={`${screenHeight - 90 - messageEntryHeight} px`} space={2} overflowY='scroll'> */}
-                    {
-                        currentConvo && currentConvo.messages.map(
-                            (message, idx) => {
-                                if (idx > numMessages) setNumMessages(idx);
-                                return <View onLayout={
-                                    (event: LayoutChangeEvent) => {
-                                        const {y} = event.nativeEvent.layout;
-                                        modifyMessageLocMap(message.id, y);
-                                    }
-                                }
-                                style={idx === 0 && {marginTop: 60}}
-                                key={message.id}>
-                                <Pressable onPress={() => {
-                                    if (selectedMiD !== undefined && selectedMiD !== message.id) {
-                                        setSelectedMiD(undefined);
-                                    }
-                                    setInitialized(true);
-                                }}>
-                                        <MessageDisplay
-                                            key={message.id}
-                                            message={message}
-                                            participants={profiles}
-                                            selected={message.id === selectedMiD}
-                                            handleSelect={() => {
-                                                if (!selectedMiD && message.id !== selectedMiD) {
-                                                    setSelectedMiD(message.id);
-                                                } else {
-                                                    setSelectedMiD(undefined);
-                                                }
-                                            }}
-                                            handleLike={() => user && socket && dispatch(sendNewLike({
-                                                socket,
-                                                messageId: message.id,
-                                                userId: user.id
-                                            }))}
-                                            handleReply={() => setReplyMessage(message)} 
-                                            handleReplySelect={() => {
-                                                goToReply(message)
-                                            }}
-                                        />
-                                    </Pressable>
-                                </View>
-                            }
-                        )
-                    }
-                    {/* </VStack> */}
-                </ScrollView>
+                    <MessageList 
+                        selectedMid={selectedMid}
+                        setSelectedMid={setSelectedMid}
+                        setReplyMessage={setReplyMessage}
+                        profiles={profiles} />
                 </View>
                 <Spacer />
                 <View onLayout={(event: LayoutChangeEvent) => {
@@ -188,9 +82,7 @@ export default function ChatDisplay({exit}: {
                             replyMessage={replyMessage} 
                             onSend={() => {
                                 setReplyMessage(undefined);
-                                setSelectedMiD(undefined);
-                                setShouldScroll(true);
-                                setInitialized(true);
+                                setSelectedMid(undefined);
                             }} />
                         </Box>
                     </VStack>

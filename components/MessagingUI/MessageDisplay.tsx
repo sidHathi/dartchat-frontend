@@ -36,12 +36,14 @@ export default function MessageDisplay({
     return <Box w='100%' paddingBottom='8px' paddingX='18px'>
         {
             message.replyRef &&
-            <Pressable onPress={handleReplySelect} paddingLeft='12px'>
-                <HStack>
+            <Pressable onPress={handleReplySelect} paddingLeft='12px'
+            maxWidth='100%'>
+                <HStack maxWidth='100%'>
                 <Box paddingTop='12px' paddingX='6px' opacity='0.8'>
                     <FontAwesome name="arrows-v" size={20} color="gray" />
                 </Box>
-                <Box paddingX='15px' paddingY='4px' borderRadius='12px' backgroundColor='#f7f7f7' marginBottom='6px' opacity='0.7'>
+                <Box paddingX='15px' paddingY='4px' borderRadius='12px' backgroundColor='#f7f7f7' marginBottom='6px' opacity='0.7'
+                mr='24px'>
                     <VStack>
                         {
                             !isSystemMessage &&
@@ -50,6 +52,7 @@ export default function MessageDisplay({
                         <Text fontSize='xs' noOfLines={1} isTruncated>{message.replyRef.content}</Text>
                     </VStack>
                 </Box>
+                <Spacer />
                 </HStack>
                 <Text pl='40px' fontSize='xs' lineHeight='4px' fontWeight='bold' pb='4px' color='coolGray.400'>. . .</Text>
             </Pressable>

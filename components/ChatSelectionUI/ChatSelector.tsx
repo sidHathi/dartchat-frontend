@@ -16,7 +16,7 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { deleteConversation, readConversationMessages, userConversationsSelector } from "../../redux/slices/userConversationsSlice";
 import { updateUserConversations } from "../../utils/identityUtils";
 import { parseConversation } from "../../utils/requestUtils";
-import { setConvo } from "../../redux/slices/chatSlice";
+import { pullConversation, setConvo } from "../../redux/slices/chatSlice";
 
 export default function ChatSelector({openChat}: {openChat: () => void}): JSX.Element {
     const { socket } = useContext(SocketContext);
@@ -36,21 +36,28 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
     }
 
     const handleSelect = (chat: ConversationPreview) => {
-        conversationsApi.getConversation(chat.cid)
-            .then((res) => {
-                dispatch(readConversationMessages(chat.cid));
-                updateUserConversations(usersApi, user, userConversations)
-                    .catch(err => {console.log(err);});
-                if (socket) {
-                    socket.emit("messagesRead", chat.cid);
-                    dispatch(readConversationMessages(chat.cid));
-                }
-                dispatch(setConvo(res));
-                openChat();
-            })
-            .catch((err) => {
-                console.log(err);
-            });
+        // conversationsApi.getConversation(chat.cid)
+        //     .then((res) => {
+        //         dispatch(readConversationMessages(chat.cid));
+        //         updateUserConversations(usersApi, user, userConversations)
+        //             .catch(err => {console.log(err);});
+        //         if (socket) {
+        //             socket.emit("messagesRead", chat.cid);
+        //             dispatch(readConversationMessages(chat.cid));
+        //         }
+        //         dispatch(setConvo(res));
+        //         openChat();
+        //     })
+        //     .catch((err) => {
+        //         console.log(err);
+        //     });
+        dispatch(pullConversation(chat.cid, conversationsApi));
+        dispatch(readConversationMessages(chat.cid));
+        if (socket) {
+            socket.emit("messagesRead", chat.cid);
+            dispatch(readConversationMessages(chat.cid));
+        }
+        openChat();
     }
 
     const handleDelete = async (chat: ConversationPreview | undefined) => {
