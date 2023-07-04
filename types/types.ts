@@ -77,3 +77,7 @@ export type SocketEvent = {
     type: string;
     metadata?: any;
 };
+
+export type CursorContainer = {
+    cursor: string | null
+};

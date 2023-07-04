@@ -19,12 +19,13 @@ type IconLabel = 'profile' |
     'cancel' |
     'delete';
 
-export default function IconButton({label, size, color, onPress, shadow, additionalProps}: {
+export default function IconButton({label, size, color, onPress, shadow, disabled, additionalProps}: {
         label: IconLabel,
         size: number,
         color?: string,
         onPress?: () => void,
         shadow?: string,
+        disabled?: boolean,
         additionalProps?: any
     }): JSX.Element {
 
@@ -60,8 +61,8 @@ export default function IconButton({label, size, color, onPress, shadow, additio
         }
     }
 
-    return <Pressable onPress={onPress}>
-        <Box bgColor='rgba(255, 255, 255, 0.1)' {...additionalProps} shadow={shadow || '9'} borderRadius={size/2}>
+    return <Pressable onPress={onPress} disabled={disabled}>
+        <Box bgColor='rgba(255, 255, 255, 0.1)' {...additionalProps} shadow={shadow || '9'} borderRadius={size/2} opacity={disabled ? '0.5' : '1'}>
             {getIcon()}
         </Box>
     </Pressable>

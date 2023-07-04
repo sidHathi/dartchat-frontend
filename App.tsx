@@ -9,31 +9,30 @@ import Home from './components/Home';
 import { SocketContextProvider } from './contexts/SocketContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { UIContextProvider } from './contexts/UIContext';
+import  { store } from './redux/store';
+import { Provider } from 'react-redux';
+import { NetworkContextProvider } from './contexts/NetworkContext';
 
 GoogleSignin.configure();
 
 export default function App(): JSX.Element {
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
-      <NativeBaseProvider>
-          <SocketContextProvider>
-            <AuthIdentityController>
-                <UIContextProvider>
-                  <Box h='100%' w='100%'>
-                      <Home />
-                      <Center>
-                        <Text>
-                          Logged in
-                        </Text>
-                        <Button onPress={() => auth().signOut()}>
-                          Log out
-                        </Button>
-                      </Center>
-                  </Box>
-                </UIContextProvider>
-              </AuthIdentityController>
-          </SocketContextProvider>
-      </NativeBaseProvider>
-    </GestureHandlerRootView>
+    <Provider store={store}>
+      <GestureHandlerRootView style={{flex: 1}}>
+        <NativeBaseProvider>
+          <NetworkContextProvider>
+            <SocketContextProvider>
+              <AuthIdentityController>
+                  <UIContextProvider>
+                    <Box flex='1'>
+                        <Home />
+                    </Box>
+                  </UIContextProvider>
+                </AuthIdentityController>
+            </SocketContextProvider>
+          </NetworkContextProvider>
+        </NativeBaseProvider>
+      </GestureHandlerRootView>
+    </Provider>
   );
 }

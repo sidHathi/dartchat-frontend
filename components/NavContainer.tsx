@@ -1,5 +1,4 @@
 import React, {PropsWithChildren, ReactNode, useEffect, useState, useContext} from "react";
-import ConversationContext from "../contexts/CurrentConversationContext";
 import { View, Box, Text, HStack, Button, Pressable, VStack, Center, Spacer } from 'native-base';
 import { Dimensions, Image } from "react-native";
 import { SvgXml } from "react-native-svg";
@@ -11,17 +10,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { UIScreen } from "../types/types";
 import IconButton from "./generics/IconButton";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { exitConvo as reduxExit } from "../redux/slices/chatSlice";
+import NetworkContext from "../contexts/NetworkContext";
+import NetworkDisconnectionAlert from "./generics/alerts/NetworkDisconnectionAlert";
+import SocketContext from "../contexts/SocketContext";
 
 export default function NavContainer({ children, navState, navSwitch }: 
     PropsWithChildren<{
         children: ReactNode, 
         navState: UIScreen,
         navSwitch: (newScreen: UIScreen) => void}>): JSX.Element {
-    const { exitConvo } = useContext(ConversationContext)
+    const dispatch = useAppDispatch();
     const screenHeight = Dimensions.get('window').height;
+    const { networkConnected } = useContext(NetworkContext);
+    const { disconnected: socketDisconnected } = useContext(SocketContext); 
 
     const handleNewMessage = () => {
-        exitConvo();
+        if (!networkConnected) return;
+        dispatch(reduxExit());
         navSwitch('messaging');
     }
 
@@ -56,7 +63,7 @@ export default function NavContainer({ children, navState, navSwitch }:
                     </HStack>
                 </Center>
             </Box>
-            <Box w='50px' h='50px' backgroundColor='#333' borderRadius='30px' shadow='9' marginX='5px'>
+            <Box w='50px' h='50px' backgroundColor='#333' borderRadius='30px' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
                 <Center h='50px'>
                     <Pressable onPress={handleNewMessage}>
                         <MaterialCommunityIcons name="message-draw" size={25} color="white" />
@@ -65,5 +72,11 @@ export default function NavContainer({ children, navState, navSwitch }:
             </Box>
             </HStack>
         </Center>
+        {
+            (!networkConnected || socketDisconnected) &&
+            <Box marginTop='-150px' zIndex='1003'>
+                <NetworkDisconnectionAlert type={networkConnected ? 'server' : 'network'} />
+            </Box>
+        }
     </View>
 }

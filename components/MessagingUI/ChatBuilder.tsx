@@ -3,18 +3,24 @@ import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Conversation, UserConversationProfile } from "../../types/types";
 import ProfilesSearch from "./ProfileSearch";
 import { Ionicons } from '@expo/vector-icons';
-import CurrentConversationContext from "../../contexts/CurrentConversationContext";
-import ConversationsContext from "../../contexts/ConverstionsContext";
 import { View, Box, Button, Center, Heading, Text, Input, VStack, HStack, Pressable, Flex } from 'native-base';
 import { ScrollView, Image } from "react-native";
-import uuid from 'react-native-uuid'
+import uuid from 'react-native-uuid';
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { addConversation } from "../../redux/slices/userConversationsSlice";
+import { setConvo } from "../../redux/slices/chatSlice";
+import ConversationsContext from "../../contexts/ConversationsContext";
+import SocketContext from "../../contexts/SocketContext";
+import useRequest from "../../requests/useRequest";
 
 export default function ChatBuilder({exit}: {
         exit: () => void
     }): JSX.Element {
-    const { createNewConversation } = useContext(ConversationsContext)
-    const { setConvo } = useContext(CurrentConversationContext);
+    const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
+    const dispatch = useAppDispatch();
+    const { conversationsApi } = useRequest();
+
     const [isGroup, setIsGroup] = useState(false);
     const [userQuery, setUserQuery] = useState<string | undefined>(undefined);
     const [groupName, setGroupName] = useState<string | undefined>(undefined);
@@ -40,7 +46,7 @@ export default function ChatBuilder({exit}: {
         return `${userDispName || user?.displayName || user?.handle || user?.email || 'Unnamed chat'} + ${selectedProfiles.length} others`;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         console.log('attempting to create chat')
         if (!user || !checkParticipantValidity()) return;
         const participants: UserConversationProfile[] = [
@@ -59,9 +65,12 @@ export default function ChatBuilder({exit}: {
             messages: []
         };
 
-        console.log('creating chat')
-        createNewConversation(newConvo);
-        setConvo(newConvo);
+        console.log('creating chat');
+        dispatch(setConvo(newConvo));
+        if (socket && user) {
+            socket.emit('newConversation', newConvo);
+            dispatch(addConversation(newConvo));
+        }
     };
 
     useEffect(() => {
@@ -175,6 +184,7 @@ export default function ChatBuilder({exit}: {
                                 marginRight='8px'
                                 // backgroundColor='#f1f1f1'
                                 variant="underlined"
+                                // autoFocus={true}
                             />
 
                         </Box>
@@ -185,8 +195,8 @@ export default function ChatBuilder({exit}: {
                             </Text>
                             <Input
                                 placeholder={user?.email || 'Firstname Lastname'}
-                                value={userQuery}
-                                onChangeText={setUserQuery}
+                                value={userDispName}
+                                onChangeText={setUserDispName}
                                 w='100%'
                                 h='40px'
                                 // borderRadius='20px'
@@ -194,6 +204,7 @@ export default function ChatBuilder({exit}: {
                                 marginRight='8px'
                                 // backgroundColor='#f1f1f1'
                                 variant="underlined"
+                                // autoFocus={true}
                             />
                         </Box>
                     }

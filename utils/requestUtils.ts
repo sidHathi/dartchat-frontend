@@ -1,5 +1,6 @@
-import { UserData, Message, Conversation } from "../types/types"
+import { UserData, Message, Conversation, CursorContainer } from "../types/types"
 import { RawUserData, SocketMessage, RawConversation } from "../types/rawTypes";
+import { AxiosRequestConfig } from "axios";
 
 export const parseUserData = (data : any): UserData => {
     try{
@@ -32,7 +33,7 @@ export const parseSocketMessage = (data: any): Message => {
         console.error(err);
         return data;
     }
-}
+};
 
 export const parseConversation = (data: any) : Conversation => {
     try {
@@ -46,4 +47,16 @@ export const parseConversation = (data: any) : Conversation => {
         console.error(err);
         return data;
     }
-}
+};
+
+export const addCursorToRequest = (requestConfig: AxiosRequestConfig<any>, cursorContainer?: CursorContainer) => {
+    if (cursorContainer && cursorContainer.cursor) {
+        return {
+            ...requestConfig,
+            params: {
+                cursor: cursorContainer.cursor
+            }
+        };
+    }
+    return requestConfig;
+};
