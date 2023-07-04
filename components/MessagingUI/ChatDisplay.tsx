@@ -18,6 +18,8 @@ import Spinner from 'react-native-spinkit';
 import useRequest from '../../requests/useRequest';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
+import NetworkContext from '../../contexts/NetworkContext';
+import NetworkDisconnectionAlert from '../generics/alerts/NetworkDisconnectionAlert';
 
 export default function ChatDisplay({exit}: {
     exit: () => void
@@ -25,6 +27,9 @@ export default function ChatDisplay({exit}: {
     const screenHeight = Dimensions.get('window').height;
 
     const { currentConvo } = useAppSelector(chatSelector);
+    const { networkConnected } = useContext(NetworkContext);
+    const { disconnected: socketDisconnected } = useContext(SocketContext);
+
     const [selectedMid, setSelectedMid] = useState<string | undefined>(undefined);
     const [replyMessage, setReplyMessage] = useState<Message | undefined>(undefined);
     const [messageEntryHeight, setMessageEntryHeight] = useState(90);
@@ -89,5 +94,13 @@ export default function ChatDisplay({exit}: {
                 </View>
             </VStack>
 =        </Box>
+
+
+        {
+            (!networkConnected || socketDisconnected) &&
+            <Box marginTop='-180px' zIndex='1003'>
+                <NetworkDisconnectionAlert type={networkConnected ? 'server' : 'network'} />
+            </Box>
+        }
     </Box>
 }

@@ -3,7 +3,7 @@ import { FlatList, NativeScrollEvent, NativeSyntheticEvent } from "react-native"
 import { Box, Center, Pressable, View } from 'native-base';
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { chatSelector, loadAdditionalMessages, sendNewLike } from "../../redux/slices/chatSlice";
+import { chatSelector, loadAdditionalMessages, loadMessagesToDate, sendNewLike } from "../../redux/slices/chatSlice";
 import { Message, UserConversationProfile } from "../../types/types";
 import MessageDisplay from "./MessageDisplay";
 import SocketContext from "../../contexts/SocketContext";
@@ -30,18 +30,50 @@ export default function MessageList({
     const { conversationsApi } = useRequest();
 
     const [indexMap, setIndexMap] = useState<{[id: string]: number}>({});
+    const [replyFetch, setReplyFetch] = useState<string | undefined>();
 
     const goToReply = (message: Message) => {
         setSelectedMid(undefined);
         console.log(indexMap);
-        if (message.replyRef && listRef.current && (message.id in indexMap)) {
+        if (message.replyRef && listRef.current && (message.replyRef.id in indexMap)) {
             listRef.current.scrollToIndex({
                 index: indexMap[message.replyRef.id],
                 animated: true
             });
             setSelectedMid(message.replyRef.id);
+        } else if (message.replyRef && currentConvo) {
+            conversationsApi.getMessage(currentConvo.id, message.replyRef.id).  then((res) => {
+                dispatch(loadMessagesToDate(res.timestamp, conversationsApi));
+                setReplyFetch(res.id);
+                if (listRef.current) listRef.current.scrollToEnd();
+            }).catch((err) => {
+                console.log(err);
+                setReplyFetch(undefined);
+            })
         }
     };
+
+    useEffect(() => {
+        if (replyFetch && (replyFetch in indexMap) && currentConvo && indexMap[replyFetch] < currentConvo.messages.length) {
+            console.log('scrolling to index ' + indexMap[replyFetch].toString());
+            listRef.current?.scrollToIndex({
+                index: indexMap[replyFetch],
+                animated: true
+            });
+            setSelectedMid(replyFetch);
+            setReplyFetch(undefined);
+        }
+    }, [indexMap, replyFetch, currentConvo, requestLoading]);
+
+    useEffect(() => {
+        if (!currentConvo) return;
+        const newIndexVals: {[id: string]: number} = Object.fromEntries(
+            currentConvo?.messages.map((message: Message, index: number) => {
+                return [message.id, index];
+            })
+        );
+        setIndexMap(newIndexVals);
+    }, [currentConvo, requestLoading]);
 
     const renderMessage = ({item, index}: {
         item?: Message,
@@ -49,9 +81,6 @@ export default function MessageList({
     }) => {
         const message = item;
         if (!message) return null;
-        if (message && !(message.id in indexMap) || indexMap[message.id] !== index) {
-            setIndexMap({...indexMap, [message.id]: index});
-        }
 
         return (
             <Pressable 
@@ -97,6 +126,12 @@ export default function MessageList({
             if (contentOffset.y < 20 && requestCursor) {
                 dispatch(loadAdditionalMessages(conversationsApi));
             }
+        }}
+        onScrollToIndexFailed={info => {
+            const wait = new Promise(resolve => setTimeout(resolve as any, 500));
+            wait.then(() => {
+            listRef.current?.scrollToIndex({ index: info.index, animated: true });
+            });
         }}
         inverted
         ListFooterComponent={(requestCursor || requestLoading) ?

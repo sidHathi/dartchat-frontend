@@ -6,6 +6,8 @@ import { SocketMessage } from "../types/rawTypes";
 export type ConversationsApi = {
     getConversation: (cid: string, cursorContainer?: CursorContainer) => Promise<Conversation | never>;
     getConversationMessages: (cid: string, cursorContainer?: CursorContainer) => Promise<Message[]>;
+    getConversationMessagesToDate: (cid: string, date: Date, cursorContainer?: CursorContainer) => Promise<Message[]>;
+    getMessage: (cid: string, mid: string) => Promise<Message | never>;
     deleteConversation: (cid: string) => Promise<any | never>;
 }
 
@@ -70,6 +72,20 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
+    const getMessage = (cid: string, mid: string): Promise<Message | never> => {
+        return apiService.request({
+            method: 'GET',
+            url: `/conversations/${cid}/messages/${mid}`
+        })
+        .then((res) => {
+            if (res && res.data) {
+                return parseSocketMessage(res.data as SocketMessage);
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
     const deleteConversation = (cid: string) => {
         return apiService.request({
             method: 'DELETE',
@@ -87,6 +103,8 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
     return {
         getConversation,
         getConversationMessages,
+        getConversationMessagesToDate,
+        getMessage,
         deleteConversation
     }
 }

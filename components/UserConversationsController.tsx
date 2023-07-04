@@ -44,33 +44,21 @@ export default function UserConversationsController({
 
     useEffect(() => {
         if (socket) socket.emit('joinRoom', userConversations.map(c => c.cid));
-        const update = async () => {
-            if (user && needsServerSync) {
-                try {
-                    dispatch(setNeedsServerSync(false));
-                    await updateUserConversations(usersApi, user, userConversations);
-                } catch (err) {
-                    console.log(err);
-                }
-            }
-        }
-        update();
     }, [userConversations])
 
-    // TODO: move a lot of this logic into another file
     useEffect(() => {
         if (!socket || !user) return;
         socket.emit('joinRoom', userConversations.map(c => c.cid));
-        // let receivedMessages = new Set<string>();
         socket.on('newMessage', async (cid: string, newMessage: SocketMessage) => {
             const message = parseSocketMessage(newMessage);
 
             if (currentConvo === undefined) {
                 console.log('message received for undefined cc');
             }
-            const messageForCurrent: boolean = currentConvo !== undefined && currentConvo.id === cid && currentConvo.messages.filter(m => m.id === message.id).length < 1;
+            const messageForCurrent: boolean = message.senderId === user?.id ||(currentConvo !== undefined && currentConvo.id === cid && currentConvo.messages.filter(m => m.id === message.id).length < 1);
             console.log(messageForCurrent);
             if (messageForCurrent) {
+                socket.emit('messagesRead', currentConvo?.id);
                 dispatch(receiveNewMessage({message, cid}));
             } 
 

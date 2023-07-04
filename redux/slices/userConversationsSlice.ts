@@ -1,7 +1,8 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
 import { Message, ConversationPreview, Conversation } from '../../types/types';
 import { RootState } from '../store';
 import { Socket } from 'socket.io-client';
+import { UsersApi } from '../../requests/usersApi';
 
 const initialState: {
     userConversations: ConversationPreview[];
@@ -108,5 +109,6 @@ export const {
     readConversationMessages,
     setNeedsServerSync
 } = userConversationsSlice.actions;
+
 export const userConversationsSelector = (state: RootState) => state.userConversationsReducer;
 export default userConversationsReducer;

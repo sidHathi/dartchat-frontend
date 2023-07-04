@@ -244,7 +244,6 @@ export const loadAdditionalMessages = (api: ConversationsApi): ThunkAction<void,
     dispatch(setRequestLoading(true))
     const cursorContainer: CursorContainer = { cursor: requestCursor || null };
     const additionalMessages: Message[] = await api.getConversationMessages(currentConvo.id, cursorContainer);
-    console.log(cursorContainer.cursor);
     if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
         dispatch(setRequestCursor(cursorContainer.cursor));
     } else {
@@ -253,6 +252,22 @@ export const loadAdditionalMessages = (api: ConversationsApi): ThunkAction<void,
     dispatch(addMessageHistory(additionalMessages));
     dispatch(setRequestLoading(false));
 };
+
+export const loadMessagesToDate = (date: Date, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo, requestCursor } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true))
+    const cursorContainer: CursorContainer = { cursor: requestCursor || null };
+    const additionalMessages: Message[] = await api.getConversationMessagesToDate(currentConvo.id, date, cursorContainer);
+    if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
+        dispatch(setRequestCursor(cursorContainer.cursor));
+    } else {
+        dispatch(setRequestCursor(undefined));
+    }
+    dispatch(addMessageHistory(additionalMessages));
+    dispatch(setRequestLoading(false));
+}
 
 const chatReducer = chatSlice.reducer;
 export const chatSelector = (state: RootState) => state.chatReducer;

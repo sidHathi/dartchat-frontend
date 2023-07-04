@@ -5,7 +5,6 @@ import NavContainer from "./NavContainer";
 import ChatSelector from "./ChatSelectionUI/ChatSelector";
 import MessagingContainer from "./MessagingUI/MessagingContainer";
 import ChatDisplay from "./MessagingUI/ChatDisplay";
-import { CCContextProvider } from "../contexts/CurrentConversationContext";
 import UserConversationsController from "./UserConversationsController";
 import { useAppDispatch } from "../redux/hooks";
 import { exitConvo } from "../redux/slices/chatSlice";

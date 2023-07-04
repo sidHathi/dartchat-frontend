@@ -17,10 +17,12 @@ import { deleteConversation, readConversationMessages, userConversationsSelector
 import { updateUserConversations } from "../../utils/identityUtils";
 import { parseConversation } from "../../utils/requestUtils";
 import { pullConversation, setConvo } from "../../redux/slices/chatSlice";
+import NetworkContext from "../../contexts/NetworkContext";
 
 export default function ChatSelector({openChat}: {openChat: () => void}): JSX.Element {
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
+    const { networkConnected } = useContext(NetworkContext);
     const { userConversations } = useAppSelector(userConversationsSelector);
     const { deleteConversation: socketDelete } = useContext(ConversationsContext);
     const { conversationsApi, usersApi } = useRequest();
@@ -36,21 +38,7 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
     }
 
     const handleSelect = (chat: ConversationPreview) => {
-        // conversationsApi.getConversation(chat.cid)
-        //     .then((res) => {
-        //         dispatch(readConversationMessages(chat.cid));
-        //         updateUserConversations(usersApi, user, userConversations)
-        //             .catch(err => {console.log(err);});
-        //         if (socket) {
-        //             socket.emit("messagesRead", chat.cid);
-        //             dispatch(readConversationMessages(chat.cid));
-        //         }
-        //         dispatch(setConvo(res));
-        //         openChat();
-        //     })
-        //     .catch((err) => {
-        //         console.log(err);
-        //     });
+        if (!networkConnected) return;
         dispatch(pullConversation(chat.cid, conversationsApi));
         dispatch(readConversationMessages(chat.cid));
         if (socket) {
