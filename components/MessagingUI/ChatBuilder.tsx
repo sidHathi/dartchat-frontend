@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
-import { Conversation, UserConversationProfile } from "../../types/types";
+import { AvatarImage, Conversation, UserConversationProfile } from "../../types/types";
 import ProfilesSearch from "./ProfileSearch";
 import { Ionicons } from '@expo/vector-icons';
 import { View, Box, Button, Center, Heading, Text, Input, VStack, HStack, Pressable, Flex } from 'native-base';
@@ -12,6 +12,9 @@ import { setConvo } from "../../redux/slices/chatSlice";
 import ConversationsContext from "../../contexts/ConversationsContext";
 import SocketContext from "../../contexts/SocketContext";
 import useRequest from "../../requests/useRequest";
+import { getDownloadUrl } from "../../firebase/cloudStore";
+import ProfileImage from "../generics/ProfileImage";
+import { autoGenGroupAvatar } from "../../utils/messagingLogic";
 
 export default function ChatBuilder({exit}: {
         exit: () => void
@@ -25,6 +28,7 @@ export default function ChatBuilder({exit}: {
     const [userQuery, setUserQuery] = useState<string | undefined>(undefined);
     const [groupName, setGroupName] = useState<string | undefined>(undefined);
     const [userDispName, setUserDispName] = useState<string | undefined>(undefined);
+    const [groupAvatar, setGroupAvatar] = useState<AvatarImage | undefined>();
     const [selectedProfiles, setSelectedProfiles] = useState<UserConversationProfile[]>([]);
     const [error, setError] = useState<string | undefined>(undefined);
 
@@ -54,15 +58,18 @@ export default function ChatBuilder({exit}: {
             {
                 displayName: userDispName || user.displayName || user.handle || user.email,
                 id: user.id || 'test',
-                profilePic: ''
+                avatar: user.avatar
             }
         ]
+
+        const avatar = groupAvatar || await autoGenGroupAvatar(participants, user?.id);
         const newConvo = {
             id: uuid.v4() as string,
             settings: {},
             participants: participants,
             name: getGroupName(),
-            messages: []
+            messages: [],
+            avatar
         };
 
         console.log('creating chat');
@@ -91,6 +98,9 @@ export default function ChatBuilder({exit}: {
         <Pressable onPress={onPress} mr='4px' mb='8px'>
             <Box py={fullSize ? '12px' : '4px'} px='6px' borderRadius='12px' bgColor='#fefefe' shadow='3' w={fullSize ? '100%' : 'auto'}>
                 <HStack w='100%'>
+                    {
+                    profile.avatar ?
+                    <ProfileImage imageUri={fullSize ? profile.avatar.mainUri: profile.avatar.tinyUri} size={fullSize ? 30 : 20} /> :
                     <Image source={require('../../assets/profile-01.png')} 
                         style={{
                             width: fullSize ? 30 : 20,
@@ -98,6 +108,7 @@ export default function ChatBuilder({exit}: {
                             marginTop: 'auto',
                             marginBottom: 'auto',
                         }}/>
+                    }
                     { fullSize ?
                         <Box mr='auto' my='auto'>
                             <Text fontSize='md' mx='4px' fontWeight='bold'>

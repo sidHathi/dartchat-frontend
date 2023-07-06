@@ -20,7 +20,7 @@ export default function ChatHeader({
                 {convoName || 'Chat'}
             </Heading>
             <Spacer />
-            <IconButton label='settings' size={24} additionalProps={{marginX: '6px', mt: '5px'}} onPress={onSettingsOpen}/>
+            {/* <IconButton label='settings' size={24} additionalProps={{marginX: '6px', mt: '5px'}} onPress={onSettingsOpen}/> */}
             <IconButton label='profile' size={33} additionalProps={{marginX: '6px'}} onPress={onProfileOpen}/>
         </HStack>
     </Box>;

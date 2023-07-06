@@ -6,6 +6,7 @@ import { Entypo } from '@expo/vector-icons';
 
 import useRequest from "../../requests/useRequest";
 import { UserConversationProfile, UserProfile } from "../../types/types";
+import ProfileImage from "../generics/ProfileImage";
 
 const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => <Box w='100%' bgColor={searchSelected ? '#fefefe': 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px'>
         {children}
@@ -71,7 +72,7 @@ export default function ProfilesSearch({
             setSelectedProfiles([...selectedProfiles, {
                 id: profile.id,
                 displayName: profile.displayName,
-                profilePic: profile.profilePic || {}
+                avatar: profile.avatar || undefined
             }]);
             setQueryString(undefined);
             setSearchSelected(false);
@@ -127,12 +128,21 @@ export default function ProfilesSearch({
     }): JSX.Element => (
         <Button variant='ghost' bgColor='#f5f5f5' onPress={onSelect} w='100%' px='0' borderRadius='12px' my='4px'>
             <HStack px='0' w='100%' space={2}>
+                {
+                profile.avatar ?
+                <ProfileImage 
+                    imageUri={profile.avatar.mainUri}
+                    size={36}
+                    shadow='9'
+                    nbProps={{margin: 'auto'}}
+                /> :
                 <Image source={require('../../assets/profile-01.png')} 
                     style={{
                         width: 36,
                         height: 36,
                         margin: 'auto'
                     }}/>
+                }
                 <Box>
                     <Text fontSize='md' fontWeight='bold' m='0'>
                         {profile.displayName}

@@ -26,7 +26,8 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     const [loading, setLoading] = useState(false);
     const dispatch = useAppDispatch();
 
-    const logOut = () => {
+    const logOut = async () => {
+        await auth().signOut();
         setUser(undefined);
         setIsAuthenticated(false);
     };
@@ -65,13 +66,13 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
             });
     };
 
-    const initAppUser = (user: UserData) => {
-        setUser(user);
+    const initAppUser = (newUser: UserData) => {
+        setUser(newUser);
         setNeedsSetup(false);
-        dispatch(setConversations(user.conversations || []));
+        dispatch(setConversations(newUser.conversations || []));
         if (socket) {
             try {
-                socket?.emit('joinRoom', user.conversations?.map(c => c.cid) || []);
+                socket?.emit('joinRoom', newUser.conversations?.map(c => c.cid) || []);
             } catch (err) {
                 console.error(err);
             }
@@ -79,18 +80,16 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     };
 
     useEffect(() => {
-        console.log('reauthenticating');
-        auth().onAuthStateChanged(async (user) => {
-            if (user && user.email) {
-                setUser({email: user.email, id: user.uid});
+        return auth().onAuthStateChanged(async (authUser) => {
+            console.log(authUser);
+            console.log(socketDisconnected);
+            if (authUser && authUser.email) {
+                setUser({email: authUser.email, id: authUser.uid});
                 setIsAuthenticated(true);
                 setLoading(true);
                 try {
-                    const localUser = await getStoredUserData();
-                    if (localUser && localUser.handle && localUser.id === user.uid) {
-                        initAppUser(localUser)
-                    }
                     if (networkConnected) {
+                        console.log('fetching user data')
                         const serverUser = await getUserData(usersApi);
                         if (serverUser && ('handle' in serverUser)) {
                             initAppUser(serverUser);
@@ -98,10 +97,18 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                         } else {
                             setNeedsSetup(true);
                         }
+                    } else {
+                        const localUser = await getStoredUserData()
+                        if (localUser && localUser.handle && localUser.id === authUser.uid) {
+                            initAppUser(localUser)
+                        }
+                        setLoading(false);
                     }
                     setLoading(false);
                 } catch (error) {
                     console.log(error);
+                    setLoading(false);
+                } finally {
                     setLoading(false);
                 }
             } else {
@@ -116,7 +123,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                 setLoading(false);
             }
         });
-    }, [networkConnected, socketDisconnected]);
+    }, []);
 
     const isSetup = () => {
         if (!needsSetup && user && user.handle && user.secureKey) {

@@ -10,6 +10,8 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
 import { handleNewMessage } from "../../redux/slices/userConversationsSlice";
 import NetworkContext from "../../contexts/NetworkContext";
+import { Keyboard } from "react-native";
+import { useKeyboard } from "@react-native-community/hooks";
 
 export default function MessageEntry({replyMessage, onSend}: {
     replyMessage?: Message,
@@ -17,6 +19,7 @@ export default function MessageEntry({replyMessage, onSend}: {
 }): JSX.Element {
     const screenWidth = Dimensions.get('window').width;
     const dispatch = useAppDispatch();
+    const { keyboardShown, keyboardHeight } = useKeyboard();
 
     const { user } = useContext(AuthIdentityContext);
     const { socket, disconnected: socketDisconnected } = useContext(SocketContext);
@@ -62,7 +65,7 @@ export default function MessageEntry({replyMessage, onSend}: {
         return;
     }
 
-    return <Box w='100%' paddingBottom='36px' paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='24px' shadow={replyMessage ? '0': '9'}>
+    return <Box w='100%' paddingBottom={keyboardShown ? `${keyboardHeight + 24}px` : '36px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='24px' shadow={replyMessage ? '0': '9'}>
         <HStack>
             <Input
                 placeholder='Message'

@@ -5,6 +5,7 @@ import { Message, UserConversationProfile } from "../../types/types";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Dimensions } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
+import ProfileImage from "../generics/ProfileImage";
 
 export default function MessageDisplay({ 
         message,
@@ -33,6 +34,13 @@ export default function MessageDisplay({
 
     const isSystemMessage = message.senderId === 'system';
 
+    const getSenderAvatar = () => {
+        if (message.senderId in participants) {
+            return participants[message.senderId].avatar;
+        }
+        return undefined;
+    }
+
     return <Box w='100%' paddingBottom='8px' paddingX='18px'>
         {
             message.replyRef &&
@@ -60,7 +68,14 @@ export default function MessageDisplay({
         <HStack space={1} w='100%'>
             {
                 !isSystemMessage ?
-                <IconButton label='profile' size={28} additionalProps={{paddingTop: '6px', marginRight: '4px'}}/> :
+                (
+                    getSenderAvatar() ? 
+                    <ProfileImage imageUri={getSenderAvatar()?.tinyUri as string} shadow='9' size={28} nbProps={{
+                        mt: '6px',
+                        mr: '4px'
+                    }} /> :
+                    <IconButton label='profile' size={28} additionalProps={{paddingTop: '6px', marginRight: '4px'}}/>
+                ) :
                 <Spacer />
             }
             <VStack maxWidth={`${screenWidth - 110} px`}>
@@ -89,15 +104,28 @@ export default function MessageDisplay({
                         <Box>
                             <HStack space={2}>
                                 {
-                                    message.likes.map((like, idx) => (
-                                        <IconButton
-                                            key={idx}
-                                            label='profile'
-                                            size={24}
-                                            onPress={() => {}}
-                                            shadow='none'
-                                        />
-                                    ))
+                                    message.likes.map((like, idx) => {
+                                        if (like in participants && participants[like].avatar) {
+                                            return (
+                                            <ProfileImage
+                                                key={idx}
+                                                imageUri={participants[like]?.avatar?.tinyUri as string}
+                                                size={24}
+                                            />
+                                            );
+                                        }
+                                        else {
+                                            return (
+                                            <IconButton
+                                                key={idx}
+                                                label='profile'
+                                                size={24}
+                                                onPress={() => {}}
+                                                shadow='none'
+                                            />
+                                            );
+                                        }
+                                    })
                                 }
                             </HStack>
                             <Text fontSize='10px' paddingTop='2px'>{`${message.likes.length}`} Like{message.likes.length > 1 && 's'}</Text> 

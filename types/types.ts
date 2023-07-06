@@ -6,6 +6,7 @@ export type UserData = {
     displayName?: string;
     phone?: string;
     conversations?: ConversationPreview[];
+    avatar?: AvatarImage;
 };
 
 export type UIScreen = 'messaging' |
@@ -21,7 +22,7 @@ export type UIState = {
 export type UserConversationProfile = {
     id: string;
     displayName: string;
-    profilePic: any;
+    avatar?: AvatarImage;
 };
 
 export type Message = {
@@ -46,7 +47,7 @@ export type Conversation = {
     settings: any;
     participants: UserConversationProfile[];
     name: string;
-    avatar?: any;
+    avatar?: AvatarImage;
     messages: Message[];
 };
 
@@ -55,7 +56,7 @@ export type ConversationPreview = {
     name: string;
     lastMessageContent?: string;
     unSeenMessages: number;
-    avatar?: any;
+    avatar?: AvatarImage;
     lastMessageTime: Date;
 };
 
@@ -67,7 +68,7 @@ export type UserProfile = {
     phone?: string;
     alias?: string;
     // implement later!!
-    profilePic?: string;
+    avatar?: AvatarImage;
     publicEncryptionKey?: string;
 };
 
@@ -81,3 +82,8 @@ export type SocketEvent = {
 export type CursorContainer = {
     cursor: string | null
 };
+
+export type AvatarImage = {
+    mainUri: string;
+    tinyUri: string;
+}

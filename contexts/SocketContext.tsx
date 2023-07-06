@@ -1,8 +1,9 @@
-import React, { useState, useEffect, createContext, PropsWithChildren, ReactNode, useContext, useCallback } from 'react';
+import React, { useState, useEffect, createContext, PropsWithChildren, ReactNode, useContext, useCallback, useRef } from 'react';
 import { Socket, io } from 'socket.io-client';
 import { REACT_APP_API_URL } from '@env';
 import auth from '@react-native-firebase/auth';
 import NetworkContext from './NetworkContext';
+import { AppState } from 'react-native';
 
 type SocketContextType = {
     socket?: Socket,
@@ -16,6 +17,7 @@ const SocketContext = createContext<SocketContextType>({
 export function SocketContextProvider({children} :PropsWithChildren<{
     children: ReactNode
 }>): JSX.Element {
+    const appState = useRef(AppState.currentState);
     const { networkConnected } = useContext(NetworkContext);
 
     const [socket, setSocket] = useState<Socket | undefined>();
@@ -25,65 +27,67 @@ export function SocketContextProvider({children} :PropsWithChildren<{
         if (!(socket?.connected) && auth().currentUser && networkConnected) {
             console.log('setting new socket');
             setDisconnected(true);
-            setSocket(io(REACT_APP_API_URL, {
+            const newSocket = io(REACT_APP_API_URL, {
                 auth: {
                     token: await auth().currentUser?.getIdToken()
                 }
-            }));
+            });
+            setSocket(newSocket);
+            setDisconnected(false);
         } else if (socket?.connected) {
             setDisconnected(false);
         } else {
             setDisconnected(true);
         }
-    }, [socket, networkConnected]);
+    }, [networkConnected, socket]);
 
     useEffect(() => {
-        if (auth().currentUser) {
-            connectAuthSocket()
+        if (auth().currentUser && networkConnected) {
+            connectAuthSocket().then(() => {
+                if (socket?.connected) setDisconnected(false);
+            })
         }
-    }, [networkConnected]);
 
-    useEffect(() => {
         auth().onAuthStateChanged(() => {
-            if (auth().currentUser) {
-                connectAuthSocket()
+            if (auth().currentUser && networkConnected) {
+                connectAuthSocket().then(() => {
+                    if (socket?.connected) setDisconnected(false);
+                })
             }
         });
     }, [networkConnected]);
 
     useEffect(() => {
-        if (!socket) return;
-
-        let interval = 0;
-
-        socket.on('disconnect', () => {
-            setDisconnected(true);
-            if (auth().currentUser) {
-                interval = setInterval(async () => {
-                    if ((!socket || !socket.connected)) {
-                        await connectAuthSocket();
-                        if (socket.connected) {
-                            setDisconnected(false);
-                        }
-                    } else {
-                        setDisconnected(false);
-                    }
-                }, 5000);
+        const eventListener = AppState.addEventListener('change', (nextState) => {
+            if (nextState === 'active') {
+                console.log('app state changed');
+                appState.current = nextState;
+                if (!socket?.connected) {
+                    connectAuthSocket().then(() => {
+                        if (socket?.connected) setDisconnected(false);
+                    });
+                } else {
+                    setDisconnected(false);
+                }
             }
         });
 
-        if (socket.connected) {
-            setDisconnected(false);
-            clearInterval(interval);
-        } else {
+        return () => {
+            eventListener.remove();
+        };
+    }, [socket]);
+
+    useEffect(() => {
+        if (!socket || !networkConnected) return;
+
+        socket.on('disconnect', async () => {
             setDisconnected(true);
-        }
+        });
 
         socket.on('connected', () => {
             setDisconnected(false);
-            clearInterval(interval);
         });
-    }, [socket, networkConnected]);
+    }, [networkConnected, socket]);
 
     return (
         <SocketContext.Provider value={{socket, disconnected}}>

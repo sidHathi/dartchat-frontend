@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, PropsWithChildren, ReactNode } from 'react';
+import React, { useState, useContext, useEffect, PropsWithChildren, ReactNode, useCallback } from 'react';
 import ConversationsContext from '../contexts/ConversationsContext';
 import { Socket } from 'socket.io-client';
 import SocketContext from '../contexts/SocketContext';
@@ -9,9 +9,10 @@ import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike } from '../redux/slices/chatSlice';
-import { addConversation, userConversationsSelector, handleNewMessage, deleteConversation as reduxDelete, setNeedsServerSync } from '../redux/slices/userConversationsSlice';
+import { addConversation, userConversationsSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete } from '../redux/slices/userConversationsSlice';
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
+import { autoGenGroupAvatar } from '../utils/messagingLogic';
 
 export default function UserConversationsController({
     children
@@ -24,7 +25,11 @@ export default function UserConversationsController({
     const dispatch = useAppDispatch();
     const { userConversations, needsServerSync }: {userConversations: ConversationPreview[], needsServerSync: boolean} = useAppSelector(userConversationsSelector);
     const { currentConvo }: {currentConvo?: Conversation} = useAppSelector(chatSelector);
-    const { usersApi } = useRequest();
+    const { conversationsApi } = useRequest();
+
+    const convoDelete = useCallback((cid: string) => {
+        dispatch(handleConversationDelete(cid, conversationsApi));
+    }, [conversationsApi])
 
     useEffect(() => {
         if (currentConvo && currentConvo.id !== ccid) {
@@ -34,10 +39,13 @@ export default function UserConversationsController({
 
     useEffect(() => {
         if (!socket || !user) return;
-        socket.on('newConversation', (newConvo: Conversation) => {
+        socket.on('newConversation', async (newConvo: Conversation) => {
             console.log('new conversation message received!');
             if (userConversations.map(c => c.cid).includes(newConvo.id)) return; 
-            dispatch(addConversation(newConvo));
+            dispatch(addConversation({
+                ...newConvo,
+                avatar: await autoGenGroupAvatar(newConvo.participants, user.id)
+            }));
             socket.emit('joinRoom', userConversations.map(c => c.cid));
         });
     }, [userConversations]);
@@ -72,13 +80,14 @@ export default function UserConversationsController({
 
     useEffect(() => {
         if (!socket) return;
-        socket.on('deleteConversation', async (cid: string) => {
+        socket.on('deleteConversation', (cid: string) => {
             if (!user) return;
             try {
-                dispatch(reduxDelete(cid) as any);
-                await updateUserConversations(usersApi, user, userConversations);
-                dispatch(exitConvo());
-                navSwitch('conversations');
+                convoDelete(cid);
+                if (currentConvo && cid === currentConvo.id) {
+                    dispatch(exitConvo());
+                    navSwitch('conversations');
+                }
             } catch (err) {
                 console.log(err);
             }

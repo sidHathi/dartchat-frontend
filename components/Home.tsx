@@ -8,6 +8,7 @@ import ChatDisplay from "./MessagingUI/ChatDisplay";
 import UserConversationsController from "./UserConversationsController";
 import { useAppDispatch } from "../redux/hooks";
 import { exitConvo } from "../redux/slices/chatSlice";
+import IdentityManager from "./IdentityManagement/IdentityManager";
 
 export default function Home(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -18,20 +19,28 @@ export default function Home(): JSX.Element {
         navSwitch('conversations');
     }
 
-    const NavScreen = (): JSX.Element => <>
-        <NavContainer navState={uiState.screen} navSwitch={navSwitch}>
+    const Main = (): JSX.Element => <>
+        <NavContainer>
             <ChatSelector openChat={() => navSwitch('messaging')}/>
         </NavContainer>
     </>
 
+    const ProfileScreen = () : JSX.Element => (
+        <NavContainer>
+            <IdentityManager />
+        </NavContainer>
+    )
+
     const getScreen = () => {
         switch (uiState.screen) {
             case 'conversations':
-                return <NavScreen />
+                return <Main />
             case 'social':
-                return <NavScreen />
+                return <Main />
             case 'messaging':
                 return <MessagingContainer exit={handleConversationExit}/>
+            case 'profile':
+                return <ProfileScreen />
             default:
                 return <></>
         }

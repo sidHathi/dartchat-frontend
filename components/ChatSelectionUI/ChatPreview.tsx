@@ -3,6 +3,7 @@ import { ConversationPreview } from '../../types/types';
 
 import { Box, HStack, Spacer, Pressable, Center, Heading, Text, VStack } from 'native-base';
 import { Image, Dimensions } from 'react-native';
+import ProfileImage from '../generics/ProfileImage';
 
 export default function ChatPreview({
     chat,
@@ -18,14 +19,21 @@ export default function ChatPreview({
         <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='7' style={{shadowOpacity: 0.07}} mx='12px'>
             <HStack w='100%'>
                 <Box bgColor='transparent' borderRadius='25px' shadow='7' mr='12px'>
-                    <Image 
-                        source={require('../../assets/profile-01.png')}
-                        style={{
-                            width: 50,
-                            height: 50,
-                            shadowColor: "black",
-                            borderRadius: 25
-                        }} />
+                    {
+                        chat.avatar ? 
+                        <ProfileImage 
+                            imageUri={chat.avatar.mainUri} 
+                            size={50}
+                            shadow='9' /> :
+                        <Image 
+                            source={require('../../assets/profile-01.png')}
+                            style={{
+                                width: 50,
+                                height: 50,
+                                shadowColor: "black",
+                                borderRadius: 25
+                            }} />
+                    }
                 </Box>
                 <VStack h='100%'>
                     <Spacer />

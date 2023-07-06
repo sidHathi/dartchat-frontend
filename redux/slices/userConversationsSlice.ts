@@ -3,15 +3,18 @@ import { Message, ConversationPreview, Conversation } from '../../types/types';
 import { RootState } from '../store';
 import { Socket } from 'socket.io-client';
 import { UsersApi } from '../../requests/usersApi';
+import { ConversationsApi } from '../../requests/conversationsApi';
 
 const initialState: {
     userConversations: ConversationPreview[];
     lastReceivedMessageId: string;
     needsServerSync: boolean;
+    requestLoading: boolean;
 } = {
     userConversations: [],
     lastReceivedMessageId: '',
     needsServerSync: false,
+    requestLoading: false
 };
 
 export const userConversationsSlice = createSlice({
@@ -95,7 +98,13 @@ export const userConversationsSlice = createSlice({
                 ...state,
                 needsServerSync: action.payload
             });
-        }
+        },
+        setRequestLoading: (state, action: PayloadAction<boolean>) => {
+            return ({
+                ...state,
+                requestLoading: action.payload
+            });
+        },
     }
 });
 
@@ -107,8 +116,21 @@ export const {
     deleteConversation,
     addConversation,
     readConversationMessages,
-    setNeedsServerSync
+    setNeedsServerSync,
+    setRequestLoading
 } = userConversationsSlice.actions;
+
+export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
+    try {
+        dispatch(setRequestLoading(true));
+        await conversationsApi.deleteConversation(cid);
+        dispatch(deleteConversation(cid));
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        dispatch(setRequestLoading(false));
+        console.log(err);
+    }
+};
 
 export const userConversationsSelector = (state: RootState) => state.userConversationsReducer;
 export default userConversationsReducer;
