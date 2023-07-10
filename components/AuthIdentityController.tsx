@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, PropsWithChildren, ReactNode } from 'react';
+import React, { useState, useEffect, useContext, PropsWithChildren, ReactNode, useCallback } from 'react';
 import { UserData } from '../types/types';
 import AuthUIController from './AuthUI/AuthUIController';
 import auth from '@react-native-firebase/auth';
@@ -66,7 +66,8 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
             });
     };
 
-    const initAppUser = (newUser: UserData) => {
+    const initAppUser = useCallback((newUser: UserData) => {
+        console.log('intializing app');
         setUser(newUser);
         setNeedsSetup(false);
         dispatch(setConversations(newUser.conversations || []));
@@ -77,7 +78,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                 console.error(err);
             }
         }
-    };
+    }, [socket]);
 
     useEffect(() => {
         return auth().onAuthStateChanged(async (authUser) => {
@@ -95,7 +96,9 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                             initAppUser(serverUser);
                             storeUserData(serverUser);
                         } else {
+                            console.log('not initialized')
                             setNeedsSetup(true);
+                            setLoading(false);
                         }
                     } else {
                         const localUser = await getStoredUserData()
@@ -123,7 +126,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                 setLoading(false);
             }
         });
-    }, []);
+    }, [networkConnected]);
 
     const isSetup = () => {
         if (!needsSetup && user && user.handle && user.secureKey) {

@@ -28,7 +28,7 @@ export type UserConversationProfile = {
 export type Message = {
     id: string;
     content: string;
-    media?: string[];
+    media?: MessageMedia[];
     timestamp: Date;
     senderId: string;
     likes: string[];
@@ -39,7 +39,7 @@ export type ReplyRef = {
     id: string;
     content: string;
     senderId: string;
-    media?: string[];
+    media?: boolean;
 }
 
 export type Conversation = {
@@ -86,4 +86,20 @@ export type CursorContainer = {
 export type AvatarImage = {
     mainUri: string;
     tinyUri: string;
-}
+};
+
+export type MessageMedia = {
+    id: string;
+    type: string;
+    uri: string;
+    width: number;
+    height: number;
+};
+
+export type MessageMediaBuffer = {
+    id: string;
+    type: string;
+    fileUri?: string;
+    width: number;
+    height: number;
+};

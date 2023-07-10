@@ -2,7 +2,7 @@ import storage from '@react-native-firebase/storage';
 import auth from '@react-native-firebase/auth'
 import uuid from 'react-native-uuid';
 import { FirebaseStorageTypes } from '@react-native-firebase/storage'
-import { UserData } from '../types/types';
+import { MessageMediaBuffer, UserData } from '../types/types';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
 import { Image } from 'react-native';
 
@@ -47,19 +47,24 @@ export const storeProfileImage = async (user: UserData, filePath: string, fileUr
 
 export const getDownloadUrl = (refLoc: string) => storage().ref(refLoc).getDownloadURL();
 
-export const storeMessagingImage = async (filePath: string): Promise<{
+export const storeMessagingImage = (fileUri: string, id: string): {
     task: FirebaseStorageTypes.Task,
     loc: string
-}> => {
+} | null => {
     try {
-        const id: string = uuid.v4().toString();
         const ref = storage().ref(`messagingMedia/${id}.jpg`);
         return {
-            task: ref.putFile(filePath),
-            loc: `userProfileImages/${id}.jpg`
+            task: ref.putFile(fileUri),
+            loc: `messagingMedia/${id}.jpg`
         }
     } catch (err) {
-        return Promise.reject(err);
+        return null;
     }
 };
 
+export const storeMediaBuffer = (mediaBuffer: MessageMediaBuffer[]) => {
+    return mediaBuffer.map(media => {
+        if (!media.fileUri) return null;
+        return storeMessagingImage(media.fileUri, media.id)
+    });
+}

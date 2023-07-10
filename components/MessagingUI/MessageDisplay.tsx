@@ -6,6 +6,8 @@ import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Dimensions } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
 import ProfileImage from "../generics/ProfileImage";
+import MessageMediaDisplay from "./MessageMediaControllers/MessageMediaDisplay";
+import { FontAwesome5 } from '@expo/vector-icons';
 
 export default function MessageDisplay({ 
         message,
@@ -14,7 +16,8 @@ export default function MessageDisplay({
         handleSelect, 
         handleLike, 
         handleReply,
-        handleReplySelect
+        handleReplySelect,
+        handleMediaSelect
     } : {
     message: Message, 
     participants: {[key: string]: UserConversationProfile},
@@ -22,7 +25,8 @@ export default function MessageDisplay({
     handleSelect: () => void,
     handleLike: () => void,
     handleReply: () => void,
-    handleReplySelect?: () => void
+    handleReplySelect?: () => void,
+    handleMediaSelect?: (message: Message, index: number) => void
 }): JSX.Element {
     const screenWidth = Dimensions.get('window').width;
 
@@ -50,19 +54,30 @@ export default function MessageDisplay({
                 <Box paddingTop='12px' paddingX='6px' opacity='0.8'>
                     <FontAwesome name="arrows-v" size={20} color="gray" />
                 </Box>
-                <Box paddingX='15px' paddingY='4px' borderRadius='12px' backgroundColor='#f7f7f7' marginBottom='6px' opacity='0.7'
+                <Box paddingX='15px' paddingY='4px' borderRadius='12px' backgroundColor='#f7f7f7' marginBottom='3px' opacity='0.7'
                 mr='24px'>
                     <VStack>
                         {
                             !isSystemMessage &&
                             <Text color='coolGray.600' fontSize='9px'>{participants[message.replyRef.senderId]?.displayName}</Text>
                         }
+                        {
+                            message.replyRef.media &&
+                            <HStack space={2} mt='4px'>
+                                <FontAwesome5 name="images" size={24} color="gray" />
+                                <Text color='trueGray.600' fontSize='xs' mt='6px' fontWeight='bold'>
+                                    Media
+                                </Text>
+                            </HStack>
+                        }
+                        {message.content &&
                         <Text fontSize='xs' noOfLines={1} isTruncated>{message.replyRef.content}</Text>
+                        }
                     </VStack>
                 </Box>
                 <Spacer />
                 </HStack>
-                <Text pl='40px' fontSize='xs' lineHeight='4px' fontWeight='bold' pb='4px' color='coolGray.400'>. . .</Text>
+                <Text pl='40px' fontSize='xs' lineHeight='4px' fontWeight='bold' pb='2px' color='coolGray.400'>. . .</Text>
             </Pressable>
         }
         <HStack space={1} w='100%'>
@@ -78,17 +93,23 @@ export default function MessageDisplay({
                 ) :
                 <Spacer />
             }
-            <VStack maxWidth={`${screenWidth - 110} px`}>
+            <VStack maxWidth={`${screenWidth - 110} px`} overflowX='visible'>
                 <Pressable onPress={handleMessageTap}>
-                    <Box paddingX='18px' paddingY='4px' borderRadius='12px' backgroundColor={isSystemMessage ? 'transparent' : '#f7f7f7'} w='100%' margin='0px' shadow={
+                    <Box paddingX='18px' paddingY='4px' borderRadius='12px' backgroundColor={isSystemMessage ? 'transparent' : '#f5f5f5'} w='100%' margin='0px' shadow={
                         (selected && !isSystemMessage) ? '3' : 'none'
-                    }>
-                        <VStack>
+                    } overflowX='visible'>
+                        <VStack overflowX='visible'>
                             {
                                 !isSystemMessage &&
                                 <Text color='coolGray.600' fontSize='10px'>{participants[message.senderId]?.displayName}</Text>
                             }
-                            <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'}>{message.content}</Text>
+                            {
+                                message.media &&
+                                <MessageMediaDisplay media={message.media} handleMediaSelect={(index: number) => {
+                                    handleMediaSelect && handleMediaSelect(message, index);
+                                }}/>
+                            }
+                            <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'}>{message.content}</Text>
                         </VStack>
                     </Box>
                 </Pressable>
@@ -144,13 +165,20 @@ export default function MessageDisplay({
                         <IconButton label='heartEmpty' color='gray' size={20} onPress={handleLike} shadow='none' /> 
                 }
                 {
+                    message.media &&
+                    <Spacer />
+                }
+                {
                     selected && !isSystemMessage &&
-                    <IconButton
-                        label='reply'
-                        size={20}
-                        onPress={handleReply}
-                        color='gray'
-                    />
+                    <Box pb={message.media ? '24px' : '0px'}>
+                        <IconButton
+                            label='reply'
+                            size={20}
+                            onPress={handleReply}
+                            color='gray'
+                            shadow='none'
+                        />
+                    </Box>
                 }
             </VStack>
         </HStack>

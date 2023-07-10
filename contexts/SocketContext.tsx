@@ -4,6 +4,7 @@ import { REACT_APP_API_URL } from '@env';
 import auth from '@react-native-firebase/auth';
 import NetworkContext from './NetworkContext';
 import { AppState } from 'react-native';
+// import ReconnectingWebSocket from 'reconnecting-websocket';
 
 type SocketContextType = {
     socket?: Socket,
@@ -13,6 +14,28 @@ type SocketContextType = {
 const SocketContext = createContext<SocketContextType>({
     disconnected: false
 });
+
+const heartCheck: any = {
+    timeout: 10000,//default 10s
+    timeoutObj: null,
+    serverTimeoutObj: null,
+    reset: (hc: any) => {
+        clearTimeout(hc.timeoutObj);
+        clearTimeout(hc.serverTimeoutObj);
+        return hc;
+    },
+    start: (hc: any, socket: Socket) => {
+        let self = hc;
+        hc.timeoutObj = setTimeout(function(){
+            if(socket.connected){
+                socket.send("ping");
+            }
+            self.serverTimeoutObj = setTimeout(() => {
+                socket.connect();//本库提供
+            }, self.timeout)
+        }, hc.timeout)
+    }
+}
 
 export function SocketContextProvider({children} :PropsWithChildren<{
     children: ReactNode
@@ -24,13 +47,18 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     const [disconnected, setDisconnected] = useState(true);
 
     const connectAuthSocket = useCallback(async (): Promise<void> => {
-        if (!(socket?.connected) && auth().currentUser && networkConnected) {
+        if (!(socket?.connected) && (!socket?.active) && auth().currentUser && networkConnected) {
             console.log('setting new socket');
             setDisconnected(true);
             const newSocket = io(REACT_APP_API_URL, {
                 auth: {
                     token: await auth().currentUser?.getIdToken()
-                }
+                },
+                reconnection: true,
+                reconnectionDelay: 500,
+                reconnectionAttempts: Infinity, 
+                transports: ['websocket'],   
+                autoConnect: true
             });
             setSocket(newSocket);
             setDisconnected(false);
@@ -82,11 +110,23 @@ export function SocketContextProvider({children} :PropsWithChildren<{
 
         socket.on('disconnect', async () => {
             setDisconnected(true);
+            if (auth().currentUser) {
+                heartCheck.reset(heartCheck).start(heartCheck, socket);
+                await new Promise((res) => setTimeout(res, 2000));
+                if (socket.connected) setDisconnected(false);
+            }
         });
+
+        socket.onAny(() => {
+            setDisconnected(false);
+            heartCheck.reset(heartCheck).start(heartCheck, socket);
+        })
 
         socket.on('connected', () => {
             setDisconnected(false);
+            heartCheck.reset(heartCheck).start(heartCheck, socket);
         });
+
     }, [networkConnected, socket]);
 
     return (

@@ -15,12 +15,16 @@ export default function MessageList({
     setReplyMessage,
     selectedMid,
     setSelectedMid,
-    profiles
+    profiles,
+    closeContentMenu,
+    handleMediaSelect
 }: {
     setReplyMessage: (message: Message | undefined) => void;
     selectedMid: string | undefined;
     setSelectedMid: (id: string | undefined) => void;
     profiles: {[id: string]: UserConversationProfile};
+    closeContentMenu: () => void;
+    handleMediaSelect: (message: Message, index: number) => void;
 }): JSX.Element {
     const dispatch = useAppDispatch();
     const listRef = useRef<FlatList | null>(null);
@@ -89,6 +93,7 @@ export default function MessageList({
                 if (selectedMid !== undefined && selectedMid !== message.id) {
                     setSelectedMid(undefined);
                 }
+                closeContentMenu();
             }}>
                 <MessageDisplay
                     key={message.id}
@@ -101,6 +106,7 @@ export default function MessageList({
                         } else {
                             setSelectedMid(undefined);
                         }
+                        closeContentMenu();
                     }}
                     handleLike={() => user && socket && dispatch(sendNewLike({
                         socket,
@@ -111,6 +117,7 @@ export default function MessageList({
                     handleReplySelect={() => {
                         goToReply(message)
                     }}
+                    handleMediaSelect={handleMediaSelect}
                 />
             </Pressable>
         );
@@ -140,5 +147,6 @@ export default function MessageList({
                     <Spinner type='ChasingDots' color='#111' size={24} />
                 </Center>
             </View> : null}
+        horizontal={false}
      />
 }

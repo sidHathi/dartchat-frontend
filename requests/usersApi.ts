@@ -6,6 +6,7 @@ export type UsersApi = {
     getCurrentUser: () => Promise<UserData | never>;
     createNewUser: (newUser: UserData) => Promise<UserData | never>;
     updateUser: (updatedUser: UserData) => Promise<UserData | never>;
+    addUserPushToken: (token: string) => Promise<boolean | never>;
 };
 
 export default function usersApi(apiService: ApiService): UsersApi {
@@ -57,9 +58,24 @@ export default function usersApi(apiService: ApiService): UsersApi {
         });
     };
 
+    const addUserPushToken = (token: string): Promise<boolean | never> => {
+        return apiService.request({
+            method: 'POST',
+            url: '/users/me/pushToken',
+            data: {
+                token
+            }
+        }).then(() => {
+            return true;
+        }).catch((err) => {
+            return Promise.reject(err);
+        })
+    };
+
     return {
         getCurrentUser,
         createNewUser,
-        updateUser
+        updateUser,
+        addUserPushToken,
     };
 }

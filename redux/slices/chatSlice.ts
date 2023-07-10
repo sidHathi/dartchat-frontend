@@ -159,7 +159,7 @@ export const chatSlice = createSlice({
                                     ...m,
                                     likes: prevLikes
                                 }
-                            } else if (event.type ==='newLike') {
+                            } else if (event.type ==='newLike' && !(userId in m.likes)) {
                                 return {
                                     ...m,
                                     likes: [...m.likes, userId]
