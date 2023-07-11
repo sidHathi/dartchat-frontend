@@ -22,28 +22,27 @@ import NetworkContext from '../../contexts/NetworkContext';
 import NetworkDisconnectionAlert from '../generics/alerts/NetworkDisconnectionAlert';
 import ContentSelectionMenu from './ContentSelectionMenu';
 import FullScreenMediaFrame from './MessageMediaControllers/FullScreenMediaFrame';
+import ConversationProfileManager from '../IdentityManagement/ConversationProfileManager';
 
 export default function ChatDisplay({exit}: {
     exit: () => void
 }): JSX.Element {
     const screenHeight = Dimensions.get('window').height;
-    const dispatch = useAppDispatch();
 
     const { currentConvo } = useAppSelector(chatSelector);
-    const { user } = useContext(AuthIdentityContext);
     const { networkConnected } = useContext(NetworkContext);
-    const { socket, disconnected: socketDisconnected } = useContext(SocketContext);
+    const { disconnected: socketDisconnected } = useContext(SocketContext);
 
     const [selectedMid, setSelectedMid] = useState<string | undefined>(undefined);
     const [replyMessage, setReplyMessage] = useState<Message | undefined>(undefined);
     const [messageEntryHeight, setMessageEntryHeight] = useState(90);
-    const [heightDif, setHeightDif] = useState(0);
     const [profiles, setProfiles] = useState<{[id: string]: UserConversationProfile}>({});
     const [contentMenuOpen, setContentMenuOpen] = useState(false);
     const [selectedMediaBuffer, setSelectedMediaBuffer] = useState<MessageMediaBuffer[] | undefined>(undefined);
     const [selectedImage, setSelectedImage] = useState<MessageMedia | undefined>(undefined);
     const [selectedMediaMessage, setSelectedMediaMessage] = useState<Message | undefined>();
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+    const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
     useEffect(() => {
         if (!currentConvo) return;
@@ -64,71 +63,96 @@ export default function ChatDisplay({exit}: {
         setSelectedMediaMessage(undefined);
     }, [selectedMediaMessage]);
 
-    return <Box w='100%' h={screenHeight} backgroundColor='#222'>
+    return <Box w='100%' h={screenHeight} backgroundColor='#111'>
     <Box backgroundColor='#fefefe' h='90px' overflow='hidden' zIndex='1001'>
        <ChatHeader 
             convoName={currentConvo?.name || 'Chat'}
             onSettingsOpen={() => {return;}}
-            onProfileOpen={logOut}
+            onProfileOpen={() => {
+                setProfileMenuOpen(!profileMenuOpen);
+            }}
             onConvoExit={exit} 
         />
     </Box>
-    <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor='#fefefe' borderTopLeftRadius='24px' shadow='9' zIndex='1000'>
-            <VStack w='100%' h='100%' space={1}>
-                <View  
+    <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor='#fefefe' borderTopLeftRadius='24px' shadow='9' zIndex='1000' >
+            {
+                profileMenuOpen &&
+                <View
                     style={{
-                        height: screenHeight - 90 - messageEntryHeight,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        backgroundColor: 'transparent',
+                        zIndex: 1001,
+                        height: 0,
+                        overflow: 'visible'
                     }}>
-                    <Pressable flex='1' onPress={() => {
-                        if (contentMenuOpen) setContentMenuOpen(false);
-                    }}>
-                    <MessageList 
-                        selectedMid={selectedMid}
-                        setSelectedMid={setSelectedMid}
-                        setReplyMessage={setReplyMessage}
-                        profiles={profiles}
-                        closeContentMenu={() => setContentMenuOpen(false)}
-                        handleMediaSelect={handleMediaSelect} />    
-                    </Pressable>
+                    <Box h='200px'>
+                    <ConversationProfileManager />
+                    </Box>
                 </View>
-                <Spacer />
-                <View onLayout={(event: LayoutChangeEvent) => {
-                        const {height} = event.nativeEvent.layout;
-                        setMessageEntryHeight(height);
-                    }}
-                    style={{display: 'flex', flexDirection: 'column'}}>
-                    <VStack w='100%' mt='auto'>
-                        {
-                            replyMessage &&
-                            <ReplyMessageDisplay 
-                                participants={profiles}
-                                message={replyMessage}
-                                handleDeselect={() => setReplyMessage(undefined)}
+            }
+            <View style={{flex: 1}}>
+                <VStack w='100%' h='100%' space={1}>
+                    <View  
+                        style={{
+                            height: screenHeight - 90,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            backgroundColor: 'transparent',
+                        }}>
+                        <Pressable flex='1' onPress={() => {
+                            if (contentMenuOpen) setContentMenuOpen(false);
+                            setProfileMenuOpen(false);
+                        }}>
+                            <MessageList 
+                                selectedMid={selectedMid}
+                                setSelectedMid={setSelectedMid}
+                                setReplyMessage={setReplyMessage}
+                                profiles={profiles}
+                                closeContentMenu={() => {
+                                    setContentMenuOpen(false)
+                                    setProfileMenuOpen(false)
+                                }}
+                                handleMediaSelect={handleMediaSelect} />    
+                        </Pressable>
+                    </View>
+                    <Spacer />
+                    <View onLayout={(event: LayoutChangeEvent) => {
+                            const {height} = event.nativeEvent.layout;
+                            setMessageEntryHeight(height);
+                        }}
+                        style={{
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            overflow: 'visible',
+                            backgroundColor: 'transparent',
+                            marginTop: -messageEntryHeight
+                        }}>
+                        <VStack w='100%' mt='-6px' overflow='visible' bgColor='transparent'>
+                            {
+                                replyMessage &&
+                                <ReplyMessageDisplay 
+                                    participants={profiles}
+                                    message={replyMessage}
+                                    handleDeselect={() => setReplyMessage(undefined)}
+                                />
+                            }
+                            {
+                                contentMenuOpen &&
+                                <ContentSelectionMenu setMediaBuffer={setSelectedMediaBuffer} closeMenu={() => setContentMenuOpen(false)}/>
+                            }
+                            <MessageEntry 
+                                replyMessage={replyMessage} 
+                                onSend={() => {
+                                    setReplyMessage(undefined);
+                                    setSelectedMid(undefined);
+                                }} 
+                                openContentMenu={() => setContentMenuOpen(!contentMenuOpen)}
+                                selectedMediaBuffer={selectedMediaBuffer}
+                                setSelectedMediaBuffer={setSelectedMediaBuffer}
                             />
-                        }
-                        {
-                            contentMenuOpen &&
-                            <ContentSelectionMenu setMediaBuffer={setSelectedMediaBuffer} closeMenu={() => setContentMenuOpen(false)}/>
-                        }
-                        <Box mt={`${heightDif} px`}>
-                        <MessageEntry 
-                            replyMessage={replyMessage} 
-                            onSend={() => {
-                                setReplyMessage(undefined);
-                                setSelectedMid(undefined);
-                            }} 
-                            openContentMenu={() => setContentMenuOpen(!contentMenuOpen)}
-                            selectedMediaBuffer={selectedMediaBuffer}
-                            setSelectedMediaBuffer={setSelectedMediaBuffer}
-                        />
-                        </Box>
-                    </VStack>
-                </View>
-            </VStack>
-=        </Box>
+                        </VStack>
+                    </View>
+                </VStack>
+            </View>
+        </Box>
 
         {
             selectedMediaMessage &&

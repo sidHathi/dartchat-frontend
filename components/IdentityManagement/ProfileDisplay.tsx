@@ -43,7 +43,7 @@ export default function ProfileDisplay({
                     {
                         user?.avatar?.mainUri ?
                         <ProfileImage imageUri={user?.avatar?.mainUri} size={80} shadow='9' /> :
-                        <IconButton label='profile' size={72} />
+                        <IconButton label='profile' size={80} />
                     }
                     <VStack h='100%'>
                         <Spacer />

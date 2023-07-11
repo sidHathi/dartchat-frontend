@@ -185,20 +185,33 @@ export const chatSlice = createSlice({
             return ({
                 ...state,
                 needsScroll: action.payload
-            })
+            });
         },
         setRequestLoading: (state, action: PayloadAction<boolean>) => {
             return ({
                ...state,
                 requestLoading: action.payload
-            })
+            });
         },
         setRequestCursor: (state, action: PayloadAction<string | undefined>) => {
             return ({
               ...state,
                 requestCursor: action.payload
-            })
+            });
         },
+        handleUpdatedProfile: (state, action: PayloadAction<UserConversationProfile>) => {
+            if (!state.currentConvo) return state;
+            return ({
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    participants: [
+                        ...state.currentConvo.participants.filter((p) => p.id !== action.payload.id),
+                        action.payload
+                    ]
+                }
+            });
+        }
     }
 });
 export const { 
@@ -215,7 +228,8 @@ export const {
     updateAvatar,
     setNeedsScroll,
     setRequestLoading,
-    setRequestCursor
+    setRequestCursor,
+    handleUpdatedProfile
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch) => {
@@ -267,7 +281,26 @@ export const loadMessagesToDate = (date: Date, api: ConversationsApi): ThunkActi
     }
     dispatch(addMessageHistory(additionalMessages));
     dispatch(setRequestLoading(false));
-}
+};
+
+export const updateConversationProfile = (updatedProfile: UserConversationProfile, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        console.log('updating profile');
+        const res = await api.updateConversationProfile(currentConvo.id, updatedProfile);
+        if (res) {
+            dispatch(handleUpdatedProfile(updatedProfile));
+            dispatch(setRequestLoading(false));
+        }
+    } catch (err) {
+        console.log(err);
+        dispatch(setRequestLoading(false));
+        return;
+    }
+};
 
 const chatReducer = chatSlice.reducer;
 export const chatSelector = (state: RootState) => state.chatReducer;

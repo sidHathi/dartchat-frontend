@@ -3,7 +3,7 @@ import { Box, HStack, Progress, Spacer } from 'native-base'
 import FastImage from "react-native-fast-image";
 import { MessageMediaBuffer } from "../../../types/types";
 import IconButton from "../../generics/IconButton";
-import Video from 'react-native-video';
+import Video from 'react-native-fast-video';
 
 export default function MediaBufferFrame({
     media,

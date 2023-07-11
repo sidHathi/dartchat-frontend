@@ -36,9 +36,9 @@ export default function NavContainer({ children }:
         navSwitch('messaging');
     }
 
-    return <View w='100%' h={screenHeight} backgroundColor='#222'>
+    return <View w='100%' h={screenHeight} backgroundColor='#111'>
         <Box backgroundColor='#fefefe' h='100px' overflow='hidden' zIndex='1001'>
-            <Box backgroundColor='#222' borderBottomRightRadius='24px' h='100px' zIndex='999'>
+            <Box backgroundColor='#111' borderBottomRightRadius='24px' h='100px' zIndex='999'>
                 <HStack w='100%' h='100px' justifyContent='space-between' alignItems='flex-start' paddingTop='50px' paddingX='12px'>
                     <Center paddingTop='0' paddingLeft='6px'>
                         <SvgXml xml={DartChatLogoXML} height='42' width='110'/>

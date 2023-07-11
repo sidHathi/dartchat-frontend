@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Pressable, Progress, Spacer } from 'native-base'
 import FastImage from "react-native-fast-image";
 import { MessageMedia } from "../../../types/types";
-import Video from 'react-native-video';
+import Video from 'react-native-fast-video';
 import { Dimensions } from "react-native";
 
 export default function MessageMediaFrame({

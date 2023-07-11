@@ -1,5 +1,5 @@
 import { ApiService } from "./request";
-import { Conversation, CursorContainer, Message } from "../types/types";
+import { Conversation, CursorContainer, Message, UserConversationProfile } from "../types/types";
 import { parseConversation, parseSocketMessage, addCursorToRequest } from "../utils/requestUtils";
 import { SocketMessage } from "../types/rawTypes";
 
@@ -9,6 +9,7 @@ export type ConversationsApi = {
     getConversationMessagesToDate: (cid: string, date: Date, cursorContainer?: CursorContainer) => Promise<Message[]>;
     getMessage: (cid: string, mid: string) => Promise<Message | never>;
     deleteConversation: (cid: string) => Promise<any | never>;
+    updateConversationProfile: (cid: string, newProfile: UserConversationProfile) => Promise<any | never>;
 }
 
 export default function conversationsApi(apiService: ApiService): ConversationsApi {
@@ -100,11 +101,27 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
+    const updateConversationProfile = (cid: string, newProfile: UserConversationProfile) => {
+        return apiService.request({
+            method: 'POST',
+            url: `/conversations/${cid}/updateProfile`,
+            data: newProfile
+        }).then((res) => {
+            if (res && res.data) {
+                console.log(res);
+                return res.data;
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    }
+
     return {
         getConversation,
         getConversationMessages,
         getConversationMessagesToDate,
         getMessage,
-        deleteConversation
+        deleteConversation,
+        updateConversationProfile
     }
 }

@@ -129,8 +129,9 @@ export default function MessageList({
         renderItem={renderMessage}
         keyExtractor={(item: Message) => item.id}
         onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-            const {contentOffset} = event.nativeEvent;
-            if (contentOffset.y < 20 && requestCursor) {
+            const {contentOffset, contentSize} = event.nativeEvent;
+            if (contentOffset.y > contentSize.height - 800 && requestCursor) {
+                console.log('fetching messages');
                 dispatch(loadAdditionalMessages(conversationsApi));
             }
         }}
@@ -147,6 +148,7 @@ export default function MessageList({
                     <Spinner type='ChasingDots' color='#111' size={24} />
                 </Center>
             </View> : null}
+        ListHeaderComponent={<Box w='100%' h='84px'></Box>}
         horizontal={false}
      />
 }

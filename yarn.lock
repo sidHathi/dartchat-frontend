@@ -4925,15 +4925,6 @@ depd@2.0.0:
   resolved "https://registry.npmjs.org/depd/-/depd-2.0.0.tgz"
   integrity sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==
 
-deprecated-react-native-prop-types@^2.2.0:
-  version "2.3.0"
-  resolved "https://registry.npmjs.org/deprecated-react-native-prop-types/-/deprecated-react-native-prop-types-2.3.0.tgz"
-  integrity sha512-pWD0voFtNYxrVqvBMYf5gq3NA2GCpfodS1yNynTPc93AYA/KEMGeWDqqeUB6R2Z9ZofVhks2aeJXiuQqKNpesA==
-  dependencies:
-    "@react-native/normalize-color" "*"
-    invariant "*"
-    prop-types "*"
-
 deprecated-react-native-prop-types@^3.0.1:
   version "3.0.1"
   resolved "https://registry.npmjs.org/deprecated-react-native-prop-types/-/deprecated-react-native-prop-types-3.0.1.tgz"
@@ -9181,6 +9172,15 @@ react-native-fast-image@^8.6.3:
   resolved "https://registry.npmjs.org/react-native-fast-image/-/react-native-fast-image-8.6.3.tgz"
   integrity sha512-Sdw4ESidXCXOmQ9EcYguNY2swyoWmx53kym2zRsvi+VeFCHEdkO+WG1DK+6W81juot40bbfLNhkc63QnWtesNg==
 
+react-native-fast-video@^5.1.7:
+  version "5.1.7"
+  resolved "https://registry.npmjs.org/react-native-fast-video/-/react-native-fast-video-5.1.7.tgz"
+  integrity sha512-pSRFDmEDjBedaDXj4F5jJu0s/lHJzAc6rUahIuLvoSgw8zQ7rHbCxCDiNNNMMhrMdmQ/oElfCVls7kgk6Nhdug==
+  dependencies:
+    keymirror "^0.1.1"
+    prop-types "^15.7.2"
+    shaka-player "^2.5.9"
+
 react-native-gesture-handler@^2.12.0:
   version "2.12.0"
   resolved "https://registry.npmjs.org/react-native-gesture-handler/-/react-native-gesture-handler-2.12.0.tgz"
@@ -9279,16 +9279,6 @@ react-native-uuid@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/react-native-uuid/-/react-native-uuid-2.0.1.tgz"
   integrity sha512-cptnoIbL53GTCrWlb/+jrDC6tvb7ypIyzbXNJcpR3Vab0mkeaaVd5qnB3f0whXYzS+SMoSQLcUUB0gEWqkPC0g==
-
-react-native-video@^5.2.1:
-  version "5.2.1"
-  resolved "https://registry.npmjs.org/react-native-video/-/react-native-video-5.2.1.tgz"
-  integrity sha512-aJlr9MeTuQ0LpZ4n+EC9RvhoKeiPbLtI2Rxy8u7zo/wzGevbRpWHSBj9xZ5YDBXnAVXzuqyNIkGhdw7bfdIBZw==
-  dependencies:
-    deprecated-react-native-prop-types "^2.2.0"
-    keymirror "^0.1.1"
-    prop-types "^15.7.2"
-    shaka-player "^2.5.9"
 
 react-native@*, "react-native@^0.0.0-0 || 0.60 - 0.72 || 1000.0.0", react-native@>=0.40.0, react-native@>=0.44.0, react-native@>=0.50.0, react-native@>=0.59, react-native@>=0.59.0, react-native@>=0.60.0, react-native@>=0.61.3, react-native@>=0.65, react-native@0.71.11:
   version "0.71.11"

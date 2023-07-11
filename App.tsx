@@ -17,7 +17,8 @@ import NotificationsController from './components/NotificationsController';
 
 LogBox.ignoreLogs([
   'In React 18, SSRProvider is not necessary and is a noop. You can remove it from your app.',
-  "Constants.platform.ios.model has been deprecated in favor of expo-device's Device.modelName property. This API will be removed in SDK 45."
+  "Constants.platform.ios.model has been deprecated in favor of expo-device's Device.modelName property. This API will be removed in SDK 45.",
+  "ViewPropTypes will be removed from React Native, along with all other PropTypes. We recommend that you migrate away from PropTypes and switch to a type system like TypeScript. If you need to continue using ViewPropTypes, migrate to the 'deprecated-react-native-prop-types' package."
   ]);
 
 GoogleSignin.configure();

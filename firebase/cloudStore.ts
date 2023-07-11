@@ -45,6 +45,31 @@ export const storeProfileImage = async (user: UserData, filePath: string, fileUr
     }
 };
 
+// need function for storing conversation profile images
+export const storeConversationProfileImage = async (cid: string, uid: string, filePath: string, fileUri?: string): Promise<{
+    mainTask: FirebaseStorageTypes.Task,
+    tinyTask: FirebaseStorageTypes.Task
+    mainLoc: string,
+    tinyLoc: string
+} | never> => {
+    try {
+        const tinyPath: string = await createTinyProfileImage(filePath, fileUri);
+        const id: string = `${cid}-${uid}`;
+        const mainLoc = `conversationProfiles/${id}.jpg`;
+        const tinyLoc = `conversationProfiles/${id}-tiny.jpg`
+        const mainRef = storage().ref(mainLoc);
+        const tinyRef = storage().ref(tinyLoc);
+        return {
+            mainTask: mainRef.putFile(filePath),
+            mainLoc,
+            tinyTask: tinyRef.putFile(tinyPath),
+            tinyLoc,
+        }
+    } catch (err) {
+        return Promise.reject(err);
+    }
+};
+
 export const getDownloadUrl = (refLoc: string) => storage().ref(refLoc).getDownloadURL();
 
 export const storeMessagingImage = (fileUri: string, id: string): {

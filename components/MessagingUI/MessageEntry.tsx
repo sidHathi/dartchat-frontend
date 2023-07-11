@@ -122,7 +122,7 @@ export default function MessageEntry({
         return;
     }, [selectedMediaBuffer, messageText, user, networkConnected]);
 
-    return <Box w='100%' paddingBottom={keyboardShown ? `${keyboardHeight + 24}px` : '36px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'}>
+    return <Box w='100%' paddingBottom={keyboardShown ? `${keyboardHeight + 24}px` : '36px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
         {
             selectedMediaBuffer &&
             <MediaBufferDisplay

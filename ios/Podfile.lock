@@ -385,6 +385,11 @@ PODS:
     - glog
   - react-native-cameraroll (5.7.2):
     - React-Core
+  - react-native-fast-video (5.1.7):
+    - React-Core
+    - react-native-fast-video/Video (= 5.1.7)
+  - react-native-fast-video/Video (5.1.7):
+    - React-Core
   - react-native-image-picker (5.6.0):
     - React-Core
   - react-native-image-resizer (3.0.5):
@@ -395,11 +400,6 @@ PODS:
     - React-Core
   - react-native-spinkit (1.4.1):
     - React
-  - react-native-video (5.2.1):
-    - React-Core
-    - react-native-video/Video (= 5.2.1)
-  - react-native-video/Video (5.2.1):
-    - React-Core
   - React-perflogger (0.71.11)
   - React-RCTActionSheet (0.71.11):
     - React-Core/RCTActionSheetHeaders (= 0.71.11)
@@ -592,12 +592,12 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - "react-native-cameraroll (from `../node_modules/@react-native-camera-roll/camera-roll`)"
+  - react-native-fast-video (from `../node_modules/react-native-fast-video`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - "react-native-image-resizer (from `../node_modules/@bam.tech/react-native-image-resizer`)"
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-spinkit (from `../node_modules/react-native-spinkit`)
-  - react-native-video (from `../node_modules/react-native-video`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
   - React-RCTActionSheet (from `../node_modules/react-native/Libraries/ActionSheetIOS`)
   - React-RCTAnimation (from `../node_modules/react-native/Libraries/NativeAnimation`)
@@ -710,6 +710,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   react-native-cameraroll:
     :path: "../node_modules/@react-native-camera-roll/camera-roll"
+  react-native-fast-video:
+    :path: "../node_modules/react-native-fast-video"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
   react-native-image-resizer:
@@ -720,8 +722,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-spinkit:
     :path: "../node_modules/react-native-spinkit"
-  react-native-video:
-    :path: "../node_modules/react-native-video"
   React-perflogger:
     :path: "../node_modules/react-native/ReactCommon/reactperflogger"
   React-RCTActionSheet:
@@ -824,12 +824,12 @@ SPEC CHECKSUMS:
   React-jsinspector: b6ed4cb3ffa27a041cd440300503dc512b761450
   React-logger: 186dd536128ae5924bc38ed70932c00aa740cd5b
   react-native-cameraroll: 134805127580aed23403b8c2cb1548920dd77b3a
+  react-native-fast-video: 2b3203e05780cbaf23694c64e0194ab66fb8825d
   react-native-image-picker: db60857e03d63721f19b6f4027de20429ddd9cba
   react-native-image-resizer: 00ceb0e05586c7aadf061eea676957a6c2ec60fa
   react-native-netinfo: fefd4e98d75cbdd6e85fc530f7111a8afdf2b0c5
   react-native-safe-area-context: 9e40fb181dac02619414ba1294d6c2a807056ab9
   react-native-spinkit: da294fd828216ad211fe36a5c14c1e09f09e62db
-  react-native-video: c26780b224543c62d5e1b2a7244a5cd1b50e8253
   React-perflogger: e706562ab7eb8eb590aa83a224d26fa13963d7f2
   React-RCTActionSheet: 57d4bd98122f557479a3359ad5dad8e109e20c5a
   React-RCTAnimation: ccf3ef00101ea74bda73a045d79a658b36728a60
