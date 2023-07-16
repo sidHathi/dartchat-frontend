@@ -70,6 +70,29 @@ export const storeConversationProfileImage = async (cid: string, uid: string, fi
     }
 };
 
+export const storeConversationAvatar = async (cid: string, filePath: string, fileUri?: string): Promise<{
+    mainTask: FirebaseStorageTypes.Task,
+    tinyTask: FirebaseStorageTypes.Task
+    mainLoc: string,
+    tinyLoc: string
+} | never> => {
+    try {
+        const tinyPath: string = await createTinyProfileImage(filePath, fileUri);
+        const mainLoc = `conversationProfiles/${cid}.jpg`;
+        const tinyLoc = `conversationProfiles/${cid}-tiny.jpg`
+        const mainRef = storage().ref(mainLoc);
+        const tinyRef = storage().ref(tinyLoc);
+        return {
+            mainTask: mainRef.putFile(filePath),
+            mainLoc,
+            tinyTask: tinyRef.putFile(tinyPath),
+            tinyLoc,
+        }
+    } catch (err) {
+        return Promise.reject(err);
+    }
+};
+
 export const getDownloadUrl = (refLoc: string) => storage().ref(refLoc).getDownloadURL();
 
 export const storeMessagingImage = (fileUri: string, id: string): {

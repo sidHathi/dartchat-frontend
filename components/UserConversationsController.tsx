@@ -3,13 +3,13 @@ import ConversationsContext from '../contexts/ConversationsContext';
 import { Socket } from 'socket.io-client';
 import SocketContext from '../contexts/SocketContext';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
-import { Conversation, ConversationPreview, SocketEvent } from '../types/types';
+import { Conversation, ConversationPreview, SocketEvent, UserConversationProfile } from '../types/types';
 import { SocketMessage } from '../types/rawTypes';
 import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike } from '../redux/slices/chatSlice';
-import { addConversation, userConversationsSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete } from '../redux/slices/userConversationsSlice';
+import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser } from '../redux/slices/chatSlice';
+import { addConversation, userConversationsSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews } from '../redux/slices/userConversationsSlice';
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
 import { autoGenGroupAvatar } from '../utils/messagingLogic';
@@ -25,11 +25,11 @@ export default function UserConversationsController({
     const dispatch = useAppDispatch();
     const { userConversations, needsServerSync }: {userConversations: ConversationPreview[], needsServerSync: boolean} = useAppSelector(userConversationsSelector);
     const { currentConvo }: {currentConvo?: Conversation} = useAppSelector(chatSelector);
-    const { conversationsApi } = useRequest();
+    const { conversationsApi, usersApi } = useRequest();
 
     const convoDelete = useCallback((cid: string) => {
         dispatch(handleConversationDelete(cid, conversationsApi));
-    }, [conversationsApi])
+    }, [conversationsApi]);
 
     useEffect(() => {
         if (currentConvo && currentConvo.id !== ccid) {
@@ -42,9 +42,17 @@ export default function UserConversationsController({
         socket.on('newConversation', async (newConvo: Conversation) => {
             console.log('new conversation message received!');
             if (userConversations.map(c => c.cid).includes(newConvo.id)) return; 
+            let name = newConvo.name;
+            if (!newConvo.group) {
+                name = newConvo.participants.filter((p) => p.id !== user.id)[0].displayName;
+            }
             dispatch(addConversation({
-                ...newConvo,
-                avatar: await autoGenGroupAvatar(newConvo.participants, user.id)
+                newConvo: {
+                    ...newConvo,
+                    avatar: await autoGenGroupAvatar(newConvo.participants, user.id),
+                    name
+                },
+                uid: user.id
             }));
             socket.emit('joinRoom', userConversations.map(c => c.cid));
         });
@@ -52,7 +60,7 @@ export default function UserConversationsController({
 
     useEffect(() => {
         if (socket) socket.emit('joinRoom', userConversations.map(c => c.cid));
-    }, [userConversations])
+    }, [userConversations, socket]);
 
     useEffect(() => {
         if (!socket || !user) return;
@@ -83,7 +91,7 @@ export default function UserConversationsController({
         socket.on('deleteConversation', (cid: string) => {
             if (!user) return;
             try {
-                convoDelete(cid);
+                dispatch(reduxDelete(cid));
                 if (currentConvo && cid === currentConvo.id) {
                     dispatch(exitConvo());
                     navSwitch('conversations');
@@ -92,7 +100,7 @@ export default function UserConversationsController({
                 console.log(err);
             }
         })
-    }, []);
+    }, [currentConvo, user]);
 
     useEffect(() => {
         if (!socket) return;
@@ -107,6 +115,39 @@ export default function UserConversationsController({
             }));
         });
     }, [currentConvo]);
+
+    useEffect(() => {
+        if (!socket) return;
+        socket.on('updateConversationDetails', (cid) => {
+            if (currentConvo && currentConvo.id === cid) {
+                dispatch(pullConversationDetails(conversationsApi));
+            }
+            dispatch(pullLatestPreviews(usersApi));
+        });
+    }, [socket, currentConvo]);
+
+    useEffect(() => {
+        if (!socket) return;
+        socket.on('newConversationUsers', (cid: string, profiles: UserConversationProfile[]) => {
+            if (currentConvo && currentConvo.id === cid) {
+                dispatch(handleAddUsers(profiles));
+            }
+            dispatch(pullLatestPreviews(usersApi));
+        });
+
+        socket.on('removeConversationUser', (cid: string, uid: string) => {
+            if (currentConvo && currentConvo.id === cid && user) {
+                if (uid !== user.id) {
+                    dispatch(handleRemoveUser(uid));
+                } else {
+                    dispatch(reduxDelete(cid));
+                    dispatch(exitConvo());
+                    navSwitch('conversations');
+                }
+            }
+            dispatch(pullLatestPreviews(usersApi));
+        })
+    }, [socket, currentConvo]);
 
     const createNewConversation = (newConvo: Conversation) => {
         if (socket && user) {

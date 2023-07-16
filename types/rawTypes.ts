@@ -7,6 +7,7 @@ export type ServerConversationPreview = {
     unSeenMessages: number;
     avatar?: any;
     lastMessageTime: string;
+    group: boolean;
 };
 
 export type RawUserData = {
@@ -26,7 +27,8 @@ export type SocketMessage = {
     timestamp: string;
     senderId: string;
     likes: string[];
-    replyRef?: ReplyRef
+    replyRef?: ReplyRef;
+    senderProfile?: UserConversationProfile;
 };
 
 export type RawConversation = {

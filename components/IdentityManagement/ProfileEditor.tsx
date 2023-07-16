@@ -11,6 +11,7 @@ import { KeyboardTypeOptions } from 'react-native';
 import ProfileImage from '../generics/ProfileImage';
 import { storeProfileImage, getDownloadUrl } from '../../firebase/cloudStore';
 import { AvatarImage, UserData } from '../../types/types';
+import { selectProfileImage } from '../../utils/identityUtils';
 
 export default function ProfileEditor({
     handleExit
@@ -34,25 +35,6 @@ export default function ProfileEditor({
         setPhone(user.phone);
         setSecureKey(user.secureKey);
     }, []);
-
-    const selectImage = async () => {
-        try {
-            const res = await ImagePicker.openPicker({
-                width: 300,
-                height: 300,
-                multiple: false,
-                cropping: true,
-                mediaType: 'photo',
-                cropperCircleOverlay: true,
-                compressImageQuality: 0.8,
-                forceJpg: true,
-                includeBase64: true,
-            });
-            setSelectedProfile(res);
-        } catch (err) {
-            console.log(err);
-        }
-    }
 
     const editField = ({value, setValue, prompt, keyboardType}: {
         value: string | undefined;
@@ -156,7 +138,7 @@ export default function ProfileEditor({
                                 <IconButton label='profile' size={100} />
                             }
                             <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'
-                            onPress={selectImage} py='6px' opacity='0.7' mt='-60px'>
+                            onPress={() => selectProfileImage(setSelectedProfile)} py='6px' opacity='0.7' mt='-60px'>
                                 <Text fontSize='9px' color='#f5f5f5' fontWeight='medium'>
                                     Change profile image
                                 </Text>

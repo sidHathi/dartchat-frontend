@@ -45,7 +45,7 @@ export default function ChatBuilder({exit}: {
     const getGroupName = () => {
         if (groupName) return groupName;
         if (selectedProfiles.length == 1) {
-            return selectedProfiles[0].displayName;
+            return 'Private chat'
         }
         return `${userDispName || user?.displayName || user?.handle || user?.email || 'Unnamed chat'} + ${selectedProfiles.length} others`;
     };
@@ -58,7 +58,9 @@ export default function ChatBuilder({exit}: {
             {
                 displayName: userDispName || user.displayName || user.handle || user.email,
                 id: user.id || 'test',
-                avatar: user.avatar
+                handle: user.handle,
+                avatar: user.avatar,
+                notifications: 'all'
             }
         ]
 
@@ -69,6 +71,7 @@ export default function ChatBuilder({exit}: {
             participants: participants,
             name: getGroupName(),
             messages: [],
+            group: isGroup,
             avatar
         };
 
@@ -76,7 +79,10 @@ export default function ChatBuilder({exit}: {
         dispatch(setConvo(newConvo));
         if (socket && user) {
             socket.emit('newConversation', newConvo);
-            dispatch(addConversation(newConvo));
+            dispatch(addConversation({
+                newConvo,
+                uid: user.id
+            }));
         }
     };
 
@@ -95,7 +101,7 @@ export default function ChatBuilder({exit}: {
         profile: UserConversationProfile;
         onPress: () => void;
     }) : JSX.Element => (
-        <Pressable onPress={onPress} mr='4px' mb='8px'>
+        <Pressable onPress={onPress} mr='4px' mb='8px' overflow='visible'>
             <Box py={fullSize ? '12px' : '4px'} px='6px' borderRadius='12px' bgColor='#fefefe' shadow='3' w={fullSize ? '100%' : 'auto'}>
                 <HStack w='100%'>
                     {
@@ -137,10 +143,10 @@ export default function ChatBuilder({exit}: {
                     New {isGroup ? 'Group' : 'Chat'}
                 </Heading>
                 <Button.Group isAttached marginBottom='20px' w='100%'>
-                    <Button borderLeftRadius='30px' colorScheme='coolGray' variant={isGroup ? 'outline' : 'solid'} onPress={() => setIsGroup(false)} marginX='0' w='50%'>
+                    <Button borderLeftRadius='30px' colorScheme={isGroup ? 'light' : 'dark'} variant={isGroup ? 'outline' : 'subtle'} onPress={() => setIsGroup(false)} marginX='0' w='50%'>
                         Private Message
                     </Button>
-                    <Button borderRightRadius='30px' colorScheme='coolGray' variant={isGroup ? 'solid' : 'outline'} onPress={() => setIsGroup(true)} marginX='0' w='50%'>
+                    <Button borderRightRadius='30px' colorScheme={!isGroup ? 'light' : 'dark'} variant={!isGroup ? 'outline' : 'subtle'} onPress={() => setIsGroup(true)} marginX='0' w='50%'>
                         Group Chat
                     </Button>
                 </Button.Group>
@@ -150,8 +156,8 @@ export default function ChatBuilder({exit}: {
                     <Text color='gray.500' fontSize='xs' mb='4px'>
                         { isGroup ? 'Selected recipients:' : 'Recipient:' }
                     </Text>
-                    <ScrollView>
-                    <Flex direction='row' flexWrap='wrap' w='100%' maxHeight='200px'>
+                    <ScrollView style={{overflow: 'visible'}}>
+                    <Flex direction='row' flexWrap='wrap' w='100%' maxHeight='200px' overflow='visible'>
                     {
                         selectedProfiles.map((profile, idx) => (
                             <RecipientBadge
@@ -228,7 +234,7 @@ export default function ChatBuilder({exit}: {
                         </Text>
                     </Center>
                 }
-                <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={handleSubmit} variant='solid' color='white' marginY='12px'>
+                <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' marginY='12px'>
                     Create Chat
                 </Button>
                 <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={exit} variant='subtle'>

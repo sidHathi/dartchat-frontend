@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
-import { Heading, VStack, Text, Box, Spinner, ScrollView } from "native-base";
+import { Pressable, VStack, Text, Box, Spinner, ScrollView } from "native-base";
 
 import ChatPreview from "./ChatPreview";
 import { ConversationPreview } from "../../types/types";
@@ -70,12 +70,14 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
     }
 
     const openConfirmModal = (chat: ConversationPreview) => {
+        console.log('opening modal');
         setUpForDelete(chat);
         setDcModalOpen(true);
     }
 
     const DeleteButton = (chat: ConversationPreview) => 
         <Animated.View>
+            <Pressable onPress={() => openConfirmModal(chat)}>
             <TouchableOpacity 
                 activeOpacity={0.5}
                 onPress={() => openConfirmModal(chat)} 
@@ -93,9 +95,10 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
                     </Box>
                 </Box>
             </TouchableOpacity>
+            </Pressable>
         </Animated.View>
 
-    return <ScrollView style={{flex: 1}}>
+    return <><ScrollView style={{flex: 1}}>
         <VStack space={3} py='24px'>
             {/* <Heading fontSize='xl'>Chats</Heading> */}
             {
@@ -112,6 +115,8 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
                 )
             }
         </VStack>
+        
+    </ScrollView>
         <ConfirmationModal
             isOpen={dcModalOpan}
             onClose={closeModal}
@@ -120,5 +125,5 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
             content='This action cannot be reversed'
             size='md'
         />
-    </ScrollView>
+    </>
 }

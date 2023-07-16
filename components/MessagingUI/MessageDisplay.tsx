@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useCallback, useMemo } from "react";
 import { Box, HStack, Spacer, VStack, Text, Pressable, Center } from 'native-base';
 import IconButton from "../generics/IconButton";
 import { Message, UserConversationProfile } from "../../types/types";
@@ -38,12 +38,23 @@ export default function MessageDisplay({
 
     const isSystemMessage = message.senderId === 'system';
 
-    const getSenderAvatar = () => {
-        if (message.senderId in participants) {
+    const senderAvatar = useMemo(() => {
+        if (message.senderProfile && message.senderProfile.avatar) {
+            return message.senderProfile.avatar;
+        } else if (message.senderId in participants) {
             return participants[message.senderId].avatar;
         }
         return undefined;
-    }
+    }, [message, participants]);
+
+    const senderName = useMemo(() => {
+        if (message.senderProfile) {
+            return message.senderProfile.displayName;
+        } else if (message.senderId in participants) {
+            return participants[message.senderId].displayName;
+        }
+        return undefined;
+    }, [message, participants])
 
     return <Box w='100%' paddingBottom='8px' paddingX='18px'>
         {
@@ -84,8 +95,8 @@ export default function MessageDisplay({
             {
                 !isSystemMessage ?
                 (
-                    getSenderAvatar() ? 
-                    <ProfileImage imageUri={getSenderAvatar()?.tinyUri as string} shadow='9' size={28} nbProps={{
+                    senderAvatar ? 
+                    <ProfileImage imageUri={senderAvatar?.tinyUri as string} shadow='9' size={28} nbProps={{
                         mt: '6px',
                         mr: '4px'
                     }} /> :
@@ -101,7 +112,7 @@ export default function MessageDisplay({
                         <VStack overflowX='visible'>
                             {
                                 !isSystemMessage &&
-                                <Text color='coolGray.600' fontSize='10px'>{participants[message.senderId]?.displayName}</Text>
+                                <Text color='coolGray.600' fontSize='10px'>{senderName}</Text>
                             }
                             {
                                 message.media &&

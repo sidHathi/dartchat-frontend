@@ -1,4 +1,4 @@
-import React, { useState, useContext, useCallback } from "react";
+import React, { useState, useContext, useCallback, useMemo } from "react";
 import { Box, Input, HStack } from 'native-base';
 import IconButton from "../generics/IconButton";
 import { Dimensions } from "react-native";
@@ -77,6 +77,13 @@ export default function MessageEntry({
         return messageMedia.filter(m => m != null) as MessageMedia[];
     }, [mediaProgress, selectedMediaBuffer]);
 
+    const userProfile = useMemo(() => {
+        if (!user || !currentConvo) return undefined;
+        const matches = currentConvo.participants.filter((p) => p.id === user.id);
+        if (matches.length > 0) return matches[0];
+        return undefined;
+    }, [user, currentConvo])
+
     const handleMessageSend = useCallback(async () => {
         console.log('button pressed')
         if (!user || (!messageText && !selectedMediaBuffer) || !networkConnected || socketDisconnected) {
@@ -106,7 +113,8 @@ export default function MessageEntry({
             senderId: user.id,
             likes: [],
             replyRef,
-            media: messageMedia
+            media: messageMedia,
+            senderProfile: userProfile
         }
         if (socket && currentConvo) {
             console.log('sending message')
@@ -122,7 +130,7 @@ export default function MessageEntry({
         return;
     }, [selectedMediaBuffer, messageText, user, networkConnected]);
 
-    return <Box w='100%' paddingBottom={keyboardShown ? `${keyboardHeight + 24}px` : '36px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
+    return <Box w='100%' paddingBottom={keyboardShown ? `${keyboardHeight + 24}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
         {
             selectedMediaBuffer &&
             <MediaBufferDisplay

@@ -485,6 +485,7 @@
 			baseConfigurationReference = 5B7EB9410499542E8C5724F5 /* Pods-dartchat-dartchatTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = DRKH8X25XM;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -514,6 +515,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = DRKH8X25XM;
 				INFOPLIST_FILE = dartchatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -543,6 +545,8 @@
 				DEVELOPMENT_TEAM = DRKH8X25XM;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = dartchat/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Dartchat;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -571,6 +575,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DRKH8X25XM;
 				INFOPLIST_FILE = dartchat/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Dartchat;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

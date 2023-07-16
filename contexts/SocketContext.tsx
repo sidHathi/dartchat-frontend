@@ -8,11 +8,13 @@ import { AppState } from 'react-native';
 
 type SocketContextType = {
     socket?: Socket,
-    disconnected: boolean
+    disconnected: boolean,
+    resetSocket: () => void,
 };
 
 const SocketContext = createContext<SocketContextType>({
-    disconnected: false
+    disconnected: false,
+    resetSocket: () => {return;},
 });
 
 const heartCheck: any = {
@@ -46,7 +48,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     const [socket, setSocket] = useState<Socket | undefined>();
     const [disconnected, setDisconnected] = useState(true);
 
-    const connectAuthSocket = useCallback(async (): Promise<void> => {
+    const resetSocket = useCallback(async (): Promise<void> => {
         if (!(socket?.connected) && (!socket?.active) && auth().currentUser && networkConnected) {
             console.log('setting new socket');
             setDisconnected(true);
@@ -71,14 +73,14 @@ export function SocketContextProvider({children} :PropsWithChildren<{
 
     useEffect(() => {
         if (auth().currentUser && networkConnected) {
-            connectAuthSocket().then(() => {
+            resetSocket().then(() => {
                 if (socket?.connected) setDisconnected(false);
             })
         }
 
         auth().onAuthStateChanged(() => {
             if (auth().currentUser && networkConnected) {
-                connectAuthSocket().then(() => {
+                resetSocket().then(() => {
                     if (socket?.connected) setDisconnected(false);
                 })
             }
@@ -91,7 +93,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
                 console.log('app state changed');
                 appState.current = nextState;
                 if (!socket?.connected) {
-                    connectAuthSocket().then(() => {
+                    resetSocket().then(() => {
                         if (socket?.connected) setDisconnected(false);
                     });
                 } else {
@@ -113,7 +115,11 @@ export function SocketContextProvider({children} :PropsWithChildren<{
             if (auth().currentUser) {
                 heartCheck.reset(heartCheck).start(heartCheck, socket);
                 await new Promise((res) => setTimeout(res, 2000));
-                if (socket.connected) setDisconnected(false);
+                if (socket.connected) {
+                    setDisconnected(false);
+                } else {
+                    await resetSocket();
+                }
             }
         });
 
@@ -130,7 +136,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     }, [networkConnected, socket]);
 
     return (
-        <SocketContext.Provider value={{socket, disconnected}}>
+        <SocketContext.Provider value={{socket, disconnected, resetSocket}}>
             {children}
         </SocketContext.Provider>
     );

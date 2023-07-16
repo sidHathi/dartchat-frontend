@@ -17,17 +17,32 @@ export default function ProfileImage({
     onPress?: () => void
     nbProps?: any
 }): JSX.Element {
-    return <TouchableOpacity onPress={onPress} activeOpacity={0.5}>
-        <Box w={`${size}px`} h={`${size}px`} borderRadius={size} shadow={shadow} bgColor='rgba(0, 0, 0, 0.1)' {...nbProps}>
-            <FastImage source={{
-                uri: imageUri,
-                priority: FastImage.priority.high
-            }} style={{
-                width: size,
-                height: size,
-                borderRadius: size
-            }}
-            resizeMode={FastImage.resizeMode.cover} />
-        </Box>
-    </TouchableOpacity>
+    return (
+        onPress ?
+            <TouchableOpacity onPress={onPress} activeOpacity={0.5}>
+                <Box w={`${size}px`} h={`${size}px`} borderRadius={size} shadow={shadow} bgColor='rgba(0, 0, 0, 0.1)' {...nbProps}>
+                    <FastImage source={{
+                        uri: imageUri,
+                        priority: FastImage.priority.high
+                    }} style={{
+                        width: size,
+                        height: size,
+                        borderRadius: size
+                    }}
+                    resizeMode={FastImage.resizeMode.cover} />
+                </Box>
+            </TouchableOpacity> :
+
+            <Box w={`${size}px`} h={`${size}px`} borderRadius={size} shadow={shadow} bgColor='rgba(0, 0, 0, 0.1)' {...nbProps}>
+                <FastImage source={{
+                    uri: imageUri,
+                    priority: FastImage.priority.high
+                }} style={{
+                    width: size,
+                    height: size,
+                    borderRadius: size
+                }}
+                resizeMode={FastImage.resizeMode.cover} />
+            </Box>
+    );
 }

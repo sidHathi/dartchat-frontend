@@ -1,9 +1,11 @@
 import { createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer } from "../../types/types";
+import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus } from "../../types/types";
 import { RootState } from "../store";
 import { Socket } from "socket.io-client";
 import uuid from 'react-native-uuid';
 import { ConversationsApi } from "../../requests/conversationsApi";
+import { AvatarImage } from "../../types/types";
+import { State } from "react-native-gesture-handler";
 
 const initialState: {
     currentConvo?: Conversation;
@@ -22,7 +24,7 @@ export const chatSlice = createSlice({
         setConvo: (state, action: PayloadAction<Conversation | undefined>) => (
             {...state, currentConvo: action.payload}
         ),
-        exitConvo: (state) => ({ ...state, currentConvo: undefined }),
+        exitConvo: (state) => ({ ...state, currentConvo: undefined , requestLoading: false, requestCursor: undefined}),
         addMessageHistory: (state, action: PayloadAction<Message[]>) => {
             if (!state.currentConvo) return state;
             const mIds = state.currentConvo.messages.map((m) => m.id);
@@ -146,6 +148,8 @@ export const chatSlice = createSlice({
             console.log('liking message');
             console.log(state.currentConvo?.messages.map((m) => m.id));
             if (!state.currentConvo) return state;
+            const message = state.currentConvo.messages.filter((m) => m.id === messageId).at(0);
+            if (message && event.type === 'newLike' && message.likes.includes(userId)) return;
             console.log('currentConvo exists');
             return ({
                 ...state,
@@ -211,6 +215,69 @@ export const chatSlice = createSlice({
                     ]
                 }
             });
+        },
+        updateChatDetails: (state, action: PayloadAction<{
+            newName?: string;
+            newAvatar?: AvatarImage
+        }>) => {
+            if (!state.currentConvo) return state;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    name: action.payload.newName || state.currentConvo.name,
+                    avatar: action.payload.newAvatar || state.currentConvo.avatar
+                }
+            }
+        },
+        handleNewUserNotStatus: (state, action: PayloadAction<{
+            newStatus: NotificationStatus,
+            uid: string
+        }>) => {
+            if (!state.currentConvo) return state;
+            const matchingProfiles = state.currentConvo.participants.filter((p) => p.id === action.payload.uid);
+            if (matchingProfiles.length > 0) {
+                const updatedProfile = {
+                    ...matchingProfiles[0],
+                    notifications: action.payload.newStatus
+                };
+                return {
+                    ...state,
+                    currentConvo: {
+                        ...state.currentConvo,
+                        participants: [
+                            updatedProfile,
+                            ...state.currentConvo.participants.filter((p) => p.id !== action.payload.uid)
+                        ]
+                    }
+                };
+            }
+            return state;
+        },
+        handleRemoveUser: (state, action: PayloadAction<string>) => {
+            if (!state.currentConvo) return state;
+            const uid = action.payload;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    participants: state.currentConvo.participants.filter((p) => p.id !== uid)
+                }
+            }
+        },
+        handleAddUsers: (state, action: PayloadAction<UserConversationProfile[]>) => {
+            if (!state.currentConvo) return state;
+            const newProfiles = action.payload;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    participants: [
+                        ...state.currentConvo.participants,
+                        ...newProfiles
+                    ]
+                }
+            }
         }
     }
 });
@@ -229,7 +296,11 @@ export const {
     setNeedsScroll,
     setRequestLoading,
     setRequestCursor,
-    handleUpdatedProfile
+    handleUpdatedProfile,
+    updateChatDetails,
+    handleNewUserNotStatus,
+    handleRemoveUser,
+    handleAddUsers
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch) => {
@@ -299,6 +370,108 @@ export const updateConversationProfile = (updatedProfile: UserConversationProfil
         console.log(err);
         dispatch(setRequestLoading(false));
         return;
+    }
+};
+
+export const updateConversationDetails = (updates: {newAvatar?: AvatarImage, newName?: string}, api: ConversationsApi, onSuccess?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        console.log('updating profile');
+        await api.updateConversationDetails(currentConvo.id, updates);
+        dispatch(updateChatDetails(updates));
+        onSuccess && onSuccess();
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        console.log(err);
+        dispatch(setRequestLoading(false));
+        return;
+    }
+};
+
+export const pullConversationDetails = (api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        console.log('updating profile');
+        const updatedConvo = await api.getConversationInfo(currentConvo.id);
+        dispatch(updateChatDetails({
+            newName: updatedConvo.name,
+            newAvatar: updatedConvo.avatar
+        }));
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        console.log(err);
+        dispatch(setRequestLoading(false));
+        return;
+    }
+};
+
+export const updateUserNotStatus = (uid: string, newStatus: NotificationStatus, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        const cid = currentConvo.id;
+        await api.updateUserNotStatus(cid, newStatus);
+        dispatch(handleNewUserNotStatus({uid, newStatus}));
+        console.log('notifications status updated');
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        console.log(err);
+        setRequestLoading(false);
+    }
+};
+
+export const removeUser = (uid: string, api: ConversationsApi, onComplete?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        await api.removeConversationUser(currentConvo.id, uid);
+        dispatch(handleRemoveUser(uid));
+        dispatch(setRequestLoading(false));
+        onComplete && onComplete();
+    } catch (err) {
+        console.log(err);
+        setRequestLoading(false);
+    }
+};
+
+export const addUsers = (userProfiles: UserConversationProfile[], api: ConversationsApi, onComplete?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        await api.addConversationUsers(currentConvo.id, userProfiles);
+        dispatch(handleAddUsers(userProfiles));
+        dispatch(setRequestLoading(false));
+        onComplete && onComplete();
+    } catch (err) {
+        console.log(err);
+        setRequestLoading(false);
+    }
+};
+
+export const leaveChat = (uid: string, api: ConversationsApi, onComplete?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        await api.leaveChat(currentConvo.id);
+        dispatch(handleRemoveUser(uid));
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        console.log(err);
+        setRequestLoading(false);
     }
 };
 

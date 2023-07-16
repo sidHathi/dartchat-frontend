@@ -1,6 +1,7 @@
 import { UsersApi } from "../requests/usersApi";
 import { ConversationPreview, UserData } from "../types/types";
 import { parseUserData } from "./requestUtils";
+import ImagePicker, { Image } from 'react-native-image-crop-picker';
 
 export const getUserData = (usersApi: UsersApi): Promise<UserData | undefined> => {
     return usersApi.getCurrentUser()
@@ -31,4 +32,27 @@ export const updateUserConversations = (usersApi: UsersApi, currentUser: UserDat
         console.log(err);
         return undefined;
     });
+};
+
+export const selectProfileImage = async (
+    setImage: (image: Image) => void,
+    setEdited?: (edited: boolean) => void
+) => {
+    try {
+        const res = await ImagePicker.openPicker({
+            width: 300,
+            height: 300,
+            multiple: false,
+            cropping: true,
+            mediaType: 'photo',
+            cropperCircleOverlay: true,
+            compressImageQuality: 0.8,
+            forceJpg: true,
+            includeBase64: true,
+        });
+        setImage(res);
+        setEdited && setEdited(true);
+    } catch (err) {
+        console.log(err);
+    }
 };

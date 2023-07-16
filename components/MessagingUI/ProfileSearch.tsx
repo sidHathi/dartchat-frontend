@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext, PropsWithChildren, ReactNode } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
-import { Text, Input, Box, Button, HStack, Spacer, Center, FormControl } from 'native-base';
+import { Text, Input, Box, Button, HStack, Spacer, Center, FormControl, VStack } from 'native-base';
 import { Image, Pressable } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
 
@@ -8,18 +8,20 @@ import useRequest from "../../requests/useRequest";
 import { UserConversationProfile, UserProfile } from "../../types/types";
 import ProfileImage from "../generics/ProfileImage";
 
-const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => <Box w='100%' bgColor={searchSelected ? '#fefefe': 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px'>
+const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => <Box w='100%' bgColor={searchSelected ? '#fefefe': 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px' style={{shadowOpacity: 0.12}}>
         {children}
     </Box>
 
 export default function ProfilesSearch({
         isGroup,
         selectedProfiles, 
-        setSelectedProfiles
+        setSelectedProfiles,
+        addedProfiles,
     } : {
         isGroup: boolean;
         selectedProfiles: UserConversationProfile[];
         setSelectedProfiles: (selectedProfiles: UserConversationProfile[]) => void;
+        addedProfiles?: UserConversationProfile[];
     }): JSX.Element {
     const inputRef = useRef<any | null>(null);
     const { user } = useContext(AuthIdentityContext);
@@ -66,13 +68,16 @@ export default function ProfilesSearch({
 
     const handleAddProfile = (profile: UserProfile) => {
         if (maxSelected()) return;
+        if (addedProfiles && addedProfiles.filter((p) => p.id === profile.id).length > 0) return;
         if (selectedProfiles.filter(
             (p) => p.id === profile.id
         ).length < 1) {
             setSelectedProfiles([...selectedProfiles, {
                 id: profile.id,
                 displayName: profile.displayName,
-                avatar: profile.avatar || undefined
+                avatar: profile.avatar || undefined,
+                handle: profile.handle,
+                notifications: 'all'
             }]);
             setQueryString(undefined);
             setSearchSelected(false);
@@ -126,8 +131,8 @@ export default function ProfilesSearch({
         profile: UserProfile,
         onSelect: () => void
     }): JSX.Element => (
-        <Button variant='ghost' bgColor='#f5f5f5' onPress={onSelect} w='100%' px='0' borderRadius='12px' my='4px'>
-            <HStack px='0' w='100%' space={2}>
+        <Button variant='ghost' bgColor='#f5f5f5' onPress={onSelect} w='100%' borderRadius='12px' my='4px' px='6px' maxWidth='100%'>
+            <HStack px='0' w='100%' space={3}>
                 {
                 profile.avatar ?
                 <ProfileImage 
@@ -151,10 +156,12 @@ export default function ProfilesSearch({
                         {profile.handle}
                     </Text>
                 </Box>
-                <Spacer minWidth='42%' />
-                <Box>
+                <Spacer />
+                <VStack>
+                    <Spacer />
                     <Entypo name="plus" size={24} color="black" />
-                </Box>
+                    <Spacer />
+                </VStack>
             </HStack>
         </Button>
     );

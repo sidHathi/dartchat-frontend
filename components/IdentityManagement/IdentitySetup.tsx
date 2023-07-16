@@ -5,6 +5,13 @@ import DartChatLogoDarkXML from '../../assets/DartChatLogoDarkXML';
 import { SvgXml } from "react-native-svg";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { AxiosError } from 'axios';
+import { Image } from 'react-native-image-crop-picker';
+import { selectProfileImage } from '../../utils/identityUtils';
+import IconButton from '../generics/IconButton';
+import ProfileImage from '../generics/ProfileImage';
+import { getDownloadUrl, storeProfileImage } from '../../firebase/cloudStore';
+import { AvatarImage } from '../../types/types';
+import Spinner from 'react-native-spinkit';
 
 export default function IdentitySetup(): JSX.Element {
     const { isAuthenticated, user, createUser } = useContext(AuthIdentityContext);
@@ -15,8 +22,37 @@ export default function IdentitySetup(): JSX.Element {
     const [displayName, setDisplayName] = useState<string | undefined>(undefined);
     const [phone, setPhone] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | undefined>(undefined);
+    const [imageUploading, setImageUploading] = useState<boolean>(false);
+    const [selectedAvatarImage, setSelectedAvatarImage] = useState<Image | undefined>();
 
-    const handleSubmit = () => {
+    const getUserAvatarFromImage = async () => {
+        if (!selectedAvatarImage || !user) return undefined;
+        setImageUploading(true);
+        try {
+            const {
+                mainTask,
+                tinyTask,
+                mainLoc,
+                tinyLoc
+            } = await storeProfileImage(user, selectedAvatarImage.path, selectedAvatarImage.sourceURL);
+            await mainTask;
+            await tinyTask;
+            const mainUri = await getDownloadUrl(mainLoc);
+            const tinyUri = await getDownloadUrl(tinyLoc);
+            const avatar: AvatarImage = {
+                mainUri,
+                tinyUri
+            };
+            setImageUploading(false);
+            return avatar;
+        } catch (err) {
+            console.log(err);
+            setImageUploading(false);
+            setError('Image upload failed');
+        }
+    }
+
+    const handleSubmit = async () => {
         // console.log('submitting');
         if (!isAuthenticated || !user) return;
         if (!secureKey || secureKey.length < 6) {
@@ -32,6 +68,7 @@ export default function IdentitySetup(): JSX.Element {
             secureKey,
             displayName,
             phone,
+            avatar: await getUserAvatarFromImage()
         })
         .catch((err: AxiosError) => {
             if (err.isAxiosError && err.response?.status === 409) {
@@ -40,7 +77,23 @@ export default function IdentitySetup(): JSX.Element {
                 setError(err.message);
             }
         });
-    }
+    };
+
+    const ProfileSelector = () => (
+        <Center w='100%' mb='30px' h='90px' mt='-30px'>
+                {
+                    (selectedAvatarImage && selectedAvatarImage.sourceURL) ?
+                    <ProfileImage imageUri={selectedAvatarImage?.sourceURL || ''} size={100} shadow='9' /> :
+                    <IconButton label='profile' size={100} />
+                }
+                <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'
+                onPress={() => selectProfileImage(setSelectedAvatarImage)} py='6px' opacity='0.7' mt='-60px'>
+                    <Text fontSize='9px' color='#f5f5f5' fontWeight='medium'>
+                        Select profile image
+                    </Text>
+                </Button>
+        </Center>
+    );
 
     return <View w='100%' h='100%' backgroundColor='#fefefe'>
         <Center w='100%' h='100%'>
@@ -52,6 +105,8 @@ export default function IdentitySetup(): JSX.Element {
                 <Heading size='md' my='12px'>
                     Setup
                 </Heading>
+
+                <ProfileSelector />
 
                 <FormControl>
                 <VStack space={1}>
@@ -158,6 +213,11 @@ export default function IdentitySetup(): JSX.Element {
                     />
                     </Box>
                 </VStack>
+                {imageUploading &&
+                <Center w='100%'>
+                    <Spinner type='ThreeBounce' color='black' />
+                </Center>
+                }
                 </FormControl>
                 <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={handleSubmit} variant='solid' color='white' marginY='12px' disabled={!handle || !secureKey}
                 opacity={(!handle || !secureKey) ? 0.5 : 1}>

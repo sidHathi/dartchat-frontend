@@ -61,7 +61,7 @@ export default function NavContainer({ children }:
         </Box>
         <Center marginTop='-90px' zIndex='1002'>
             <HStack>
-            <Box w='150px' h='50px' backgroundColor='#333' borderRadius='30px' shadow='3' marginX='5px'>
+            <Box w='150px' h='50px' backgroundColor='#111' borderRadius='30px' shadow='3' marginX='5px'>
                 <Center h='50px'>
                     <HStack w='90px'>
                         <Pressable opacity={navState.screen === 'conversations' ? 1 : 0.5} onPress={() => navSwitch('conversations')}>
@@ -75,7 +75,7 @@ export default function NavContainer({ children }:
                     </HStack>
                 </Center>
             </Box>
-            <Box w='50px' h='50px' backgroundColor='#333' borderRadius='30px' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
+            <Box w='50px' h='50px' backgroundColor='#111' borderRadius='30px' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
                 <Center h='50px'>
                     <Pressable onPress={handleNewMessage}>
                         <MaterialCommunityIcons name="message-draw" size={25} color="white" />

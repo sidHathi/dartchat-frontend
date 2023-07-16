@@ -19,10 +19,14 @@ export type UIState = {
     selectedConversation: string | undefined;
 };
 
+export type NotificationStatus = 'all' | 'mentions' | 'none';
+
 export type UserConversationProfile = {
     id: string;
+    handle?: string;
     displayName: string;
     avatar?: AvatarImage;
+    notifications?: NotificationStatus
 };
 
 export type Message = {
@@ -33,6 +37,7 @@ export type Message = {
     senderId: string;
     likes: string[];
     replyRef?: ReplyRef
+    senderProfile?: UserConversationProfile;
 };
 
 export type ReplyRef = {
@@ -49,6 +54,7 @@ export type Conversation = {
     name: string;
     avatar?: AvatarImage;
     messages: Message[];
+    group: boolean;
 };
 
 export type ConversationPreview = {

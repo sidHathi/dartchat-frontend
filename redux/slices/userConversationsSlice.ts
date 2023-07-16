@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
-import { Message, ConversationPreview, Conversation } from '../../types/types';
+import { Message, ConversationPreview, Conversation, AvatarImage } from '../../types/types';
 import { RootState } from '../store';
 import { Socket } from 'socket.io-client';
 import { UsersApi } from '../../requests/usersApi';
@@ -57,21 +57,29 @@ export const userConversationsSlice = createSlice({
                 userConversations: state.userConversations.filter((c) => c.cid !== action.payload)
             });
         },
-        addConversation: (state, action: PayloadAction<Conversation>) => {
+        addConversation: (state, action: PayloadAction<{
+            newConvo: Conversation,
+            uid: string
+        }>) => {
             console.log('adding conversation');
-            if (state.userConversations.map((c) => c.cid).includes(action.payload.id)) return state;
-            const lastMessage = action.payload.messages.length > 0 ? action.payload.messages[action.payload.messages.length - 1] : undefined;
+            const { newConvo, uid } = action.payload;
+            if (state.userConversations.map((c) => c.cid).includes(newConvo.id)) return state;
+            const lastMessage = newConvo.messages.length > 0 ? newConvo.messages[newConvo.messages.length - 1] : undefined;
+            let name = newConvo.name;
+            if (!newConvo.group && newConvo.participants.length > 1) {
+                name = newConvo.participants.filter((p) => p.id !== uid)[0].displayName;
+            }
             return ({
                 ...state,
                 userConversations: [
                     ...state.userConversations, 
                     {
-                        cid: action.payload.id,
-                        name: action.payload.name,
+                        cid: newConvo.id,
+                        name: newConvo.name,
                         lastMessageContent: lastMessage ? lastMessage.content : '',
                         lastMessageTime: lastMessage ? lastMessage?.timestamp : new Date(),
                         unSeenMessages: 0,
-                        avatar: action.payload.avatar
+                        avatar: newConvo.avatar
                     }
                 ]
             });
@@ -105,6 +113,33 @@ export const userConversationsSlice = createSlice({
                 requestLoading: action.payload
             });
         },
+        handleUpdatedChat: (state, action: PayloadAction<{
+            cid: string
+            newName?: string,
+            newAvatar?: AvatarImage,
+        }>) => {
+            const matches = state.userConversations.filter((c) => c.cid === action.payload.cid);
+            if (matches.length < 1) return state;
+            const updatedPreview: ConversationPreview = {
+                ...matches[0],
+                name: action.payload.newName || matches[0].name,
+                avatar: action.payload.newAvatar || matches[0].avatar
+            };
+            return {
+                ...state,
+                userConversations: [
+                    updatedPreview,
+                    ...state.userConversations.filter((c) => c.cid !== action.payload.cid)
+                ]
+            };
+        },
+        leaveConversation: (state, action: PayloadAction<string>) => {
+            const cid = action.payload;
+            return {
+                ...state,
+                userConversations: state.userConversations.filter((c) => c.cid !== cid)
+            }
+        }
     }
 });
 
@@ -117,7 +152,8 @@ export const {
     addConversation,
     readConversationMessages,
     setNeedsServerSync,
-    setRequestLoading
+    setRequestLoading,
+    handleUpdatedChat
 } = userConversationsSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
@@ -131,6 +167,32 @@ export const handleConversationDelete = (cid: string, conversationsApi: Conversa
         console.log(err);
     }
 };
+
+export const pullLatestPreviews = (usersApi: UsersApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
+    dispatch(setRequestLoading(true));
+
+    try {
+        const updatedUser = await usersApi.getCurrentUser();
+        if (updatedUser && updatedUser.conversations) {
+            dispatch(setConversations(updatedUser.conversations));
+        }
+        dispatch(setRequestLoading(false)); 
+    } catch (err) {
+        console.log(err);
+        dispatch(setRequestLoading(false));
+    }
+};
+
+export const joinConversation = (cid: string, conversationsApi: ConversationsApi, usersApi: UsersApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
+    try {
+        dispatch(setRequestLoading(true));
+        await conversationsApi.joinChat(cid);
+        dispatch(pullLatestPreviews(usersApi));
+    } catch (err) {
+        dispatch(setRequestLoading(false));
+        console.log(err);
+    }
+}
 
 export const userConversationsSelector = (state: RootState) => state.userConversationsReducer;
 export default userConversationsReducer;

@@ -11,6 +11,7 @@ import { AvatarImage, UserConversationProfile } from "../../types/types";
 import { storeConversationProfileImage, getDownloadUrl } from '../../firebase/cloudStore';
 import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
+import { selectProfileImage } from "../../utils/identityUtils";
 
 export default function ConversationProfileEditor({
     handleSave
@@ -53,7 +54,7 @@ export default function ConversationProfileEditor({
                 setImageUploading(false);
             }
         }
-    }, [user, currentConvo, selectedProfile, user]);
+    }, [user, currentConvo, selectedProfile]);
 
     const onSave = useCallback(async () => {
         if (!currentConvo || !user) return;
@@ -86,26 +87,6 @@ export default function ConversationProfileEditor({
         setNewDisplayName(currProfile?.displayName);
     }, []);
 
-    const selectImage = async () => {
-        try {
-            const res = await ImagePicker.openPicker({
-                width: 300,
-                height: 300,
-                multiple: false,
-                cropping: true,
-                mediaType: 'photo',
-                cropperCircleOverlay: true,
-                compressImageQuality: 0.8,
-                forceJpg: true,
-                includeBase64: true,
-            });
-            setSelectedProfile(res);
-            setEdited(true);
-        } catch (err) {
-            console.log(err);
-        }
-    };
-
     const editField = ({value, setValue, prompt}: {
         value: string | undefined;
         setValue: (newVal: string) => void;
@@ -130,7 +111,7 @@ export default function ConversationProfileEditor({
                 variant="underlined"
                 fontWeight='bold'
                 fontSize='sm'
-                bgColor='#f1f1f1'
+                bgColor='#fdfdfd'
                 my='6px'
             />
         </Box>
@@ -145,7 +126,7 @@ export default function ConversationProfileEditor({
                 <IconButton label='profile' size={72} />
             }
             <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'
-            onPress={selectImage} py='6px' opacity='0.7' mt='-40px'>
+            onPress={() => selectProfileImage(setSelectedProfile, setEdited)} py='6px' opacity='0.7' mt='-40px'>
                 <Text fontSize='9px' color='#f5f5f5' fontWeight='medium'>
                     Change profile image
                 </Text>
