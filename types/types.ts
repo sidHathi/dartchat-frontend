@@ -36,8 +36,10 @@ export type Message = {
     timestamp: Date;
     senderId: string;
     likes: string[];
-    replyRef?: ReplyRef
+    replyRef?: ReplyRef;
+    mentions?: UserConversationProfile[];
     senderProfile?: UserConversationProfile;
+    objectRef?: ObjectRef;
 };
 
 export type ReplyRef = {
@@ -45,6 +47,7 @@ export type ReplyRef = {
     content: string;
     senderId: string;
     media?: boolean;
+    mentions?: UserConversationProfile[];
 }
 
 export type Conversation = {
@@ -55,6 +58,8 @@ export type Conversation = {
     avatar?: AvatarImage;
     messages: Message[];
     group: boolean;
+    polls?: Poll[];
+    events?: Event[];
 };
 
 export type ConversationPreview = {
@@ -64,6 +69,7 @@ export type ConversationPreview = {
     unSeenMessages: number;
     avatar?: AvatarImage;
     lastMessageTime: Date;
+    recipientId?: string;
 };
 
 export type UserProfile = {
@@ -108,4 +114,29 @@ export type MessageMediaBuffer = {
     fileUri?: string;
     width: number;
     height: number;
+};
+
+export type Poll = {
+    id: string;
+    multiChoice: boolean;
+    question: string;
+    media?: MessageMedia[];
+    options: {
+        idx: number;
+        value: string;
+        voters: string[];
+    }[];
+    expirationDate: Date;
+    messageId?: string;
+};
+
+export type Event = {
+    id: string;
+    name: string;
+    date: Date;
+};
+
+export type ObjectRef = {
+    type: string;
+    id: string;
 };

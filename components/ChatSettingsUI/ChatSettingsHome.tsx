@@ -36,7 +36,16 @@ export default function ChatSettingsHome({
     const [nameAvatarEdited, setNameAvatarEdited] = useState(false);
     const [imageUploading, setImageUploading] = useState(false);
 
-    const convoName: string = useMemo(() => (currentConvo?.name || 'Unnamed chat'), [currentConvo])
+    const convoName: string = useMemo(() => {
+        if (currentConvo && currentConvo.group) {
+            return currentConvo.name || 'Unnamed chat'
+        } else if (currentConvo && user) {
+            const otherMembers = currentConvo.participants.filter((p) => p.id !== user.id);
+            if (otherMembers.length > 0) return otherMembers[0].displayName;
+            return 'Private Chat'
+        }
+        return 'Unnamed chat';
+    }, [currentConvo])
 
     const currConvoAvatar = useMemo(() => {
         if (currentConvo?.group) {

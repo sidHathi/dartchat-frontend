@@ -12,7 +12,7 @@ import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConvers
 import { addConversation, userConversationsSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews } from '../redux/slices/userConversationsSlice';
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
-import { autoGenGroupAvatar } from '../utils/messagingLogic';
+import { autoGenGroupAvatar } from '../utils/messagingUtils';
 
 export default function UserConversationsController({
     children
@@ -68,9 +68,6 @@ export default function UserConversationsController({
         socket.on('newMessage', async (cid: string, newMessage: SocketMessage) => {
             const message = parseSocketMessage(newMessage);
 
-            if (currentConvo === undefined) {
-                console.log('message received for undefined cc');
-            }
             const messageForCurrent: boolean = message.senderId === user?.id ||(currentConvo !== undefined && currentConvo.id === cid && currentConvo.messages.filter(m => m.id === message.id).length < 1);
             console.log(messageForCurrent);
             if (messageForCurrent) {

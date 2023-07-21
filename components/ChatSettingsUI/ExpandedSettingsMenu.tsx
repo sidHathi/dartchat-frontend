@@ -5,13 +5,15 @@ export type MenuPage = 'members' | 'search' | 'gallery' | 'polls' | 'events' | '
 
 export default function ExpandedSettingsMenu({
     currPage,
+    exit
 }: {
     currPage: MenuPage;
+    exit: () => void;
 }): JSX.Element {
     const getElem = () => {
         switch (currPage) {
             case 'members':
-                return <MembersList />;
+                return <MembersList exit={exit} />;
             default:
                 return <></>;
         }

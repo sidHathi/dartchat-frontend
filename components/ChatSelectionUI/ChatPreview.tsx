@@ -4,6 +4,7 @@ import { ConversationPreview } from '../../types/types';
 import { Box, HStack, Spacer, Pressable, Center, Heading, Text, VStack } from 'native-base';
 import { Image, Dimensions } from 'react-native';
 import ProfileImage from '../generics/ProfileImage';
+import MentionsTextDisplay from '../MessagingUI/Mentions/MentionsTextDisplay';
 
 export default function ChatPreview({
     chat,
@@ -40,9 +41,14 @@ export default function ChatPreview({
                     <Heading fontSize='md'>
                         {chat.name}
                     </Heading>
-                    <Text color='gray.700' fontSize='xs'  maxWidth={`${screenWidth - 200}px`} noOfLines={2}>
+                    <MentionsTextDisplay
+                        message={{
+                            content: chat.lastMessageContent || 'New conversation',
+                        }}
+                        color='gray.700' fontSize='xs'  maxWidth={`${screenWidth - 200}px`} noOfLines={2} />
+                    {/* <Text color='gray.700' fontSize='xs'  maxWidth={`${screenWidth - 200}px`} noOfLines={2}>
                         {chat.lastMessageContent || 'New conversation'}
-                    </Text>
+                    </Text> */}
                     <Spacer />
                 </VStack>
                 <Spacer />

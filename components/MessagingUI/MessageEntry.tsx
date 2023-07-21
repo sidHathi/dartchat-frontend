@@ -1,8 +1,8 @@
 import React, { useState, useContext, useCallback, useMemo } from "react";
-import { Box, Input, HStack } from 'native-base';
+import { Box, HStack, VStack, Spacer} from 'native-base';
 import IconButton from "../generics/IconButton";
 import { Dimensions } from "react-native";
-import { Message, MessageMedia, MessageMediaBuffer, ReplyRef } from '../../types/types';
+import { Message, MessageMedia, MessageMediaBuffer, ReplyRef, UserConversationProfile } from '../../types/types';
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import uuid from 'react-native-uuid';
 import SocketContext from "../../contexts/SocketContext";
@@ -14,19 +14,26 @@ import { useKeyboard } from "@react-native-community/hooks";
 import MediaBufferDisplay from "./MessageMediaControllers/MediaBufferDisplay";
 import { getDownloadUrl, storeMessagingImage } from "../../firebase/cloudStore";
 import Spinner from "react-native-spinkit";
+import MentionsInput from "./Mentions/MentionsInput";
+import { getMentionsFromMessage } from "../../utils/messagingUtils";
+import PollBuilder from "../Polls/PollBuilder";
 
 export default function MessageEntry({
     replyMessage, 
     onSend, 
     openContentMenu,
     selectedMediaBuffer,
-    setSelectedMediaBuffer
+    setSelectedMediaBuffer,
+    pollBuilderOpen,
+    setPollBuilderOpen
 }: {
     replyMessage?: Message,
     onSend?: () => void,
     openContentMenu?: () => void,
     selectedMediaBuffer?: MessageMediaBuffer[],
     setSelectedMediaBuffer: (mediaBuffer: MessageMediaBuffer[] | undefined) => void,
+    pollBuilderOpen: boolean,
+    setPollBuilderOpen: (newVal: boolean) => void
 }): JSX.Element {
     const screenWidth = Dimensions.get('window').width;
     const dispatch = useAppDispatch();
@@ -40,6 +47,8 @@ export default function MessageEntry({
     const [messageText, setMessageText] = useState<string | undefined>(undefined);
     const [mediaProgress, setMediaProgress] = useState<{[id: string]: number}>({});
     const [mediaLoading, setMediaLoading] = useState(false);
+
+    // Need better way to render mentions inline as the user is typing -> version of MessageText for input??
 
     const getMediaFromBuffer = useCallback(async (): Promise<MessageMedia[] | undefined> => {
         if (!selectedMediaBuffer) return;
@@ -85,7 +94,8 @@ export default function MessageEntry({
     }, [user, currentConvo])
 
     const handleMessageSend = useCallback(async () => {
-        console.log('button pressed')
+        console.log('button pressed');
+        setPollBuilderOpen(false);
         if (!user || (!messageText && !selectedMediaBuffer) || !networkConnected || socketDisconnected) {
             console.log('unable to send');
             return;
@@ -103,9 +113,10 @@ export default function MessageEntry({
                 id: replyMessage.id,
                 content: replyMessage.content,
                 senderId: replyMessage.senderId,
-                media: replyMessage.media !== undefined
+                media: replyMessage.media !== undefined,
             }
         }
+        const mentions = currentConvo && messageText ? getMentionsFromMessage(messageText, currentConvo.participants) : undefined;
         const message: Message = {
             id: id.toString(),
             content: messageText || "",
@@ -114,7 +125,8 @@ export default function MessageEntry({
             likes: [],
             replyRef,
             media: messageMedia,
-            senderProfile: userProfile
+            senderProfile: userProfile,
+            mentions: mentions
         }
         if (socket && currentConvo) {
             console.log('sending message')
@@ -128,9 +140,9 @@ export default function MessageEntry({
             console.log(currentConvo);
         }
         return;
-    }, [selectedMediaBuffer, messageText, user, networkConnected]);
+    }, [selectedMediaBuffer, messageText, user, networkConnected, currentConvo, socket]);
 
-    return <Box w='100%' paddingBottom={keyboardShown ? `${keyboardHeight + 24}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
+    return <Box w='100%' paddingBottom={keyboardShown && !pollBuilderOpen ? `${keyboardHeight + 24}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
         {
             selectedMediaBuffer &&
             <MediaBufferDisplay
@@ -140,8 +152,14 @@ export default function MessageEntry({
                 />
         }
         <HStack w='100%' space='1'>
-            <IconButton label='plus' size={32} shadow='none' color='black' onPress={openContentMenu} additionalProps={{mt: '3px'}}/>
-            <Input
+            <VStack>
+                <Spacer />
+            <IconButton label='plus' size={32} shadow='none' color='black' onPress={() => {
+                openContentMenu && openContentMenu();
+                setPollBuilderOpen(false);
+            }} additionalProps={{mb: '6px'}}/>
+            </VStack>
+            {/* <Input
                 placeholder='Message'
                 value={messageText}
                 onChangeText={setMessageText}
@@ -151,12 +169,30 @@ export default function MessageEntry({
                 paddingX='20px'
                 backgroundColor='#f5f5f5'
                 isDisabled={!networkConnected || socketDisconnected}
-            />
-            {
+            /> */}
+            <Box flex='1'>
+            <MentionsInput
+                onPressIn={() => setPollBuilderOpen(false)}
+                messageText={messageText}
+                setMessageText={setMessageText}
+                />
+            </Box>
+            <VStack>
+            <Spacer />
+            {!pollBuilderOpen && (
                 mediaLoading ? 
                 <Spinner type='CircleFlip' color="#333" size={40} /> :
-                <IconButton label='send' size={40} onPress={handleMessageSend} color="black" shadow="2" disabled={(!networkConnected || socketDisconnected)} />
+                <IconButton label='send' size={40} onPress={handleMessageSend} color="black" shadow="2" disabled={(!networkConnected || socketDisconnected)} />)
             }
+            </VStack>
         </HStack>
+        {
+            pollBuilderOpen &&
+            <Box mt='12px' w='100%'>
+                <PollBuilder 
+                    close={() => setPollBuilderOpen(false)}
+                    />
+            </Box>
+        }
     </Box>;
 }

@@ -8,7 +8,6 @@ import { Entypo } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons'; 
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { UIScreen } from "../types/types";
 import IconButton from "./generics/IconButton";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { exitConvo as reduxExit } from "../redux/slices/chatSlice";

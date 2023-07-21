@@ -25,6 +25,7 @@ export default function ChatDisplay({closeOverlays}: {
     const [selectedMediaBuffer, setSelectedMediaBuffer] = useState<MessageMediaBuffer[] | undefined>(undefined);
     const [selectedMediaMessage, setSelectedMediaMessage] = useState<Message | undefined>();
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+    const [pollBuilderOpen, setPollBuilderOpen] = useState(false);
 
     useEffect(() => {
         if (!currentConvo) return;
@@ -58,11 +59,15 @@ export default function ChatDisplay({closeOverlays}: {
                 }}>
                 <Pressable flex='1' onPress={() => {
                     if (contentMenuOpen) setContentMenuOpen(false);
+                    setPollBuilderOpen(false);
                     closeOverlays();
                 }}>
                     <MessageList
                         selectedMid={selectedMid}
-                        setSelectedMid={setSelectedMid}
+                        setSelectedMid={(newMid: string | undefined) => {
+                            setSelectedMid(newMid);
+                            setPollBuilderOpen(false);
+                        }}
                         setReplyMessage={setReplyMessage}
                         profiles={profiles}
                         closeContentMenu={() => {
@@ -93,7 +98,11 @@ export default function ChatDisplay({closeOverlays}: {
                     }
                     {
                         contentMenuOpen &&
-                        <ContentSelectionMenu setMediaBuffer={setSelectedMediaBuffer} closeMenu={() => setContentMenuOpen(false)}/>
+                        <ContentSelectionMenu 
+                            setMediaBuffer={setSelectedMediaBuffer} 
+                            closeMenu={() => setContentMenuOpen(false)}
+                            openPollBuilder={() => setPollBuilderOpen(true)}
+                            />
                     }
                     <MessageEntry 
                         replyMessage={replyMessage} 
@@ -104,6 +113,8 @@ export default function ChatDisplay({closeOverlays}: {
                         openContentMenu={() => setContentMenuOpen(!contentMenuOpen)}
                         selectedMediaBuffer={selectedMediaBuffer}
                         setSelectedMediaBuffer={setSelectedMediaBuffer}
+                        pollBuilderOpen={pollBuilderOpen}
+                        setPollBuilderOpen={setPollBuilderOpen}
                     />
                 </VStack>
             </View>

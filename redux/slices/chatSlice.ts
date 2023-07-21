@@ -1,20 +1,22 @@
 import { createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus } from "../../types/types";
+import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview } from "../../types/types";
 import { RootState } from "../store";
 import { Socket } from "socket.io-client";
 import uuid from 'react-native-uuid';
 import { ConversationsApi } from "../../requests/conversationsApi";
 import { AvatarImage } from "../../types/types";
-import { State } from "react-native-gesture-handler";
+import { findPrivateMessageIdForUser } from "../../utils/messagingUtils";
 
 const initialState: {
     currentConvo?: Conversation;
     needsScroll: boolean;
     requestLoading: boolean;
+    silent: boolean;
     requestCursor?: string;
 } = {
     needsScroll: false,
     requestLoading: false,
+    silent: false,
 };
 
 export const chatSlice = createSlice({
@@ -22,14 +24,21 @@ export const chatSlice = createSlice({
     initialState,
     reducers: {
         setConvo: (state, action: PayloadAction<Conversation | undefined>) => (
-            {...state, currentConvo: action.payload}
+            {...state, silent: false, currentConvo: action.payload}
         ),
+        setConvoSilently: (state, action: PayloadAction<Conversation>) => ({
+            ...state, 
+            currentConvo: action.payload,
+            silent: true,
+            requestCursor: undefined,
+        }),
         exitConvo: (state) => ({ ...state, currentConvo: undefined , requestLoading: false, requestCursor: undefined}),
         addMessageHistory: (state, action: PayloadAction<Message[]>) => {
             if (!state.currentConvo) return state;
             const mIds = state.currentConvo.messages.map((m) => m.id);
             return {
                 ...state,
+                silent: false,
                 currentConvo: {
                     ...state.currentConvo,
                     messages: [
@@ -45,6 +54,13 @@ export const chatSlice = createSlice({
         }>) => {
             const { socket, message } = action.payload;
             if (state.currentConvo) {
+                if (state.silent) {
+                    socket.emit('newPrivateMessage', state.currentConvo, message);
+                    return {
+                        ...state,
+                        silent: false
+                    };
+                }
                 socket.emit('newMessage', state.currentConvo.id, message);
                 return ({
                     ...state,
@@ -283,6 +299,7 @@ export const chatSlice = createSlice({
 });
 export const { 
     setConvo,
+    setConvoSilently,
     exitConvo,
     addMessageHistory,
     sendNewMessage,
@@ -472,6 +489,19 @@ export const leaveChat = (uid: string, api: ConversationsApi, onComplete?: () =>
     } catch (err) {
         console.log(err);
         setRequestLoading(false);
+    }
+};
+
+export const openPrivateMessage = (seedConvo: Conversation, uid: string, userConversations: ConversationPreview[], api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => (dispatch) => {
+    const recipientProfiles = seedConvo.participants.filter((p) => p.id !== uid);
+    if (recipientProfiles.length < 1) return;
+    const recipientProfile = recipientProfiles[0];
+    const existingCid = findPrivateMessageIdForUser(recipientProfile, userConversations);
+    if (!existingCid) {
+        dispatch(setConvoSilently(seedConvo));
+    } else {
+        dispatch(setConvo(undefined));
+        dispatch(pullConversation(existingCid, api));
     }
 };
 

@@ -66,8 +66,11 @@ export const userConversationsSlice = createSlice({
             if (state.userConversations.map((c) => c.cid).includes(newConvo.id)) return state;
             const lastMessage = newConvo.messages.length > 0 ? newConvo.messages[newConvo.messages.length - 1] : undefined;
             let name = newConvo.name;
+            let recipientId: string | undefined = undefined;
             if (!newConvo.group && newConvo.participants.length > 1) {
-                name = newConvo.participants.filter((p) => p.id !== uid)[0].displayName;
+                const otherParticipant = newConvo.participants.filter((p) => p.id !== uid)[0];
+                name = otherParticipant.displayName;
+                recipientId = otherParticipant.id;
             }
             return ({
                 ...state,
@@ -75,11 +78,12 @@ export const userConversationsSlice = createSlice({
                     ...state.userConversations, 
                     {
                         cid: newConvo.id,
-                        name: newConvo.name,
+                        name,
                         lastMessageContent: lastMessage ? lastMessage.content : '',
                         lastMessageTime: lastMessage ? lastMessage?.timestamp : new Date(),
                         unSeenMessages: 0,
-                        avatar: newConvo.avatar
+                        avatar: newConvo.avatar,
+                        recipientId
                     }
                 ]
             });

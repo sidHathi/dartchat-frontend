@@ -65,7 +65,10 @@ export default function ChatController({
             />
         </Box>
         <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor='#fefefe' borderTopLeftRadius='24px' shadow='9' zIndex='1000'>
-            {expandedSettingsOpen && expandedSettingsPage ? <ExpandedSettingsMenu currPage={expandedSettingsPage} /> :
+            {expandedSettingsOpen && expandedSettingsPage ? <ExpandedSettingsMenu currPage={expandedSettingsPage} exit={() => {
+                setExpandedSettingsOpen(false);
+                closeOverlays();
+            }} /> :
             <>
             {
                 profileMenuOpen &&

@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState, useContext } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { Heading, ScrollView, View, VStack, Box, Button, Modal, Center, Text, Icon } from 'native-base';
-import { addUsers, chatSelector, removeUser } from '../../redux/slices/chatSlice';
-import { UserConversationProfile } from '../../types/types';
+import { addUsers, chatSelector, openPrivateMessage, removeUser } from '../../redux/slices/chatSlice';
+import { Conversation, UserConversationProfile } from '../../types/types';
 import MemberCard from './MemberCard';
 import IconButton from '../generics/IconButton';
 import ProfileImage from '../generics/ProfileImage';
@@ -11,12 +11,19 @@ import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import NewMemberSearch from './NewMemberSearch';
 import useRequest from '../../requests/useRequest';
 import SocketContext from '../../contexts/SocketContext';
+import uuid from 'react-native-uuid';
+import { userConversationsSelector } from '../../redux/slices/userConversationsSlice';
 
-export default function MembersList(): JSX.Element {
+export default function MembersList({
+    exit
+}: {
+    exit: () => void;
+}): JSX.Element {
     const dispatch = useAppDispatch();
     const { user } = useContext(AuthIdentityContext);
     const { socket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
+    const { userConversations } = useAppSelector(userConversationsSelector);
     const { conversationsApi } = useRequest();
 
     const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -52,6 +59,27 @@ export default function MembersList(): JSX.Element {
     };
     
     const handleMessage = (profile: UserConversationProfile) => {
+        if (!user) return;
+        const seedConvo: Conversation = {
+            id: uuid.v4() as string,
+            settings: {},
+            participants: [
+                profile,
+                {
+                    displayName: user.displayName || user.handle || user.email,
+                    id: user.id || 'test',
+                    handle: user.handle,
+                    avatar: user.avatar,
+                    notifications: 'all',
+                }
+            ],
+            name: 'Private Message',
+            group: false,
+            avatar: profile.avatar,
+            messages: []
+        };
+        dispatch(openPrivateMessage(seedConvo, user.id, userConversations, conversationsApi));
+        exit();
         return;
     };
 

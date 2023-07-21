@@ -19,12 +19,13 @@ export default function Home(): JSX.Element {
     const { disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
 
     const [idle, setIdle] = useState(false);
-    const [timeForInactivityInSecond] = useState(1200);
+    const [timeForInactivityInSecond] = useState(300);
 
     const handleIdleUser = useCallback(() => idle === false && setIdle(true), [idle]);
 
     const handleActiveUser = useCallback(() => {
-        if (idle && socketDisconnected) resetSocket();
+        if (socketDisconnected && idle) resetSocket();
+        setIdle(false);
     }, [socketDisconnected, idle]);
     
     useEffect(() => {

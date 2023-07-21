@@ -1,5 +1,5 @@
 import { ApiService } from "./request";
-import { AvatarImage, Conversation, CursorContainer, Message, NotificationStatus, UserConversationProfile } from "../types/types";
+import { AvatarImage, Conversation, CursorContainer, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
 import { parseConversation, parseSocketMessage, addCursorToRequest } from "../utils/requestUtils";
 import { SocketMessage } from "../types/rawTypes";
 
@@ -14,12 +14,14 @@ export type ConversationsApi = {
     updateConversationDetails: (cid: string, newDetails: {
         newName?: string,
         newAvatar?: AvatarImage
-    }) => void;
+    }) => any;
     updateUserNotStatus: (cid: string, newStatus: NotificationStatus) => Promise<any | never>;
-    addConversationUsers: (cid: string, newUsers: UserConversationProfile[]) => void;
-    removeConversationUser: (cid: string, userId: string) => void;
-    leaveChat: (cid: string) => void;
-    joinChat: (cid: string) => void;
+    addConversationUsers: (cid: string, newUsers: UserConversationProfile[]) => Promise<any | never>;
+    removeConversationUser: (cid: string, userId: string) => Promise<any | never>;
+    leaveChat: (cid: string) => Promise<any | never>;
+    joinChat: (cid: string) => Promise<any | never>;
+    addPoll: (cid: string, poll: Poll) => Promise<any | never>;
+    getPoll: (cid: string, pid: string) => Promise<Poll | never>;
 }
 
 export default function conversationsApi(apiService: ApiService): ConversationsApi {
@@ -132,7 +134,6 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
             data: newProfile
         }).then((res) => {
             if (res && res.data) {
-                console.log(res);
                 return res.data;
             }
             return Promise.reject(res);
@@ -150,7 +151,6 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
             data: newDetails
         }).then((res) => {
             if (res && res.data) {
-                console.log(res);
                 return res.data;
             }
             return Promise.reject(res);
@@ -167,7 +167,6 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
             }
         }).then((res) => {
             if (res && res.data) {
-                console.log(res);
                 return res.data;
             }
             return Promise.reject(res);
@@ -182,7 +181,6 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
             data: newUsers
         }).then((res) => {
             if (res && res.data) {
-                console.log(res);
                 return res.data;
             }
             return Promise.reject(res);
@@ -199,7 +197,6 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
             }
         }).then((res) => {
             if (res && res.data) {
-                console.log(res);
                 return res.data;
             }
             return Promise.reject(res);
@@ -213,7 +210,6 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
             url: `/conversations/${cid}/leave`
         }).then((res) => {
             if (res && res.data) {
-                console.log(res);
                 return res.data;
             }
             return Promise.reject(res);
@@ -227,8 +223,34 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
             url: `/conversations/${cid}/join`
         }).then((res) => {
             if (res && res.data) {
-                console.log(res);
                 return res.data;
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
+    const addPoll = (cid: string, poll: Poll) => {
+        return apiService.request({
+            method: 'POST',
+            url: `/conversations/${cid}/addPoll`,
+            data: poll
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
+    const getPoll = (cid: string, pid: string) => {
+        return apiService.request({
+            method: 'GET',
+            url: `/conversations/${cid}/polls/${pid}`
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data as Poll;
             }
             return Promise.reject(res);
         })
@@ -248,6 +270,8 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         addConversationUsers,
         removeConversationUser,
         leaveChat,
-        joinChat
+        joinChat,
+        addPoll,
+        getPoll
     }
 }

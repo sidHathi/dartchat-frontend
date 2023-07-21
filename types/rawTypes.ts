@@ -1,4 +1,4 @@
-import { ReplyRef, UserConversationProfile } from "./types";
+import { ReplyRef, UserConversationProfile, Poll, Event, ObjectRef } from "./types";
 
 export type ServerConversationPreview = {
     cid: string;
@@ -8,6 +8,9 @@ export type ServerConversationPreview = {
     avatar?: any;
     lastMessageTime: string;
     group: boolean;
+    recipientId?: string;
+    polls?: Poll[];
+    events?: Event[];
 };
 
 export type RawUserData = {
@@ -29,6 +32,7 @@ export type SocketMessage = {
     likes: string[];
     replyRef?: ReplyRef;
     senderProfile?: UserConversationProfile;
+    objectRef?: ObjectRef;
 };
 
 export type RawConversation = {

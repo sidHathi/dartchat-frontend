@@ -1,18 +1,20 @@
 import React from 'react';
 import { Box, Text, VStack, HStack, Center, Menu } from 'native-base';
 import { MessageMediaBuffer } from '../../types/types';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import uuid from 'react-native-uuid';
 
-type MenuItem = 'photo' | 'camera';
+type MenuItem = 'photo' | 'camera' | 'poll';
 
 export default function ContentSelectionMenu({
     setMediaBuffer,
+    openPollBuilder,
     closeMenu
 }:{
     setMediaBuffer: (buffers: MessageMediaBuffer[] | undefined) => void;
+    openPollBuilder : () => void;
     closeMenu: () => void;
 }): JSX.Element {
 
@@ -49,8 +51,10 @@ export default function ContentSelectionMenu({
                 return 'Select a photo';
             case 'camera':
                 return 'Take a photo';
+            case 'poll':
+                return 'Create a poll';
             default:
-                return <></>
+                return ''
         }
     }
 
@@ -60,6 +64,8 @@ export default function ContentSelectionMenu({
                 return <MaterialIcons name="photo-library" size={24} color="black" />
             case 'camera':
                 return <MaterialIcons name="camera-alt" size={24} color="black" />
+            case 'poll':
+                return <MaterialCommunityIcons name="poll" size={24} color="black" />
             default:
                 return <></>
         }
@@ -86,8 +92,12 @@ export default function ContentSelectionMenu({
         </TouchableOpacity>
     );
 
-    return <Box w='100%' bgColor='rgba(250, 250, 250, 0.7)' pb='36px' pt='6px' mb='-36px' mt='-118px'>
+    return <Box w='100%' bgColor='rgba(250, 250, 250, 0.8)' pb='36px' pt='6px' mb='-48px' mt='-152px'>
         <VStack space={1} pb='12px'>
+            <MenuItem menuItem='poll' onPress={() => {
+                openPollBuilder()
+                closeMenu()
+            }} />
             <MenuItem menuItem='camera' onPress={() => {return;}} />
             <MenuItem menuItem='photo' onPress={handleImageSelect} />
         </VStack>

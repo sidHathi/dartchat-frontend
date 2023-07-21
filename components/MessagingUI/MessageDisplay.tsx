@@ -8,6 +8,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import ProfileImage from "../generics/ProfileImage";
 import MessageMediaDisplay from "./MessageMediaControllers/MessageMediaDisplay";
 import { FontAwesome5 } from '@expo/vector-icons';
+import MessageTextDisplay from "./Mentions/MentionsTextDisplay";
+import PollDisplay from "../Polls/PollDisplay";
 
 export default function MessageDisplay({ 
         message,
@@ -82,7 +84,8 @@ export default function MessageDisplay({
                             </HStack>
                         }
                         {message.content &&
-                        <Text fontSize='xs' noOfLines={1} isTruncated>{message.replyRef.content}</Text>
+                        // <Text fontSize='xs' noOfLines={1} isTruncated>{message.replyRef.content}</Text>
+                        <MessageTextDisplay message={message.replyRef} fontSize='xs' noOfLines={1} isTruncated />
                         }
                     </VStack>
                 </Box>
@@ -106,6 +109,11 @@ export default function MessageDisplay({
             }
             <VStack maxWidth={`${screenWidth - 110} px`} overflowX='visible'>
                 <Pressable onPress={handleMessageTap}>
+                    {
+                        message.objectRef && message.objectRef.type === 'poll' ?
+                        <Box w={`${screenWidth - 110} px`}>
+                            <PollDisplay pid={message.objectRef.id} />
+                        </Box> :
                     <Box paddingX='18px' paddingY='4px' borderRadius='12px' backgroundColor={isSystemMessage ? 'transparent' : '#f5f5f5'} w='100%' margin='0px' shadow={
                         (selected && !isSystemMessage) ? '3' : 'none'
                     } overflowX='visible'>
@@ -120,9 +128,11 @@ export default function MessageDisplay({
                                     handleMediaSelect && handleMediaSelect(message, index);
                                 }}/>
                             }
-                            <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'}>{message.content}</Text>
+                            {/* <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'}>{message.content}</Text> */}
+                            <MessageTextDisplay message={message} fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} />
                         </VStack>
                     </Box>
+                    }
                 </Pressable>
                 {
                     selected &&

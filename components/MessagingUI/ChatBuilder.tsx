@@ -7,14 +7,14 @@ import { View, Box, Button, Center, Heading, Text, Input, VStack, HStack, Pressa
 import { ScrollView, Image } from "react-native";
 import uuid from 'react-native-uuid';
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { addConversation } from "../../redux/slices/userConversationsSlice";
-import { setConvo } from "../../redux/slices/chatSlice";
+import { addConversation, userConversationsSelector } from "../../redux/slices/userConversationsSlice";
+import { openPrivateMessage, setConvo } from "../../redux/slices/chatSlice";
 import ConversationsContext from "../../contexts/ConversationsContext";
 import SocketContext from "../../contexts/SocketContext";
 import useRequest from "../../requests/useRequest";
 import { getDownloadUrl } from "../../firebase/cloudStore";
 import ProfileImage from "../generics/ProfileImage";
-import { autoGenGroupAvatar } from "../../utils/messagingLogic";
+import { autoGenGroupAvatar } from "../../utils/messagingUtils";
 
 export default function ChatBuilder({exit}: {
         exit: () => void
@@ -23,6 +23,7 @@ export default function ChatBuilder({exit}: {
     const { user } = useContext(AuthIdentityContext);
     const dispatch = useAppDispatch();
     const { conversationsApi } = useRequest();
+    const { userConversations } = useAppSelector(userConversationsSelector);
 
     const [isGroup, setIsGroup] = useState(false);
     const [userQuery, setUserQuery] = useState<string | undefined>(undefined);
@@ -76,13 +77,17 @@ export default function ChatBuilder({exit}: {
         };
 
         console.log('creating chat');
-        dispatch(setConvo(newConvo));
-        if (socket && user) {
-            socket.emit('newConversation', newConvo);
-            dispatch(addConversation({
-                newConvo,
-                uid: user.id
-            }));
+        if (isGroup) {
+            dispatch(setConvo(newConvo));
+            if (socket && user) {
+                socket.emit('newConversation', newConvo);
+                dispatch(addConversation({
+                    newConvo,
+                    uid: user.id
+                }));
+            }
+        } else if (user) {
+            dispatch(openPrivateMessage(newConvo, user.id, userConversations, conversationsApi));
         }
     };
 

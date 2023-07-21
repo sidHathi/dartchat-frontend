@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 
-import { Center, Flex, Heading, VStack, Pressable, Text, View,  } from "native-base";
+import { Center, Flex, Heading, VStack, Pressable, Text, View, Box } from "native-base";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import { SvgXml } from "react-native-svg";
@@ -46,6 +46,7 @@ export default function AuthUIController(): JSX.Element {
                 <Center marginBottom='8px'>
                     <Text color='white' fontSize='xs'>or</Text>
                 </Center>
+                <Box mb='16px' borderRadius='30px'>
                 <FontAwesome.Button 
                     name="google" 
                     onPress={googleSignIn}
@@ -53,12 +54,12 @@ export default function AuthUIController(): JSX.Element {
                         backgroundColor:'#555',
                         borderRadius: 30,
                         color: 'f5f5f5',
-                        marginBottom: 16
                     }}
                     backgroundColor='transparent'
                 >
                      <Text color='#f5f5f5'>Sign in with Google</Text>
                 </FontAwesome.Button>
+                </Box>
                 {/* <GoogleSigninButton
                   size={GoogleSigninButton.Size.Wide}
                   color={GoogleSigninButton.Color.Light}

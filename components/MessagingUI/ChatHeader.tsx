@@ -38,6 +38,12 @@ export default function ChatHeader({
     const chatAvatar = useMemo(() => {
         if (!currentConvo || !userConversations) return;
 
+        if (!currentConvo.group && user) {
+            const otherParticipants = currentConvo.participants.filter((p) => p.id !== user.id);
+            if (otherParticipants.length > 0 && otherParticipants[0].avatar) {
+                return <ProfileImage imageUri={otherParticipants[0].avatar.tinyUri}  size={30} />
+            }
+        }
         const matchingUserConvos = userConversations.filter((p) => p.cid === currentConvo.id);
         if (matchingUserConvos.length < 1 || !matchingUserConvos[0].avatar) {
             return <IconButton label='profile' size={30} />
