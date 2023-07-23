@@ -10,6 +10,8 @@ import MessageMediaDisplay from "./MessageMediaControllers/MessageMediaDisplay";
 import { FontAwesome5 } from '@expo/vector-icons';
 import MessageTextDisplay from "./Mentions/MentionsTextDisplay";
 import PollDisplay from "../Polls/PollDisplay";
+import { getDateTimeString } from "../../utils/messagingUtils";
+import EventDisplay from "../EventsUI/EventDisplay";
 
 export default function MessageDisplay({ 
         message,
@@ -110,10 +112,21 @@ export default function MessageDisplay({
             <VStack maxWidth={`${screenWidth - 110} px`} overflowX='visible'>
                 <Pressable onPress={handleMessageTap}>
                     {
-                        message.objectRef && message.objectRef.type === 'poll' ?
-                        <Box w={`${screenWidth - 110} px`}>
-                            <PollDisplay pid={message.objectRef.id} />
-                        </Box> :
+                        message.objectRef && ['poll', 'event'].includes(message.objectRef.type) ?
+                            message.objectRef.type === 'poll' ?
+                            <Box w={`${screenWidth - 110} px`} shadow={
+                                (selected && !isSystemMessage) ? '3' : 'none'
+                            }>
+                                <PollDisplay pid={message.objectRef.id} />
+                            </Box> :
+                            message.objectRef.type === 'event' ?
+                            <Box w={`${screenWidth - 110} px`} shadow={
+                                (selected && !isSystemMessage) ? '3' : 'none'
+                            }>
+                                <EventDisplay eid={message.objectRef.id} selected={selected} />
+                            </Box> :
+                            <></>
+                        :
                     <Box paddingX='18px' paddingY='4px' borderRadius='12px' backgroundColor={isSystemMessage ? 'transparent' : '#f5f5f5'} w='100%' margin='0px' shadow={
                         (selected && !isSystemMessage) ? '3' : 'none'
                     } overflowX='visible'>
@@ -139,7 +152,7 @@ export default function MessageDisplay({
                     <VStack space={1} py='6px'>
                         <Center w='100%'>
                             <Text fontSize='xs' color='gray.500'>
-                                Sent {message && message.timestamp && message.timestamp.toLocaleTimeString()}
+                                Sent {message && message.timestamp && getDateTimeString(message.timestamp)}
                             </Text>
                         </Center>
                         {message.likes.length > 0 &&

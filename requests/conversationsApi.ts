@@ -1,6 +1,6 @@
 import { ApiService } from "./request";
-import { AvatarImage, Conversation, CursorContainer, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
-import { parseConversation, parseSocketMessage, addCursorToRequest } from "../utils/requestUtils";
+import { AvatarImage, CalendarEvent, Conversation, CursorContainer, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
+import { parseConversation, parseSocketMessage, addCursorToRequest, parseEvent } from "../utils/requestUtils";
 import { SocketMessage } from "../types/rawTypes";
 
 export type ConversationsApi = {
@@ -22,6 +22,8 @@ export type ConversationsApi = {
     joinChat: (cid: string) => Promise<any | never>;
     addPoll: (cid: string, poll: Poll) => Promise<any | never>;
     getPoll: (cid: string, pid: string) => Promise<Poll | never>;
+    addEvent: (cid: string, event: CalendarEvent) => Promise<any | never>;
+    getEvent: (cid: string, eid: string) => Promise<CalendarEvent | never>;
 }
 
 export default function conversationsApi(apiService: ApiService): ConversationsApi {
@@ -257,6 +259,33 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
+    const addEvent = (cid: string, event: CalendarEvent) => {
+        return apiService.request({
+            method: 'POST',
+            url: `/conversations/${cid}/addEvent`,
+            data: event
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
+    const getEvent = (cid: string, eid: string) => {
+        return apiService.request({
+            method: 'GET',
+            url: `/conversations/${cid}/events/${eid}`
+        }).then((res) => {
+            if (res && res.data) {
+                return parseEvent(res.data) as CalendarEvent;
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
     return {
         getConversation,
         getConversationInfo,
@@ -272,6 +301,8 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         leaveChat,
         joinChat,
         addPoll,
-        getPoll
+        getPoll,
+        addEvent,
+        getEvent
     }
 }

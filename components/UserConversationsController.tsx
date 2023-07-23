@@ -56,7 +56,7 @@ export default function UserConversationsController({
             }));
             socket.emit('joinRoom', userConversations.map(c => c.cid));
         });
-    }, [userConversations]);
+    }, [userConversations, socket, user]);
 
     useEffect(() => {
         if (socket) socket.emit('joinRoom', userConversations.map(c => c.cid));
@@ -81,7 +81,7 @@ export default function UserConversationsController({
                 messageForCurrent
             }));
         });
-    }, [currentConvo]);
+    }, [currentConvo, socket, user]);
 
     useEffect(() => {
         if (!socket) return;
@@ -111,7 +111,7 @@ export default function UserConversationsController({
                 event
             }));
         });
-    }, [currentConvo]);
+    }, [currentConvo, socket]);
 
     useEffect(() => {
         if (!socket) return;

@@ -126,7 +126,7 @@ export default function PollDisplay({
     const handleNewResponse = useCallback((selectedIndices: number[]) => {
         if (!socket || !currentConvo || !poll || !user) return;
 
-        socket.emit('pollResponse', currentConvo.id, user.id, poll.id, selectedIndices);
+        socket.emit('pollResponse', currentConvo.id, poll.id, selectedIndices);
         const newOpts = poll.options.map(opt => {
             if (selectedIndices.includes(opt.idx)) {
                 return {

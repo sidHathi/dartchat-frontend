@@ -103,7 +103,7 @@ export default function PollBuilder({
         const messageId = uuid.v4().toString();
         const message: Message = {
             id: messageId,
-            content: "",
+            content: `Poll: ${question}`,
             timestamp: new Date(),
             senderId: user.id,
             likes: [],
@@ -159,6 +159,13 @@ export default function PollBuilder({
         setOptions([...options, '']);
     }, [options]);
 
+    const removeOption = useCallback((idx: number) => {
+        if (options.length < 3) return;
+        const newOptions = options
+            .filter((_, i) => i !== idx);
+        setOptions(newOptions);
+    }, [options])
+
     return <View h={`${0.8*screenHeight - 90}px`} flexShrink='0' w='100%'>
         <Box w='96%' m='auto' h='100%' flexShrink='0'>
             <Heading fontSize='lg'>
@@ -208,10 +215,10 @@ export default function PollBuilder({
                         setValue: (newVal: string) => setOption(idx, newVal),
                         prompt: `Option ${idx + 1}`
                     })}
-                    <Spacer />
                     <IconButton icon={
-                        <Icon as={Ionicons} name='remove-circle' size='md' />}
-                        borderRadius='full' />
+                        <Icon as={Ionicons} name='remove-circle' size='md' color='dark.300'/>}
+                        borderRadius='full' ml='-40px' mt='18px'
+                        onPress={() => removeOption(idx)}/>
                     </HStack>
                 })
             }

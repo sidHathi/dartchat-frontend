@@ -26,6 +26,7 @@ export default function ChatDisplay({closeOverlays}: {
     const [selectedMediaMessage, setSelectedMediaMessage] = useState<Message | undefined>();
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
     const [pollBuilderOpen, setPollBuilderOpen] = useState(false);
+    const [eventBuilderOpen, setEventBuilderOpen] = useState(false);
 
     useEffect(() => {
         if (!currentConvo) return;
@@ -60,6 +61,7 @@ export default function ChatDisplay({closeOverlays}: {
                 <Pressable flex='1' onPress={() => {
                     if (contentMenuOpen) setContentMenuOpen(false);
                     setPollBuilderOpen(false);
+                    setEventBuilderOpen(false);
                     closeOverlays();
                 }}>
                     <MessageList
@@ -67,6 +69,7 @@ export default function ChatDisplay({closeOverlays}: {
                         setSelectedMid={(newMid: string | undefined) => {
                             setSelectedMid(newMid);
                             setPollBuilderOpen(false);
+                            setEventBuilderOpen(false);
                         }}
                         setReplyMessage={setReplyMessage}
                         profiles={profiles}
@@ -102,6 +105,7 @@ export default function ChatDisplay({closeOverlays}: {
                             setMediaBuffer={setSelectedMediaBuffer} 
                             closeMenu={() => setContentMenuOpen(false)}
                             openPollBuilder={() => setPollBuilderOpen(true)}
+                            openEventBuilder={() => setEventBuilderOpen(true)}
                             />
                     }
                     <MessageEntry 
@@ -115,6 +119,8 @@ export default function ChatDisplay({closeOverlays}: {
                         setSelectedMediaBuffer={setSelectedMediaBuffer}
                         pollBuilderOpen={pollBuilderOpen}
                         setPollBuilderOpen={setPollBuilderOpen}
+                        eventBuilderOpen={eventBuilderOpen}
+                        setEventBuilderOpen={setEventBuilderOpen}
                     />
                 </VStack>
             </View>

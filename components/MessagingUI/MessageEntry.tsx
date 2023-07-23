@@ -17,6 +17,7 @@ import Spinner from "react-native-spinkit";
 import MentionsInput from "./Mentions/MentionsInput";
 import { getMentionsFromMessage } from "../../utils/messagingUtils";
 import PollBuilder from "../Polls/PollBuilder";
+import EventBuilder from "../EventsUI/EventBuilder";
 
 export default function MessageEntry({
     replyMessage, 
@@ -25,7 +26,9 @@ export default function MessageEntry({
     selectedMediaBuffer,
     setSelectedMediaBuffer,
     pollBuilderOpen,
-    setPollBuilderOpen
+    setPollBuilderOpen,
+    eventBuilderOpen,
+    setEventBuilderOpen,
 }: {
     replyMessage?: Message,
     onSend?: () => void,
@@ -33,7 +36,9 @@ export default function MessageEntry({
     selectedMediaBuffer?: MessageMediaBuffer[],
     setSelectedMediaBuffer: (mediaBuffer: MessageMediaBuffer[] | undefined) => void,
     pollBuilderOpen: boolean,
-    setPollBuilderOpen: (newVal: boolean) => void
+    setPollBuilderOpen: (newVal: boolean) => void,
+    eventBuilderOpen: boolean,
+    setEventBuilderOpen: (newVal: boolean) => void,
 }): JSX.Element {
     const screenWidth = Dimensions.get('window').width;
     const dispatch = useAppDispatch();
@@ -96,6 +101,7 @@ export default function MessageEntry({
     const handleMessageSend = useCallback(async () => {
         console.log('button pressed');
         setPollBuilderOpen(false);
+        setEventBuilderOpen(false);
         if (!user || (!messageText && !selectedMediaBuffer) || !networkConnected || socketDisconnected) {
             console.log('unable to send');
             return;
@@ -142,7 +148,7 @@ export default function MessageEntry({
         return;
     }, [selectedMediaBuffer, messageText, user, networkConnected, currentConvo, socket]);
 
-    return <Box w='100%' paddingBottom={keyboardShown && !pollBuilderOpen ? `${keyboardHeight + 24}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
+    return <Box w='100%' paddingBottom={keyboardShown && !eventBuilderOpen && !pollBuilderOpen ? `${keyboardHeight + 24}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
         {
             selectedMediaBuffer &&
             <MediaBufferDisplay
@@ -157,6 +163,7 @@ export default function MessageEntry({
             <IconButton label='plus' size={32} shadow='none' color='black' onPress={() => {
                 openContentMenu && openContentMenu();
                 setPollBuilderOpen(false);
+                setEventBuilderOpen(false);
             }} additionalProps={{mb: '6px'}}/>
             </VStack>
             {/* <Input
@@ -172,14 +179,17 @@ export default function MessageEntry({
             /> */}
             <Box flex='1'>
             <MentionsInput
-                onPressIn={() => setPollBuilderOpen(false)}
+                onPressIn={() => {
+                    setPollBuilderOpen(false)
+                    setEventBuilderOpen(false)
+                }}
                 messageText={messageText}
                 setMessageText={setMessageText}
                 />
             </Box>
             <VStack>
             <Spacer />
-            {!pollBuilderOpen && (
+            {!pollBuilderOpen && !eventBuilderOpen && (
                 mediaLoading ? 
                 <Spinner type='CircleFlip' color="#333" size={40} /> :
                 <IconButton label='send' size={40} onPress={handleMessageSend} color="black" shadow="2" disabled={(!networkConnected || socketDisconnected)} />)
@@ -191,6 +201,14 @@ export default function MessageEntry({
             <Box mt='12px' w='100%'>
                 <PollBuilder 
                     close={() => setPollBuilderOpen(false)}
+                    />
+            </Box>
+        }
+        {
+            eventBuilderOpen &&
+            <Box mt='12px' w='100%'>
+                <EventBuilder 
+                    close={() => setEventBuilderOpen(false)}
                     />
             </Box>
         }

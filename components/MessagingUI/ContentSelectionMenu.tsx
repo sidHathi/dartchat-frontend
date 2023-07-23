@@ -6,15 +6,17 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import uuid from 'react-native-uuid';
 
-type MenuItem = 'photo' | 'camera' | 'poll';
+type MenuItem = 'photo' | 'camera' | 'poll' | 'event';
 
 export default function ContentSelectionMenu({
     setMediaBuffer,
     openPollBuilder,
+    openEventBuilder,
     closeMenu
 }:{
     setMediaBuffer: (buffers: MessageMediaBuffer[] | undefined) => void;
     openPollBuilder : () => void;
+    openEventBuilder: () => void;
     closeMenu: () => void;
 }): JSX.Element {
 
@@ -53,6 +55,8 @@ export default function ContentSelectionMenu({
                 return 'Take a photo';
             case 'poll':
                 return 'Create a poll';
+            case 'event':
+                return 'Create an event';
             default:
                 return ''
         }
@@ -64,6 +68,8 @@ export default function ContentSelectionMenu({
                 return <MaterialIcons name="photo-library" size={24} color="black" />
             case 'camera':
                 return <MaterialIcons name="camera-alt" size={24} color="black" />
+            case 'event':
+                return <MaterialIcons name="event" size={24} color="black" />
             case 'poll':
                 return <MaterialCommunityIcons name="poll" size={24} color="black" />
             default:
@@ -94,6 +100,10 @@ export default function ContentSelectionMenu({
 
     return <Box w='100%' bgColor='rgba(250, 250, 250, 0.8)' pb='36px' pt='6px' mb='-48px' mt='-152px'>
         <VStack space={1} pb='12px'>
+            <MenuItem menuItem='event' onPress={() => {
+                openEventBuilder()
+                closeMenu()
+            }} />
             <MenuItem menuItem='poll' onPress={() => {
                 openPollBuilder()
                 closeMenu()

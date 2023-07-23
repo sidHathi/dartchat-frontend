@@ -5,6 +5,7 @@ import { Box, HStack, Spacer, Pressable, Center, Heading, Text, VStack } from 'n
 import { Image, Dimensions } from 'react-native';
 import ProfileImage from '../generics/ProfileImage';
 import MentionsTextDisplay from '../MessagingUI/Mentions/MentionsTextDisplay';
+import { getTimeString } from '../../utils/messagingUtils';
 
 export default function ChatPreview({
     chat,
@@ -14,7 +15,7 @@ export default function ChatPreview({
     onSelect : () => void
 }) : JSX.Element {
     const screenWidth = Dimensions.get('window').width;
-    const lastMessageTimeStr = (chat.lastMessageTime).toLocaleTimeString();
+    const lastMessageTimeStr = getTimeString(chat.lastMessageTime);
 
     return <Pressable onPress={onSelect}>
         <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='7' style={{shadowOpacity: 0.07}} mx='12px'>

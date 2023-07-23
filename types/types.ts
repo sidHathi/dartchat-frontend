@@ -59,7 +59,7 @@ export type Conversation = {
     messages: Message[];
     group: boolean;
     polls?: Poll[];
-    events?: Event[];
+    events?: CalendarEvent[];
 };
 
 export type ConversationPreview = {
@@ -130,10 +130,13 @@ export type Poll = {
     messageId?: string;
 };
 
-export type Event = {
+export type CalendarEvent = {
     id: string;
     name: string;
     date: Date;
+    reminders: Date[];
+    going: string[];
+    notGoing: string[];
 };
 
 export type ObjectRef = {

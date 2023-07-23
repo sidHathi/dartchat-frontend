@@ -1,4 +1,4 @@
-import { ReplyRef, UserConversationProfile, Poll, Event, ObjectRef } from "./types";
+import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia } from "./types";
 
 export type ServerConversationPreview = {
     cid: string;
@@ -7,10 +7,7 @@ export type ServerConversationPreview = {
     unSeenMessages: number;
     avatar?: any;
     lastMessageTime: string;
-    group: boolean;
     recipientId?: string;
-    polls?: Poll[];
-    events?: Event[];
 };
 
 export type RawUserData = {
@@ -26,7 +23,7 @@ export type RawUserData = {
 export type SocketMessage = {
     id: string;
     content: string;
-    media?: string[];
+    media?: MessageMedia[];
     timestamp: string;
     senderId: string;
     likes: string[];
@@ -42,4 +39,30 @@ export type RawConversation = {
     name: string;
     avatar?: any;
     messages: SocketMessage[];
+    polls?: Poll[];
+    group: boolean;
+    events?: CalendarEvent[];
+}
+
+export type RawCalendarEvent = {
+    id: string;
+    name: string;
+    date: string;
+    reminders: Date[];
+    going: string[];
+    notGoing: string[];
+};
+
+export type RawPoll = {
+    id: string;
+    multiChoice: boolean;
+    question: string;
+    media?: MessageMedia[];
+    options: {
+        idx: number;
+        value: string;
+        voters: string[];
+    }[];
+    expirationDate: string;
+    messageId?: string;
 }
