@@ -6,7 +6,7 @@ import { Entypo } from '@expo/vector-icons';
 
 import useRequest from "../../requests/useRequest";
 import { UserConversationProfile, UserProfile } from "../../types/types";
-import ProfileImage from "../generics/ProfileImage";
+import IconImage from "../generics/IconImage";
 
 const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => <Box w='100%' bgColor={searchSelected ? '#fefefe': 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px' style={{shadowOpacity: 0.12}}>
         {children}
@@ -135,7 +135,7 @@ export default function ProfilesSearch({
             <HStack px='0' w='100%' space={3}>
                 {
                 profile.avatar ?
-                <ProfileImage 
+                <IconImage 
                     imageUri={profile.avatar.mainUri}
                     size={36}
                     shadow='9'

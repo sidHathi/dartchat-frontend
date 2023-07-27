@@ -4,7 +4,7 @@ import FastImage from "react-native-fast-image";
 import { Box } from "native-base";
 import { TouchableOpacity } from "react-native-gesture-handler";
 
-export default function ProfileImage({
+export default function IconImage({
     imageUri,
     size,
     shadow,
@@ -20,7 +20,7 @@ export default function ProfileImage({
     return (
         onPress ?
             <TouchableOpacity onPress={onPress} activeOpacity={0.5}>
-                <Box w={`${size}px`} h={`${size}px`} borderRadius={size} shadow={shadow} bgColor='rgba(0, 0, 0, 0.1)' {...nbProps}>
+                <Box w={`${size}px`} h={`${size}px`} borderRadius={size} shadow={shadow} {...nbProps}>
                     <FastImage source={{
                         uri: imageUri,
                         priority: FastImage.priority.high
@@ -33,7 +33,7 @@ export default function ProfileImage({
                 </Box>
             </TouchableOpacity> :
 
-            <Box w={`${size}px`} h={`${size}px`} borderRadius={size} shadow={shadow} bgColor='rgba(0, 0, 0, 0.1)' {...nbProps}>
+            <Box w={`${size}px`} h={`${size}px`} borderRadius={size} shadow={shadow} {...nbProps}>
                 <FastImage source={{
                     uri: imageUri,
                     priority: FastImage.priority.high

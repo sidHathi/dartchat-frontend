@@ -1,21 +1,22 @@
 import React, { useState, useMemo, useCallback, useContext } from 'react';
-import { View, Center, Box, Button, Text, Heading, HStack, Input } from 'native-base';
-import ProfileImage from '../generics/ProfileImage';
+import { View, Center, Box, Button, Text, Heading, HStack, Input, Modal, Icon } from 'native-base';
+import IconImage from '../generics/IconImage';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { chatSelector, updateConversationDetails } from '../../redux/slices/chatSlice';
+import { chatSelector, exitConvo, leaveChat, updateConversationDetails } from '../../redux/slices/chatSlice';
 import IconButton from '../generics/IconButton';
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
 import { selectProfileImage } from '../../utils/identityUtils';
 import { getDownloadUrl, storeConversationAvatar } from '../../firebase/cloudStore';
 import { AvatarImage } from '../../types/types';
 import useRequest from '../../requests/useRequest';
-import { handleUpdatedChat } from '../../redux/slices/userConversationsSlice';
+import { handleUpdatedChat, handleUserConvoLeave } from '../../redux/slices/userDataSlice';
 import Spinner from 'react-native-spinkit';
 import SocketContext from '../../contexts/SocketContext';
 import ButtonGrid, { ButtonLabel } from './ButtonGrid';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import { ChatSettingsPanel } from './ChatSettingsController';
 import { MenuPage } from './ExpandedSettingsMenu';
+import UIContext from '../../contexts/UIContext';
 
 export default function ChatSettingsHome({
     setSettingsPanel,
@@ -29,12 +30,24 @@ export default function ChatSettingsHome({
     const { socket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
+    const { navSwitch } = useContext(UIContext)
 
     const [nameAvatarEditing, setNameAvatarEditing] = useState(false);
     const [newName, setNewName] = useState<string | undefined>();
     const [newAvatar, setNewAvatar] = useState<Image | undefined>();
     const [nameAvatarEdited, setNameAvatarEdited] = useState(false);
     const [imageUploading, setImageUploading] = useState(false);
+    const [confirmLeaveModalOpen, setConfirmLeaveModalOpen] = useState(false);
+
+    const confirmUserLeaves = useCallback(() => {
+        if (!user || !currentConvo || !socket) return;
+        dispatch(leaveChat(user.id, conversationsApi, () => {
+            dispatch(handleUserConvoLeave(currentConvo.id));
+            socket.emit('removeConversationUser', currentConvo.id, user.id);
+            dispatch(exitConvo());
+            navSwitch('conversations');
+        }));
+    }, [socket, dispatch, user, conversationsApi, currentConvo]);
 
     const convoName: string = useMemo(() => {
         if (currentConvo && currentConvo.group) {
@@ -50,16 +63,16 @@ export default function ChatSettingsHome({
     const currConvoAvatar = useMemo(() => {
         if (currentConvo?.group) {
             if (newAvatar?.sourceURL || currentConvo?.avatar) {
-                return <ProfileImage imageUri={newAvatar ? `file://${newAvatar.path}` : currentConvo?.avatar?.mainUri || ''} shadow='9' size={100} />;
+                return <IconImage imageUri={newAvatar ? `file://${newAvatar.path}` : currentConvo?.avatar?.mainUri || ''} shadow='9' size={100} />;
             }
-            return <IconButton size={100} label='profile' />;
+            return <IconButton size={100} label='profile' shadow='9' />;
         } else if (currentConvo && user) {
             const otherProfiles = currentConvo.participants.filter((p) => p.id !== user.id);
             if (otherProfiles.length > 0 && otherProfiles[0].avatar) {
-                return <ProfileImage imageUri={otherProfiles[0].avatar.mainUri || ''} shadow='9' size={100} />;
+                return <IconImage imageUri={otherProfiles[0].avatar.mainUri || ''} shadow='9' size={100} />;
             }
         }
-        return <IconButton size={100} label='profile' />;
+        return <IconButton size={100} label='profile' shadow='9' />;
     }, [currentConvo, newAvatar]);
 
     const selectImage = async () => {
@@ -74,6 +87,20 @@ export default function ChatSettingsHome({
             case 'members':
                 openExpandedView('members');
                 break;
+            case 'like button':
+                setSettingsPanel('likeButton');
+                break;
+            case 'gallery':
+                openExpandedView('gallery');
+                break;
+            case 'polls':
+                openExpandedView('polls');
+                break;
+            case 'events':
+                openExpandedView('events');
+                break;
+            case 'leave':
+                setConfirmLeaveModalOpen(true);
             default:
                 return;
         }
@@ -197,5 +224,27 @@ export default function ChatSettingsHome({
         </Center>
 
         <ButtonGrid onButtonSelect={onButtonSelect}/>
+
+        <Modal isOpen={confirmLeaveModalOpen} onClose={() => setConfirmLeaveModalOpen(false)}>
+            <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px'>
+                <Modal.CloseButton />
+                <Box w='100%' py='24px'>
+                    <Heading>
+                        Confirm
+                    </Heading>
+                    <Text fontSize='xs' textAlign='center' mx='auto' mt='12px'>
+                        By selecting confirm you will exit the chat.
+                    </Text>
+                </Box>
+                <Button colorScheme='dark' variant='subtle' w='100%' borderRadius='24px' mb='6px' onPress={confirmUserLeaves}>
+                    Confirm
+                </Button>
+                <Button colorScheme='dark' variant='ghost' w='100%' borderRadius='24px' mb='6px' onPress={() => setConfirmLeaveModalOpen(false)}>
+                    <Text>
+                    Cancel
+                    </Text>
+                </Button>
+            </Modal.Content>
+        </Modal>
     </Box>
 }

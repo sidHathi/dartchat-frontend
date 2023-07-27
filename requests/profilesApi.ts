@@ -3,7 +3,8 @@ import { UserProfile } from "../types/types";
 
 export type ProfilesApi = {
     getProfile: (id: string) => Promise<UserProfile | never>;
-    findProfile: (id: string) => Promise<UserProfile[] | never>;
+    findProfile: (qString: string) => Promise<UserProfile[] | never>;
+    getProfiles: (ids: string[]) => Promise<UserProfile[] | never>;
 }
 
 export default function profilesApi(apiService : ApiService): ProfilesApi {
@@ -29,8 +30,21 @@ export default function profilesApi(apiService : ApiService): ProfilesApi {
         });
     };
 
+    const getProfiles = (ids: string[]) : Promise<UserProfile[] | never> => {
+        return apiService.request({
+            method: 'POST',
+            url: `/profiles/forIds`,
+            data: ids
+        }).then((res) => res.data as UserProfile[])
+        .catch((err) =>{
+            // console.error(err);
+            return Promise.reject(err);
+        });
+    };
+
     return {
         getProfile,
-        findProfile
+        findProfile,
+        getProfiles
     };
 }

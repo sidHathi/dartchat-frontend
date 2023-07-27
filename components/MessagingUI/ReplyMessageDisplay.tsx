@@ -3,7 +3,7 @@ import { Message, UserConversationProfile } from '../../types/types';
 
 import {View, Box, HStack, VStack, Text, Spacer, Pressable} from 'native-base';
 import IconButton from '../generics/IconButton';
-import ProfileImage from '../generics/ProfileImage';
+import IconImage from '../generics/IconImage';
 import { FontAwesome5 } from '@expo/vector-icons';
 
 export default function ReplyMessageDisplay({
@@ -19,8 +19,8 @@ export default function ReplyMessageDisplay({
                 <HStack space={1} w='100%' paddingX='18px'>
                     {
                         message.senderId in participants && participants[message.senderId].avatar ? 
-                        <ProfileImage imageUri={participants[message.senderId].avatar?.tinyUri || ''} size={28} nbProps={{mt: '6px', mr: '4px'}} shadow='9' /> : 
-                        <IconButton label='profile' size={28} additionalProps={{paddingTop: '6px', marginRight: '4px'}}/>  
+                        <IconImage imageUri={participants[message.senderId].avatar?.tinyUri || ''} size={28} nbProps={{mt: '6px', mr: '4px'}} shadow='9' /> : 
+                        <IconButton label='profile' shadow='9' size={28} additionalProps={{paddingTop: '6px', marginRight: '4px'}}/>  
                     }
                     <Box paddingX='18px' paddingY='4px' borderRadius='12px' backgroundColor='#f7f7f7' margin='0px' maxWidth='80%'>
                         <VStack>

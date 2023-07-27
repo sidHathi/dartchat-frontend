@@ -8,7 +8,7 @@ import { AxiosError } from 'axios';
 import { Image } from 'react-native-image-crop-picker';
 import { selectProfileImage } from '../../utils/identityUtils';
 import IconButton from '../generics/IconButton';
-import ProfileImage from '../generics/ProfileImage';
+import IconImage from '../generics/IconImage';
 import { getDownloadUrl, storeProfileImage } from '../../firebase/cloudStore';
 import { AvatarImage } from '../../types/types';
 import Spinner from 'react-native-spinkit';
@@ -83,7 +83,7 @@ export default function IdentitySetup(): JSX.Element {
         <Center w='100%' mb='30px' h='90px' mt='-30px'>
                 {
                     (selectedAvatarImage && selectedAvatarImage.sourceURL) ?
-                    <ProfileImage imageUri={selectedAvatarImage?.sourceURL || ''} size={100} shadow='9' /> :
+                    <IconImage imageUri={selectedAvatarImage?.sourceURL || ''} size={100} shadow='9' /> :
                     <IconButton label='profile' size={100} />
                 }
                 <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'

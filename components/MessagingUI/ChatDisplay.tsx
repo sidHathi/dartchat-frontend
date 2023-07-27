@@ -10,6 +10,8 @@ import { chatSelector } from '../../redux/slices/chatSlice';
 import FullScreenMediaFrame from './MessageMediaControllers/FullScreenMediaFrame';
 import MessageList from './MessageList';
 import ContentSelectionMenu from './ContentSelectionMenu';
+import UserDetailsModal from '../ChatSettingsUI/UserDetailsModal';
+import RemoveUserModal from '../ChatSettingsUI/RemoveUserModal';
 
 export default function ChatDisplay({closeOverlays}: {
     closeOverlays: () => void
@@ -27,6 +29,9 @@ export default function ChatDisplay({closeOverlays}: {
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
     const [pollBuilderOpen, setPollBuilderOpen] = useState(false);
     const [eventBuilderOpen, setEventBuilderOpen] = useState(false);
+    const [selectedProfile, setSelectedProfile] = useState<UserConversationProfile | undefined>();
+    const [userDetailModalOpen, setUserDetailModalOpen] = useState(false);
+    const [removeUserModalOpen, setRemoveUserModalOpen] = useState(false);
 
     useEffect(() => {
         if (!currentConvo) return;
@@ -46,6 +51,13 @@ export default function ChatDisplay({closeOverlays}: {
         setSelectedMediaIndex(0);
         setSelectedMediaMessage(undefined);
     }, [selectedMediaMessage]);
+
+    const handleRemove = (profile: UserConversationProfile) => {
+        setSelectedProfile(profile);
+        setUserDetailModalOpen(false);
+        setRemoveUserModalOpen(true);
+        return;
+    };
 
     return <View style={{flex: 1}}>
         <VStack w='100%' h='100%'>
@@ -77,7 +89,11 @@ export default function ChatDisplay({closeOverlays}: {
                             setContentMenuOpen(false)
                             closeOverlays()
                         }}
-                        handleMediaSelect={handleMediaSelect} />    
+                        handleMediaSelect={handleMediaSelect}
+                        handleProfileSelect={(profile: UserConversationProfile) => {
+                            setSelectedProfile(profile);
+                            setUserDetailModalOpen(true);
+                        }} />    
                 </Pressable>
             </View>
             <Spacer />
@@ -133,6 +149,24 @@ export default function ChatDisplay({closeOverlays}: {
                 setMessage={setSelectedMediaMessage}
                 handleReply={handleMediaReply}
             />
+        }
+        {
+            currentConvo && currentConvo.group && selectedProfile &&
+            <UserDetailsModal
+                isOpen={userDetailModalOpen}
+                handleClose={() => setUserDetailModalOpen(false)}
+                profile={selectedProfile}
+                navToMessages={() => {return;}}
+                handleRemove={() => handleRemove(selectedProfile)}
+                />
+        }
+        {
+            currentConvo && currentConvo.group && selectedProfile &&
+            <RemoveUserModal
+                isOpen={removeUserModalOpen}
+                handleClose={() => setRemoveUserModalOpen(false)}
+                profile={selectedProfile}
+                onRemove={() => setSelectedProfile(undefined)} />
         }
     </View>
 }

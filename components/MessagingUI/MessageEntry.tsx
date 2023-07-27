@@ -8,7 +8,7 @@ import uuid from 'react-native-uuid';
 import SocketContext from "../../contexts/SocketContext";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
-import { handleNewMessage } from "../../redux/slices/userConversationsSlice";
+import { handleNewMessage } from "../../redux/slices/userDataSlice";
 import NetworkContext from "../../contexts/NetworkContext";
 import { useKeyboard } from "@react-native-community/hooks";
 import MediaBufferDisplay from "./MessageMediaControllers/MediaBufferDisplay";

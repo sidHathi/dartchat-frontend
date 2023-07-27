@@ -1,5 +1,5 @@
 import { ApiService } from "./request";
-import { AvatarImage, CalendarEvent, Conversation, CursorContainer, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
+import { AvatarImage, CalendarEvent, Conversation, CursorContainer, LikeIcon, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
 import { parseConversation, parseSocketMessage, addCursorToRequest, parseEvent } from "../utils/requestUtils";
 import { SocketMessage } from "../types/rawTypes";
 
@@ -24,6 +24,10 @@ export type ConversationsApi = {
     getPoll: (cid: string, pid: string) => Promise<Poll | never>;
     addEvent: (cid: string, event: CalendarEvent) => Promise<any | never>;
     getEvent: (cid: string, eid: string) => Promise<CalendarEvent | never>;
+    changeLikeIcon: (cid: string, newIcon: LikeIcon) => Promise<any | never>;
+    resetLikeIcon: (cid: string) => Promise<any | never>;
+    getGallery: (cid: string, cursorContainer?: CursorContainer) => Promise<Message[] | never>;
+    getConversationsForIds: (ids: string[]) => Promise<Conversation[] | never>;
 }
 
 export default function conversationsApi(apiService: ApiService): ConversationsApi {
@@ -286,6 +290,66 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
+    const changeLikeIcon = (cid: string, newIcon: LikeIcon) => {
+        return apiService.request({
+            method: 'PUT',
+            url: `/conversations/${cid}/likeIcon`,
+            data: newIcon
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
+    const resetLikeIcon = (cid: string) => {
+        return apiService.request({
+            method: 'PUT',
+            url: `/conversations/${cid}/likeIcon/reset`,
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
+    const getGallery = (cid: string, cursorContainer?: CursorContainer) => {
+        return apiService.request(addCursorToRequest({
+            method: 'GET',
+            url: `/conversations/${cid}/gallery`
+        }, cursorContainer))
+        .then((res) => {
+            if (res && res.data) {
+                if (cursorContainer && 'cursor' in res.headers) {
+                    cursorContainer.cursor = res.headers.cursor;
+                } else if (cursorContainer) {
+                    cursorContainer.cursor = null;
+                }
+                return (res.data as SocketMessage[]).map((m) => parseSocketMessage(m));
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
+    const getConversationsForIds = (ids: string[]) => {
+        return apiService.request({
+            method: 'POST',
+            url: `/conversations/forIds`,
+            data: ids
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data as Conversation[];
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
     return {
         getConversation,
         getConversationInfo,
@@ -303,6 +367,10 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         addPoll,
         getPoll,
         addEvent,
-        getEvent
+        getEvent,
+        changeLikeIcon,
+        resetLikeIcon,
+        getGallery,
+        getConversationsForIds
     }
 }

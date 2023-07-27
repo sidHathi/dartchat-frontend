@@ -2,7 +2,7 @@ import React, { useState, useContext, useMemo, useEffect, useCallback } from "re
 import { Box, HStack, Text, Input, Button, Center, VStack, Heading, Spacer } from 'native-base';
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
 
-import ProfileImage from "../generics/ProfileImage";
+import IconImage from "../generics/IconImage";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import IconButton from "../generics/IconButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
@@ -122,8 +122,8 @@ export default function ConversationProfileEditor({
         <Center mt='-12px'>
             {
                 ((selectedProfile && selectedProfile.sourceURL) || currProfile?.avatar) ?
-                <ProfileImage imageUri={selectedProfile?.sourceURL || currProfile?.avatar?.mainUri || ''} size={72} shadow='9' /> :
-                <IconButton label='profile' size={72} />
+                <IconImage imageUri={selectedProfile?.sourceURL || currProfile?.avatar?.mainUri || ''} size={72} shadow='9' /> :
+                <IconButton label='profile' size={72} shadow='9' />
             }
             <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'
             onPress={() => selectProfileImage(setSelectedProfile, setEdited)} py='6px' opacity='0.7' mt='-40px'>

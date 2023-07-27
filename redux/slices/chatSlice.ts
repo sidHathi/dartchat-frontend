@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview } from "../../types/types";
+import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon } from "../../types/types";
 import { RootState } from "../store";
 import { Socket } from "socket.io-client";
 import uuid from 'react-native-uuid';
@@ -9,10 +9,12 @@ import { findPrivateMessageIdForUser } from "../../utils/messagingUtils";
 
 const initialState: {
     currentConvo?: Conversation;
+    galleryMessages?: Message[];
     needsScroll: boolean;
     requestLoading: boolean;
     silent: boolean;
-    requestCursor?: string;
+    messageCursor?: string;
+    galleryCursor?: string;
 } = {
     needsScroll: false,
     requestLoading: false,
@@ -23,16 +25,29 @@ export const chatSlice = createSlice({
     name: 'chat',
     initialState,
     reducers: {
-        setConvo: (state, action: PayloadAction<Conversation | undefined>) => (
-            {...state, silent: false, currentConvo: action.payload}
-        ),
+        setConvo: (state, action: PayloadAction<Conversation | undefined>) => ({
+            ...state, 
+            silent: false, 
+            currentConvo: action.payload,
+            galleryMessages: undefined,
+            galleryCursor: undefined,
+        }),
         setConvoSilently: (state, action: PayloadAction<Conversation>) => ({
             ...state, 
             currentConvo: action.payload,
             silent: true,
-            requestCursor: undefined,
+            messageCursor: undefined,
+            galleryMessages: undefined,
+            galleryCursor: undefined,
         }),
-        exitConvo: (state) => ({ ...state, currentConvo: undefined , requestLoading: false, requestCursor: undefined}),
+        exitConvo: (state) => ({
+             ...state, 
+             currentConvo: undefined, 
+             requestLoading: false, 
+             messageCursor: undefined,
+             galleryMessages: undefined,
+             galleryCursor: undefined,
+        }),
         addMessageHistory: (state, action: PayloadAction<Message[]>) => {
             if (!state.currentConvo) return state;
             const mIds = state.currentConvo.messages.map((m) => m.id);
@@ -213,10 +228,10 @@ export const chatSlice = createSlice({
                 requestLoading: action.payload
             });
         },
-        setRequestCursor: (state, action: PayloadAction<string | undefined>) => {
+        setMessageCursor: (state, action: PayloadAction<string | undefined>) => {
             return ({
               ...state,
-                requestCursor: action.payload
+                messageCursor: action.payload
             });
         },
         handleUpdatedProfile: (state, action: PayloadAction<UserConversationProfile>) => {
@@ -233,8 +248,9 @@ export const chatSlice = createSlice({
             });
         },
         updateChatDetails: (state, action: PayloadAction<{
-            newName?: string;
-            newAvatar?: AvatarImage
+            newName?: string,
+            newAvatar?: AvatarImage,
+            newLikeIcon?: LikeIcon
         }>) => {
             if (!state.currentConvo) return state;
             return {
@@ -242,7 +258,8 @@ export const chatSlice = createSlice({
                 currentConvo: {
                     ...state.currentConvo,
                     name: action.payload.newName || state.currentConvo.name,
-                    avatar: action.payload.newAvatar || state.currentConvo.avatar
+                    avatar: action.payload.newAvatar || state.currentConvo.avatar,
+                    customLikeIcon: action.payload.newLikeIcon || undefined
                 }
             }
         },
@@ -283,7 +300,7 @@ export const chatSlice = createSlice({
         },
         handleAddUsers: (state, action: PayloadAction<UserConversationProfile[]>) => {
             if (!state.currentConvo) return state;
-            const newProfiles = action.payload;
+            const newProfiles = action.payload.filter((p) => !state.currentConvo?.participants.includes(p));
             return {
                 ...state,
                 currentConvo: {
@@ -293,6 +310,30 @@ export const chatSlice = createSlice({
                         ...newProfiles
                     ]
                 }
+            }
+        },
+        handleNewLikeIcon: (state, action: PayloadAction<LikeIcon | undefined>) => {
+            if (!state.currentConvo) return state;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    customLikeIcon: action.payload
+                }
+            }
+        },
+        handleNewGalleryMessages: (state, action: PayloadAction<Message[]>) => {
+            if (!state.currentConvo) return state;
+            const currGallery = state.galleryMessages || [];
+            return {
+                ...state,
+                galleryMessages: [...currGallery, ...action.payload]
+            }
+        },
+        setGalleryCursor: (state, action: PayloadAction<string | undefined>) => {
+            return {
+                ...state,
+                galleryCursor: action.payload
             }
         }
     }
@@ -312,12 +353,15 @@ export const {
     updateAvatar,
     setNeedsScroll,
     setRequestLoading,
-    setRequestCursor,
+    setMessageCursor,
     handleUpdatedProfile,
     updateChatDetails,
     handleNewUserNotStatus,
     handleRemoveUser,
-    handleAddUsers
+    handleAddUsers,
+    handleNewLikeIcon,
+    handleNewGalleryMessages,
+    setGalleryCursor
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch) => {
@@ -327,9 +371,9 @@ export const pullConversation = (cid: string, api: ConversationsApi): ThunkActio
         const cursorContainer: CursorContainer = { cursor: null };
         const apiConvo = await api.getConversation(cid, cursorContainer);
         if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
-            dispatch(setRequestCursor(cursorContainer.cursor));
+            dispatch(setMessageCursor(cursorContainer.cursor));
         } else {
-            dispatch(setRequestCursor(undefined));
+            dispatch(setMessageCursor(undefined));
         }
         dispatch(setConvo(apiConvo));
         dispatch(setRequestLoading(false));
@@ -340,35 +384,45 @@ export const pullConversation = (cid: string, api: ConversationsApi): ThunkActio
 };
 
 export const loadAdditionalMessages = (api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
-    const { currentConvo, requestCursor } = getState().chatReducer;
+    const { currentConvo, messageCursor } = getState().chatReducer;
     if (!currentConvo) return;
 
-    dispatch(setRequestLoading(true))
-    const cursorContainer: CursorContainer = { cursor: requestCursor || null };
-    const additionalMessages: Message[] = await api.getConversationMessages(currentConvo.id, cursorContainer);
-    if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
-        dispatch(setRequestCursor(cursorContainer.cursor));
-    } else {
-        dispatch(setRequestCursor(undefined));
+    try {
+        dispatch(setRequestLoading(true))
+        const cursorContainer: CursorContainer = { cursor: messageCursor || null };
+        const additionalMessages: Message[] = await api.getConversationMessages(currentConvo.id, cursorContainer);
+        if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
+            dispatch(setMessageCursor(cursorContainer.cursor));
+        } else {
+            dispatch(setMessageCursor(undefined));
+        }
+        dispatch(addMessageHistory(additionalMessages));
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        console.log(err);
+        dispatch(setRequestLoading(false));
     }
-    dispatch(addMessageHistory(additionalMessages));
-    dispatch(setRequestLoading(false));
 };
 
 export const loadMessagesToDate = (date: Date, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
-    const { currentConvo, requestCursor } = getState().chatReducer;
+    const { currentConvo, messageCursor } = getState().chatReducer;
     if (!currentConvo) return;
 
-    dispatch(setRequestLoading(true))
-    const cursorContainer: CursorContainer = { cursor: requestCursor || null };
-    const additionalMessages: Message[] = await api.getConversationMessagesToDate(currentConvo.id, date, cursorContainer);
-    if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
-        dispatch(setRequestCursor(cursorContainer.cursor));
-    } else {
-        dispatch(setRequestCursor(undefined));
+    try {
+        dispatch(setRequestLoading(true))
+        const cursorContainer: CursorContainer = { cursor: messageCursor || null };
+        const additionalMessages: Message[] = await api.getConversationMessagesToDate(currentConvo.id, date, cursorContainer);
+        if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
+            dispatch(setMessageCursor(cursorContainer.cursor));
+        } else {
+            dispatch(setMessageCursor(undefined));
+        }
+        dispatch(addMessageHistory(additionalMessages));
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        console.log(err);
+        dispatch(setRequestLoading(false));
     }
-    dispatch(addMessageHistory(additionalMessages));
-    dispatch(setRequestLoading(false));
 };
 
 export const updateConversationProfile = (updatedProfile: UserConversationProfile, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
@@ -416,9 +470,11 @@ export const pullConversationDetails = (api: ConversationsApi): ThunkAction<void
     try {
         console.log('updating profile');
         const updatedConvo = await api.getConversationInfo(currentConvo.id);
+        console.log(updatedConvo);
         dispatch(updateChatDetails({
             newName: updatedConvo.name,
-            newAvatar: updatedConvo.avatar
+            newAvatar: updatedConvo.avatar,
+            newLikeIcon: updatedConvo.customLikeIcon
         }));
         dispatch(setRequestLoading(false));
     } catch (err) {
@@ -464,6 +520,10 @@ export const removeUser = (uid: string, api: ConversationsApi, onComplete?: () =
 export const addUsers = (userProfiles: UserConversationProfile[], api: ConversationsApi, onComplete?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
     const { currentConvo } = getState().chatReducer;
     if (!currentConvo) return;
+    const newUsers = userProfiles.filter((profile) => {
+       return !currentConvo.participants.includes(profile);
+    });
+    if (newUsers.length < 1) return;
 
     dispatch(setRequestLoading(true));
     try {
@@ -486,6 +546,7 @@ export const leaveChat = (uid: string, api: ConversationsApi, onComplete?: () =>
         await api.leaveChat(currentConvo.id);
         dispatch(handleRemoveUser(uid));
         dispatch(setRequestLoading(false));
+        onComplete && onComplete();
     } catch (err) {
         console.log(err);
         setRequestLoading(false);
@@ -502,6 +563,59 @@ export const openPrivateMessage = (seedConvo: Conversation, uid: string, userCon
     } else {
         dispatch(setConvo(undefined));
         dispatch(pullConversation(existingCid, api));
+    }
+};
+
+export const changeLikeIcon = (newLikeIcon: LikeIcon, api: ConversationsApi, onSuccess?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        await api.changeLikeIcon(currentConvo.id, newLikeIcon);
+        dispatch(setRequestLoading(false));
+        dispatch(handleNewLikeIcon(newLikeIcon));
+        onSuccess && onSuccess();
+    } catch (err) {
+        setRequestLoading(false);
+        console.log(err);
+    }
+};
+
+export const resetLikeIcon = (api: ConversationsApi, onSuccess?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        await api.resetLikeIcon(currentConvo.id);
+        dispatch(setRequestLoading(false));
+        dispatch(handleNewLikeIcon(undefined));
+        onSuccess && onSuccess();
+    } catch (err) {
+        setRequestLoading(false);
+        console.log(err);
+    }
+};
+
+export const pullGallery = (api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo, galleryCursor } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true))
+    try {
+        const cursorContainer: CursorContainer = { cursor: galleryCursor || null };
+        const messages: Message[] = await api.getGallery(currentConvo.id, cursorContainer);
+        if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
+            dispatch(setGalleryCursor(cursorContainer.cursor));
+        } else {
+            dispatch(setGalleryCursor(undefined));
+        }
+        dispatch(handleNewGalleryMessages(messages));
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        dispatch(setRequestLoading(false));
+        console.log(err);
     }
 };
 

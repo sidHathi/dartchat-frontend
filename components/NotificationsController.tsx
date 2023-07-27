@@ -4,7 +4,7 @@ import { AppState } from 'react-native';
 import useRequest from '../requests/useRequest';
 import { chatSelector, pullConversation } from '../redux/slices/chatSlice';
 import { getUserData } from '../utils/identityUtils';
-import { setConversations } from '../redux/slices/userConversationsSlice';
+import { setConversations } from '../redux/slices/userDataSlice';
 import { getBackgroundUpdateFlag, setBackgroundUpdateFlag } from '../localStore/store';
 import messaging from '@react-native-firebase/messaging';
 

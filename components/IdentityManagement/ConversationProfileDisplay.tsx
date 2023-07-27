@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Box, HStack, Spacer, Heading, VStack, Text } from 'native-base';
 
-import ProfileImage from "../generics/ProfileImage";
+import IconImage from "../generics/IconImage";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import IconButton from "../generics/IconButton";
 import { useAppSelector } from "../../redux/hooks";
@@ -13,13 +13,13 @@ export default function ConversationProfileDisplay(): JSX.Element {
     
     const getAvatar = () => {
         if (!user || !currentConvo) {
-            return <IconButton label='profile' size={72} />
+            return <IconButton label='profile' size={72} shadow='9' />
         }
         const matchingProfiles = currentConvo.participants.filter((p) => p.id === user.id);
         if (matchingProfiles.length < 1 || !matchingProfiles[0].avatar) {
-            return <IconButton label='profile' size={72} />
+            return <IconButton label='profile' size={72} shadow='9' />
         }
-        return <ProfileImage imageUri={matchingProfiles[0].avatar.tinyUri} size={64} shadow='9' />
+        return <IconImage imageUri={matchingProfiles[0].avatar.tinyUri} size={64} shadow='9' />
     };
 
     const getDisplayName = () => {

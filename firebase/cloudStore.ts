@@ -12,9 +12,25 @@ export const createTinyProfileImage = async (filePath: string, fileUri?: string)
     try {
         const res = await ImageResizer.createResizedImage(
             fileUri || `file://${filePath}`,
-            100,
-            100,
+            72,
+            72,
             'JPEG',
+            85,
+          );
+        return res.path;
+    } catch (err) {
+        return Promise.reject(err);
+    }
+};
+
+
+export const createIcon = async (fileUri: string): Promise<string | never> => {
+    try {
+        const res = await ImageResizer.createResizedImage(
+            fileUri,
+            72,
+            72,
+            'PNG',
             85,
           );
         return res.path;
@@ -93,6 +109,30 @@ export const storeConversationAvatar = async (cid: string, filePath: string, fil
     }
 };
 
+export const storeLikeIconImages = async (cid: string, imageUris: {
+    empty?: string;
+    partial?: string;
+    active?: string;
+}) => {
+    try {
+        const storageLocs = {
+            empty: `likeImages/${cid}/empty.png`,
+            partial: `likeImages/${cid}/partial.png`,
+            active: `likeImages/${cid}/active.png`,
+        }
+        return {
+            emptyLoc: storageLocs.empty,
+            emptyTask: imageUris.empty ? storage().ref(storageLocs.empty).putFile(await createIcon(imageUris.empty)) : undefined,
+            partialLoc: storageLocs.partial,
+            partialTask: imageUris.partial ? storage().ref(storageLocs.partial).putFile(await createIcon(imageUris.partial)) : undefined,
+            activeLoc: storageLocs.active,
+            activeTask: imageUris.active ?storage().ref(storageLocs.active).putFile(await createIcon(imageUris.active)) : undefined,
+        }
+    } catch (err) {
+        return Promise.reject(err);
+    }
+};
+
 export const getDownloadUrl = (refLoc: string) => storage().ref(refLoc).getDownloadURL();
 
 export const storeMessagingImage = (fileUri: string, id: string): {
@@ -115,4 +155,4 @@ export const storeMediaBuffer = (mediaBuffer: MessageMediaBuffer[]) => {
         if (!media.fileUri) return null;
         return storeMessagingImage(media.fileUri, media.id)
     });
-}
+};

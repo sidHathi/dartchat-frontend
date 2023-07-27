@@ -7,13 +7,13 @@ import { View, Box, Button, Center, Heading, Text, Input, VStack, HStack, Pressa
 import { ScrollView, Image } from "react-native";
 import uuid from 'react-native-uuid';
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { addConversation, userConversationsSelector } from "../../redux/slices/userConversationsSlice";
+import { addConversation, userDataSelector } from "../../redux/slices/userDataSlice";
 import { openPrivateMessage, setConvo } from "../../redux/slices/chatSlice";
 import ConversationsContext from "../../contexts/ConversationsContext";
 import SocketContext from "../../contexts/SocketContext";
 import useRequest from "../../requests/useRequest";
 import { getDownloadUrl } from "../../firebase/cloudStore";
-import ProfileImage from "../generics/ProfileImage";
+import IconImage from "../generics/IconImage";
 import { autoGenGroupAvatar } from "../../utils/messagingUtils";
 
 export default function ChatBuilder({exit}: {
@@ -23,7 +23,7 @@ export default function ChatBuilder({exit}: {
     const { user } = useContext(AuthIdentityContext);
     const dispatch = useAppDispatch();
     const { conversationsApi } = useRequest();
-    const { userConversations } = useAppSelector(userConversationsSelector);
+    const { userConversations } = useAppSelector(userDataSelector);
 
     const [isGroup, setIsGroup] = useState(false);
     const [userQuery, setUserQuery] = useState<string | undefined>(undefined);
@@ -111,7 +111,7 @@ export default function ChatBuilder({exit}: {
                 <HStack w='100%'>
                     {
                     profile.avatar ?
-                    <ProfileImage imageUri={fullSize ? profile.avatar.mainUri: profile.avatar.tinyUri} size={fullSize ? 30 : 20} /> :
+                    <IconImage imageUri={fullSize ? profile.avatar.mainUri: profile.avatar.tinyUri} size={fullSize ? 30 : 20} /> :
                     <Image source={require('../../assets/profile-01.png')} 
                         style={{
                             width: fullSize ? 30 : 20,

@@ -5,7 +5,7 @@ import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import { useAppSelector } from '../../redux/hooks';
 import { chatSelector } from '../../redux/slices/chatSlice';
-import ProfileImage from '../generics/ProfileImage';
+import IconImage from '../generics/IconImage';
 import IconButton from '../generics/IconButton';
 import PollResponder from './PollResponder';
 import useRequest from '../../requests/useRequest';
@@ -110,9 +110,9 @@ export default function PollDisplay({
 
     const getElemForAvatar = (avatar: AvatarImage | undefined) => {
         if (avatar) {
-            return <ProfileImage imageUri={avatar.tinyUri} size={24} />
+            return <IconImage imageUri={avatar.tinyUri} size={24} />
         }
-        return <IconButton label='profile' size={24} shadow='none' />
+        return <IconButton label='profile' size={24} />
     };
 
     const handleOptionSelect = useCallback((optIdx: number) => {

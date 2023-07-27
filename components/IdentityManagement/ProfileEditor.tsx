@@ -8,7 +8,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import IconButton from '../generics/IconButton';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import { KeyboardTypeOptions } from 'react-native';
-import ProfileImage from '../generics/ProfileImage';
+import IconImage from '../generics/IconImage';
 import { storeProfileImage, getDownloadUrl } from '../../firebase/cloudStore';
 import { AvatarImage, UserData } from '../../types/types';
 import { selectProfileImage } from '../../utils/identityUtils';
@@ -134,8 +134,8 @@ export default function ProfileEditor({
                     <Center w='100%' mb='20px' h='90px'>
                             {
                                 ((selectedProfile && selectedProfile.sourceURL) || user?.avatar?.mainUri) ?
-                                <ProfileImage imageUri={selectedProfile?.sourceURL || user?.avatar?.mainUri || ''} size={100} shadow='9' /> :
-                                <IconButton label='profile' size={100} />
+                                <IconImage imageUri={selectedProfile?.sourceURL || user?.avatar?.mainUri || ''} size={100} shadow='9' /> :
+                                <IconButton label='profile' size={100} shadow='9' />
                             }
                             <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'
                             onPress={() => selectProfileImage(setSelectedProfile)} py='6px' opacity='0.7' mt='-60px'>

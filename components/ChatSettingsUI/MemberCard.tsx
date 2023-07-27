@@ -1,7 +1,7 @@
 import React, { useMemo, useContext } from "react";
 import { UserConversationProfile } from "../../types/types";
 import { Box, HStack, Text, Center, Spacer, VStack } from "native-base";
-import ProfileImage from "../generics/ProfileImage";
+import IconImage from "../generics/IconImage";
 import IconButton from "../generics/IconButton";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -24,9 +24,9 @@ export default function MemberCard({
 
     const avatarElem = useMemo(() => {
         if (profile.avatar) {
-            return <ProfileImage imageUri={profile.avatar.mainUri} size={60} shadow='9' />;
+            return <IconImage imageUri={profile.avatar.mainUri} size={60} shadow='9' />;
         }
-        return <IconButton label='profile' size={60} />
+        return <IconButton label='profile' size={60} shadow='9' />
     }, [profile]);
 
     const getActionIcon = (label: string) => {

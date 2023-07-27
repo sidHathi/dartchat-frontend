@@ -3,7 +3,7 @@ import { ConversationPreview } from '../../types/types';
 
 import { Box, HStack, Spacer, Pressable, Center, Heading, Text, VStack } from 'native-base';
 import { Image, Dimensions } from 'react-native';
-import ProfileImage from '../generics/ProfileImage';
+import IconImage from '../generics/IconImage';
 import MentionsTextDisplay from '../MessagingUI/Mentions/MentionsTextDisplay';
 import { getTimeString } from '../../utils/messagingUtils';
 
@@ -23,7 +23,7 @@ export default function ChatPreview({
                 <Box bgColor='transparent' borderRadius='25px' shadow='7' mr='12px'>
                     {
                         chat.avatar ? 
-                        <ProfileImage 
+                        <IconImage 
                             imageUri={chat.avatar.mainUri} 
                             size={50}
                             shadow='9' /> :

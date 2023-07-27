@@ -16,7 +16,7 @@ import NetworkDisconnectionAlert from "./generics/alerts/NetworkDisconnectionAle
 import SocketContext from "../contexts/SocketContext";
 import UIContext from "../contexts/UIContext";
 import AuthIdentityContext from "../contexts/AuthIdentityContext";
-import ProfileImage from "./generics/ProfileImage";
+import IconImage from "./generics/IconImage";
 
 export default function NavContainer({ children }: 
     PropsWithChildren<{
@@ -47,9 +47,9 @@ export default function NavContainer({ children }:
                     navState.screen !== 'profile' &&
                     (
                         user?.avatar?.tinyUri ? 
-                        <ProfileImage imageUri={user.avatar.tinyUri} size={36}
+                        <IconImage imageUri={user.avatar.tinyUri} size={36}
                         shadow='9' onPress={() => navSwitch('profile')} nbProps={{mt: '6px'}}/> :
-                        <IconButton label='profile' size={36} additionalProps={{marginTop: '6px'}} onPress={() => navSwitch('profile')}/>
+                        <IconButton label='profile' size={36} additionalProps={{marginTop: '6px'}} onPress={() => navSwitch('profile')} shadow='9' />
                      )
                     }
                 </HStack>

@@ -1,4 +1,4 @@
-import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia } from "./types";
+import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia, LikeIcon } from "./types";
 
 export type ServerConversationPreview = {
     cid: string;
@@ -18,6 +18,8 @@ export type RawUserData = {
     displayName?: string;
     phone?: string;
     conversations?: ServerConversationPreview[];
+    contacts?: string[];
+    archivedConvos?: string[];
 };
 
 export type SocketMessage = {
@@ -42,6 +44,7 @@ export type RawConversation = {
     polls?: Poll[];
     group: boolean;
     events?: CalendarEvent[];
+    customLikeIcon?: LikeIcon;
 }
 
 export type RawCalendarEvent = {

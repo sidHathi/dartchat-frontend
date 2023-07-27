@@ -8,7 +8,7 @@ import uuid from 'react-native-uuid';
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
 import SocketContext from "../../contexts/SocketContext";
-import { handleNewMessage } from "../../redux/slices/userConversationsSlice";
+import { handleNewMessage } from "../../redux/slices/userDataSlice";
 import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
 

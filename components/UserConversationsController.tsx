@@ -9,7 +9,7 @@ import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser } from '../redux/slices/chatSlice';
-import { addConversation, userConversationsSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews } from '../redux/slices/userConversationsSlice';
+import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews } from '../redux/slices/userDataSlice';
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
 import { autoGenGroupAvatar } from '../utils/messagingUtils';
@@ -23,7 +23,7 @@ export default function UserConversationsController({
     const [ccid, setCcid] = useState('');
     const [receivedEvents, setReceivedEvents] = useState<Set<string>>(new Set<string>());
     const dispatch = useAppDispatch();
-    const { userConversations, needsServerSync }: {userConversations: ConversationPreview[], needsServerSync: boolean} = useAppSelector(userConversationsSelector);
+    const { userConversations, needsServerSync }: {userConversations: ConversationPreview[], needsServerSync: boolean} = useAppSelector(userDataSelector);
     const { currentConvo }: {currentConvo?: Conversation} = useAppSelector(chatSelector);
     const { conversationsApi, usersApi } = useRequest();
 

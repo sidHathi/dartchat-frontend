@@ -17,7 +17,8 @@ export default function MessageList({
     setSelectedMid,
     profiles,
     closeContentMenu,
-    handleMediaSelect
+    handleMediaSelect,
+    handleProfileSelect
 }: {
     setReplyMessage: (message: Message | undefined) => void;
     selectedMid: string | undefined;
@@ -25,10 +26,11 @@ export default function MessageList({
     profiles: {[id: string]: UserConversationProfile};
     closeContentMenu: () => void;
     handleMediaSelect: (message: Message, index: number) => void;
+    handleProfileSelect: (profile: UserConversationProfile) => void;
 }): JSX.Element {
     const dispatch = useAppDispatch();
     const listRef = useRef<FlatList | null>(null);
-    const { currentConvo, requestLoading, requestCursor } = useAppSelector(chatSelector);
+    const { currentConvo, requestLoading, messageCursor } = useAppSelector(chatSelector);
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { conversationsApi } = useRequest();
@@ -118,6 +120,7 @@ export default function MessageList({
                         goToReply(message)
                     }}
                     handleMediaSelect={handleMediaSelect}
+                    handleProfileSelect={handleProfileSelect}
                 />
             </Pressable>
         );
@@ -130,7 +133,7 @@ export default function MessageList({
         keyExtractor={(item: Message) => item.id}
         onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
             const {contentOffset, contentSize} = event.nativeEvent;
-            if (contentOffset.y > contentSize.height - 800 && requestCursor) {
+            if (contentOffset.y > contentSize.height - 800 && messageCursor) {
                 console.log('fetching messages');
                 dispatch(loadAdditionalMessages(conversationsApi));
             }
@@ -142,7 +145,7 @@ export default function MessageList({
             });
         }}
         inverted
-        ListFooterComponent={(requestCursor || requestLoading) ?
+        ListFooterComponent={(messageCursor || requestLoading) ?
             <View>
                 <Center w='100%' mt='40px'>
                     <Spinner type='ChasingDots' color='#111' size={24} />

@@ -1,6 +1,8 @@
 import { UserConversationProfile, AvatarImage, UserData, ConversationPreview } from "../types/types";
 import { getDownloadUrl } from "../firebase/cloudStore";
 import { parseValue } from "react-native-controlled-mentions";
+import ImagePicker, { Image } from 'react-native-image-crop-picker';
+import { launchImageLibrary, Asset } from "react-native-image-picker";
 
 export const autoGenGroupAvatar = async (participants: UserConversationProfile[], userId?: string): Promise<AvatarImage | undefined> => {
     if (participants.length > 2) {
@@ -21,7 +23,7 @@ export const autoGenGroupAvatar = async (participants: UserConversationProfile[]
 export const findPrivateMessageIdForUser = (recipientProfile: UserConversationProfile, userConversations: ConversationPreview[]): string | undefined => {
     const matches = userConversations.filter((preview) => {
         if (preview.recipientId && recipientProfile.id === preview.recipientId) return true;
-        if (preview.name === recipientProfile.displayName) return true;
+        // if (preview.name === recipientProfile.displayName) return true;
         return false;
     });
     if (matches.length > 0) {
@@ -67,3 +69,29 @@ export const getTimeString = (date: Date): string => {
     return stringRep;
 };
 
+export const selectIconImage = async (
+    setImage: (asset: Asset) => void,
+    setEdited?: (edited: boolean) => void
+) => {
+    try {
+        const res = await launchImageLibrary({
+            mediaType: 'photo',
+            selectionLimit: 1,
+            quality: 0.8,
+            maxWidth: 72
+        });
+        if (res.assets) {
+            setImage(res.assets[0]);
+            setEdited && setEdited(true);
+        }
+    } catch (err) {
+        console.log(err);
+    }
+};
+
+export const getNewContacts = (candidates: string[], uid: string, currentContacts: string[]) => {
+    const contactSet = new Set(currentContacts);
+    return candidates.filter((c) => {
+        return !contactSet.has(c) && c !== uid
+    });
+};

@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import IconButton from '../generics/IconButton';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import { AntDesign } from '@expo/vector-icons';
-import ProfileImage from '../generics/ProfileImage';
+import IconImage from '../generics/IconImage';
 
 export default function ProfileDisplay({
     handleExit,
@@ -42,8 +42,8 @@ export default function ProfileDisplay({
                 <HStack space={6} px='40px'>
                     {
                         user?.avatar?.mainUri ?
-                        <ProfileImage imageUri={user?.avatar?.mainUri} size={80} shadow='9' /> :
-                        <IconButton label='profile' size={80} />
+                        <IconImage imageUri={user?.avatar?.mainUri} size={80} shadow='9' /> :
+                        <IconButton label='profile' size={80} shadow='9' />
                     }
                     <VStack h='100%'>
                         <Spacer />

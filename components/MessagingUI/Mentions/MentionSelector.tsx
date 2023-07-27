@@ -1,6 +1,6 @@
 import React, {useContext, useEffect, useMemo} from "react";
 import { Box, HStack, ScrollView, Spacer, Text, VStack } from 'native-base';
-import ProfileImage from "../../generics/ProfileImage";
+import IconImage from "../../generics/IconImage";
 import { UserConversationProfile } from "../../../types/types";
 import IconButton from "../../generics/IconButton";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -26,9 +26,9 @@ export default function MentionSelector({
     const MenuItem = ({profile}: {profile: UserConversationProfile}) => {
         const avatarImage = () => {
             if (profile.avatar) {
-                return <ProfileImage imageUri={profile.avatar.tinyUri} size={24} />;
+                return <IconImage imageUri={profile.avatar.tinyUri} size={24} />;
             }
-            return <IconButton size={24} label='profile' />;
+            return <IconButton size={24} label='profile' shadow='9' />;
         }
 
         return <TouchableOpacity onPress={() => onSelect(profile)}

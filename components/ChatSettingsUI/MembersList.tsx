@@ -4,15 +4,15 @@ import { Heading, ScrollView, View, VStack, Box, Button, Modal, Center, Text, Ic
 import { addUsers, chatSelector, openPrivateMessage, removeUser } from '../../redux/slices/chatSlice';
 import { Conversation, UserConversationProfile } from '../../types/types';
 import MemberCard from './MemberCard';
-import IconButton from '../generics/IconButton';
-import ProfileImage from '../generics/ProfileImage';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import NewMemberSearch from './NewMemberSearch';
 import useRequest from '../../requests/useRequest';
 import SocketContext from '../../contexts/SocketContext';
 import uuid from 'react-native-uuid';
-import { userConversationsSelector } from '../../redux/slices/userConversationsSlice';
+import { userDataSelector } from '../../redux/slices/userDataSlice';
+import RemoveUserModal from './RemoveUserModal';
+import UserDetailsModal from './UserDetailsModal';
 
 export default function MembersList({
     exit
@@ -23,7 +23,7 @@ export default function MembersList({
     const { user } = useContext(AuthIdentityContext);
     const { socket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
-    const { userConversations } = useAppSelector(userConversationsSelector);
+    const { userConversations } = useAppSelector(userDataSelector);
     const { conversationsApi } = useRequest();
 
     const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -43,13 +43,6 @@ export default function MembersList({
         }
         setAddMenuOpen(!addMenuOpen);
     }, [addMenuOpen, currentConvo, selectedNewMembers]);
-    
-    const getModalProfileImage = useCallback(() => {
-        if (selectedProfile && selectedProfile?.avatar) {
-            return <ProfileImage imageUri={selectedProfile.avatar.mainUri} size={180} shadow='9' />
-        }
-        return <IconButton label='profile' size={180} />
-    }, [selectedProfile]);
 
     const handleSelect = (profile: UserConversationProfile) => {
         if (user && profile.id === user.id) return;
@@ -90,15 +83,6 @@ export default function MembersList({
         return;
     };
 
-    const confirmDelete = useCallback(() => {
-        if (!selectedProfile || !currentConvo) return;
-        dispatch(removeUser(selectedProfile.id, conversationsApi, () => {
-            socket && socket.emit('removeConversationUser', currentConvo.id, selectedProfile.id);
-            setConfirmRemoveModalOpen(false);
-            setSelectedProfile(undefined);
-        }));
-    }, [selectedProfile]);
-
     return <View flex='1'>
         <Heading px='24px' mt='24px'>
             Members
@@ -133,50 +117,23 @@ export default function MembersList({
                 </Button>
             </Box>
         </View>
-
-        <Modal isOpen={userDetailModal} onClose={() => setUserDetailModalOpen(false)} size='lg'>
-            <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px'>
-                <Modal.CloseButton />
-                <Center w='100%' py='24px'>
-                    {getModalProfileImage()}
-                    <Heading mt='18px'>
-                        {selectedProfile?.displayName || ''}
-                    </Heading>
-                    {selectedProfile?.handle &&
-                    <Text fontSize='xs' color='gray.500'>
-                        {selectedProfile?.handle || ''}
-                    </Text>
-                    }
-                </Center>
-                <Button colorScheme='dark' variant='subtle' w='100%' borderRadius='24px' mb='6px' leftIcon={<Icon as={Feather} name='message-circle'/>}>
-                    Message
-                </Button>
-                <Button colorScheme='dark' variant='ghost' w='100%' borderRadius='24px' mb='12px' onPress={() => (selectedProfile && handleRemove(selectedProfile))}>
-                    <Text color='red.500'>
-                    Remove from group
-                    </Text>
-                </Button>
-            </Modal.Content>
-        </Modal>
-
-        <Modal isOpen={confirmRemoveModalOpen} onClose={() => setConfirmRemoveModalOpen(false)} size='lg'>
-            <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px'>
-                <Modal.CloseButton />
-                <Center w='100%' py='24px'>
-                    {getModalProfileImage()}
-                    <Text fontSize='xs' textAlign='center' mx='auto' mt='12px'>
-                        {`By selecting confirm you will remove ${selectedProfile?.displayName || ''} from the group.`}
-                    </Text>
-                </Center>
-                <Button colorScheme='dark' variant='subtle' w='100%' borderRadius='24px' mb='6px' leftIcon={<Icon as={Ionicons} name='ios-person-remove-outline'/>} onPress={confirmDelete}>
-                    Confirm
-                </Button>
-                <Button colorScheme='dark' variant='solid' w='100%' borderRadius='24px' mb='6px' onPress={() => setConfirmRemoveModalOpen}>
-                    <Text>
-                    Cancel
-                    </Text>
-                </Button>
-            </Modal.Content>
-        </Modal>
+        {
+            selectedProfile &&
+            <UserDetailsModal
+                isOpen={userDetailModal}
+                handleClose={() => setUserDetailModalOpen(false)}
+                profile={selectedProfile}
+                navToMessages={exit}
+                handleRemove={() => handleRemove(selectedProfile)}
+                />
+        }
+        {
+            selectedProfile &&
+            <RemoveUserModal
+                isOpen={confirmRemoveModalOpen}
+                handleClose={() => setConfirmRemoveModalOpen(false)}
+                profile={selectedProfile}
+                onRemove={() => setSelectedProfile(undefined)} />
+        }
     </View>
 }

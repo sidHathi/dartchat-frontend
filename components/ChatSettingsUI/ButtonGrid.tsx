@@ -1,6 +1,6 @@
 import React, { useMemo, useContext } from "react";
 import { Box, Center, HStack, Spacer, Text } from 'native-base';
-import { Ionicons, Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, Feather, MaterialIcons, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { useAppSelector } from "../../redux/hooks";
 import { chatSelector } from "../../redux/slices/chatSlice";
@@ -15,7 +15,8 @@ export type ButtonLabel = 'members' |
                     'leave' |
                     'notifications' |
                     'search' |
-                    'admin';
+                    'admin' |
+                    'like button';
 
 export default function ButtonGrid({onButtonSelect}: {
     onButtonSelect: (buttonLabel: ButtonLabel) => void;
@@ -61,6 +62,8 @@ export default function ButtonGrid({onButtonSelect}: {
                 return <MaterialIcons name={notificationsIcon} size={24} color="black" />
             case 'search':
                 return <Feather name="search" size={24} color="black" />;
+            case 'like button':
+                return <FontAwesome name="heart-o" size={24} color="black" />;
             default: 
                 return;
         }
@@ -88,7 +91,8 @@ export default function ButtonGrid({onButtonSelect}: {
         <HStack w='100%' space={3} my='12px'>
             <Spacer />
             <GridButton label='members' />
-            <GridButton label='search' />
+            <GridButton label='like button' />
+            {/* <GridButton label='search' /> */}
             <GridButton label='notifications' />
             <Spacer />
         </HStack>
@@ -101,6 +105,7 @@ export default function ButtonGrid({onButtonSelect}: {
         </HStack>
         <HStack w='100%' space={3} my='12px'>
             <Spacer />
+                {/* <GridButton label='like button' /> */}
                 <GridButton label='encryption' />
                 <GridButton label='leave' />
             <Spacer />

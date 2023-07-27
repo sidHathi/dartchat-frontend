@@ -8,7 +8,7 @@ import { getUserData } from '../utils/identityUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import SocketContext from '../contexts/SocketContext';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setConversations } from '../redux/slices/userConversationsSlice';
+import { initReduxUser, setConversations } from '../redux/slices/userDataSlice';
 import { storeUserData, getStoredUserData, deleteStoredUserData } from '../localStore/store';
 import Spinner from 'react-native-spinkit';
 import { Center } from 'native-base';
@@ -70,7 +70,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
         console.log('intializing app');
         setUser(newUser);
         setNeedsSetup(false);
-        dispatch(setConversations(newUser.conversations || []));
+        dispatch(initReduxUser(newUser));
         if (socket) {
             try {
                 socket?.emit('joinRoom', newUser.conversations?.map(c => c.cid) || []);

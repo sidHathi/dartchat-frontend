@@ -3,7 +3,7 @@ import { Box, Heading, HStack, Spacer, Text, VStack, ScrollView } from 'native-b
 import { UserConversationProfile } from '../../types/types';
 import ProfilesSearch from '../MessagingUI/ProfileSearch';
 import MemberCard from './MemberCard';
-import ProfileImage from '../generics/ProfileImage';
+import IconImage from '../generics/IconImage';
 import IconButton from '../generics/IconButton';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -29,7 +29,7 @@ export default function NewMemberSearch({
     const PNMCard = ({
         profile
     }: {profile: UserConversationProfile}): JSX.Element => {
-        const avatarElem = profile.avatar ? <ProfileImage imageUri={profile.avatar.mainUri} size={60} shadow='9' /> : <IconButton label='profile' size={60} />;
+        const avatarElem = profile.avatar ? <IconImage imageUri={profile.avatar.mainUri} size={60} shadow='9' /> : <IconButton label='profile' size={60} />;
 
         return <Box h='70px'><Box w='100%' borderRadius='12px' px='12px' backgroundColor='#f5f5f5' maxHeight='60px' overflow='visible'>
             <HStack space={4}>

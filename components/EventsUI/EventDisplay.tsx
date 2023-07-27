@@ -8,7 +8,7 @@ import { chatSelector } from "../../redux/slices/chatSlice";
 import SocketContext from "../../contexts/SocketContext";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import IconButton from "../generics/IconButton";
-import ProfileImage from "../generics/ProfileImage";
+import IconImage from "../generics/IconImage";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getDateTimeString, getTimeString } from "../../utils/messagingUtils";
 
@@ -165,7 +165,7 @@ export default function EventDisplay({
         if (!avatar) {
             return <IconButton label='profile' size={24} shadow='none'/>
         }
-        return <ProfileImage imageUri={avatar.tinyUri} size={24} />
+        return <IconImage imageUri={avatar.tinyUri} size={24} />
     };
 
     if (!event) {
@@ -201,8 +201,8 @@ export default function EventDisplay({
             selected && event && (event.notGoing.length + event.going.length > 0) &&
             <HStack mt='12px'>
                 <ScrollView maxH='180px' w='48%' overflow='hidden'>
-                <VStack>
-                    <Text fontSize='xs' color='gray.500'>
+                <VStack space={1}>
+                    <Text fontSize='xs' color='gray.500' mb='3px'>
                         Going:
                     </Text>
                     {
@@ -219,7 +219,7 @@ export default function EventDisplay({
                 </ScrollView>
                 <Spacer />
                 <ScrollView maxH='180px' w='48%' overflow='hidden'>
-                <VStack>
+                <VStack space={1}>
                     <Text fontSize='xs' color='gray.500'>
                         Not going:
                     </Text>

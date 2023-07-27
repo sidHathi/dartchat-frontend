@@ -5,13 +5,14 @@ import { Message, UserConversationProfile } from "../../types/types";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Dimensions } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
-import ProfileImage from "../generics/ProfileImage";
+import IconImage from "../generics/IconImage";
 import MessageMediaDisplay from "./MessageMediaControllers/MessageMediaDisplay";
 import { FontAwesome5 } from '@expo/vector-icons';
 import MessageTextDisplay from "./Mentions/MentionsTextDisplay";
 import PollDisplay from "../Polls/PollDisplay";
 import { getDateTimeString } from "../../utils/messagingUtils";
 import EventDisplay from "../EventsUI/EventDisplay";
+import LikeButton from "./LikeButton";
 
 export default function MessageDisplay({ 
         message,
@@ -21,7 +22,8 @@ export default function MessageDisplay({
         handleLike, 
         handleReply,
         handleReplySelect,
-        handleMediaSelect
+        handleMediaSelect,
+        handleProfileSelect
     } : {
     message: Message, 
     participants: {[key: string]: UserConversationProfile},
@@ -30,7 +32,8 @@ export default function MessageDisplay({
     handleLike: () => void,
     handleReply: () => void,
     handleReplySelect?: () => void,
-    handleMediaSelect?: (message: Message, index: number) => void
+    handleMediaSelect?: (message: Message, index: number) => void,
+    handleProfileSelect?: (profile: UserConversationProfile) => void
 }): JSX.Element {
     const screenWidth = Dimensions.get('window').width;
 
@@ -101,11 +104,13 @@ export default function MessageDisplay({
                 !isSystemMessage ?
                 (
                     senderAvatar ? 
-                    <ProfileImage imageUri={senderAvatar?.tinyUri as string} shadow='9' size={28} nbProps={{
+                    <IconImage imageUri={senderAvatar?.tinyUri as string} shadow='9' size={28} nbProps={{
                         mt: '6px',
                         mr: '4px'
-                    }} /> :
-                    <IconButton label='profile' size={28} additionalProps={{paddingTop: '6px', marginRight: '4px'}}/>
+                    }}
+                    onPress={() => message.senderProfile && message.senderProfile.id !== user?.id && handleProfileSelect && handleProfileSelect(message.senderProfile)}
+                    /> :
+                    <IconButton label='profile' size={28} additionalProps={{paddingTop: '6px', marginRight: '4px'}} onPress={() => message.senderProfile && message.senderProfile.id !== user?.id && handleProfileSelect && handleProfileSelect(message.senderProfile)} shadow='9' />
                 ) :
                 <Spacer />
             }
@@ -162,7 +167,7 @@ export default function MessageDisplay({
                                     message.likes.map((like, idx) => {
                                         if (like in participants && participants[like].avatar) {
                                             return (
-                                            <ProfileImage
+                                            <IconImage
                                                 key={idx}
                                                 imageUri={participants[like]?.avatar?.tinyUri as string}
                                                 size={24}
@@ -191,13 +196,7 @@ export default function MessageDisplay({
             </VStack>
             <Spacer />
             <VStack paddingTop={isSystemMessage ? '6px': '12px'} space={3} mb={isSystemMessage ? '12px': '0px'}>
-                {   
-                    user && message.likes.includes(user.id) ?
-                    <IconButton label='heartFill' color='red' size={20} onPress={handleLike} /> :
-                        message.likes.length > 0 ?
-                        <IconButton label='heartFill' color='gray' size={20} onPress={handleLike} shadow='none' /> :
-                        <IconButton label='heartEmpty' color='gray' size={20} onPress={handleLike} shadow='none' /> 
-                }
+                <LikeButton message={message} onPress={handleLike} />
                 {
                     message.media &&
                     <Spacer />

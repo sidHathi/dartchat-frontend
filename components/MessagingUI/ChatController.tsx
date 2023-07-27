@@ -11,6 +11,7 @@ import NetworkDisconnectionAlert from '../generics/alerts/NetworkDisconnectionAl
 import ChatDisplay from './ChatDisplay';
 import ChatSettingsController from '../ChatSettingsUI/ChatSettingsController';
 import ExpandedSettingsMenu, { MenuPage } from '../ChatSettingsUI/ExpandedSettingsMenu';
+import { setEnabled } from 'react-native/Libraries/Performance/Systrace';
 
 export default function ChatController({
     exit
@@ -28,10 +29,12 @@ export default function ChatController({
     const [expandedSettingsPage, setExpandedSettingsPage] = useState<MenuPage | undefined>();
 
     const toggleProfileOpen = useCallback(() => {
+        setExpandedSettingsOpen(false);
         setProfileMenuOpen(!profileMenuOpen);
     }, [profileMenuOpen]);
 
     const toggleSettingsMenuOpen = useCallback(() => {
+        setExpandedSettingsOpen(false);
         setSettingsMenuOpen(!settingsMenuOpen);
     }, [settingsMenuOpen]);
 

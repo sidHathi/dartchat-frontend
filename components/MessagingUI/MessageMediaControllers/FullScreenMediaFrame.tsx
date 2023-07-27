@@ -17,7 +17,7 @@ export default function FullScreenMediaFrame({
 }: {
     message: Message | undefined,
     setMessage: (message: Message | undefined) => void;
-    handleReply: () => void;
+    handleReply?: () => void;
     startIndex?: number;
 }): JSX.Element {
     const dispatch = useAppDispatch();
@@ -56,7 +56,10 @@ export default function FullScreenMediaFrame({
                 <IconButton label='heartFill' color='white' shadow='none' size={24} onPress={handleLike}/> :
                 <IconButton label='heartEmpty' color='white' shadow='none' size={24} onPress={handleLike}/> 
             }
-            <IconButton label='reply' color='white' shadow='none' size={24} onPress={handleReply}/> 
+            {
+                handleReply &&
+                <IconButton label='reply' color='white' shadow='none' size={24} onPress={handleReply}/> 
+            }
         </HStack>
     </Box>
 

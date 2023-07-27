@@ -13,7 +13,7 @@ import ConfirmationModal from "../generics/ConfirmationModal";
 import ConversationsContext from "../../contexts/ConversationsContext";
 import SocketContext from "../../contexts/SocketContext";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { deleteConversation, readConversationMessages, userConversationsSelector } from "../../redux/slices/userConversationsSlice";
+import { deleteConversation, readConversationMessages, userDataSelector } from "../../redux/slices/userDataSlice";
 import { updateUserConversations } from "../../utils/identityUtils";
 import { parseConversation } from "../../utils/requestUtils";
 import { pullConversation, setConvo } from "../../redux/slices/chatSlice";
@@ -23,7 +23,7 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { networkConnected } = useContext(NetworkContext);
-    const { userConversations } = useAppSelector(userConversationsSelector);
+    const { userConversations } = useAppSelector(userDataSelector);
     const { deleteConversation: socketDelete } = useContext(ConversationsContext);
     const { conversationsApi, usersApi } = useRequest();
     const dispatch = useAppDispatch();

@@ -3,7 +3,7 @@ import { Box, Button, HStack, Heading, Icon, Center, Text } from 'native-base';
 import IconButton from '../generics/IconButton';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { chatSelector, updateUserNotStatus } from '../../redux/slices/chatSlice';
-import { userConversationsSelector } from '../../redux/slices/userConversationsSlice';
+import { userDataSelector } from '../../redux/slices/userDataSlice';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import { NotificationStatus } from '../../types/types';
 import { MaterialIcons } from '@expo/vector-icons';

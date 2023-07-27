@@ -11,6 +11,7 @@ import { exitConvo } from "../redux/slices/chatSlice";
 import IdentityManager from "./IdentityManagement/IdentityManager";
 import { View, PanResponder, Pressable } from "react-native";
 import SocketContext from "../contexts/SocketContext";
+import People from "./PeoplePanel/People";
 
 export default function Home(): JSX.Element {
     const timerId = useRef<NodeJS.Timeout | boolean>(false);
@@ -66,6 +67,12 @@ export default function Home(): JSX.Element {
         <NavContainer>
             <IdentityManager />
         </NavContainer>
+    );
+
+    const PeopleView = () : JSX.Element => (
+        <NavContainer>
+            <People />
+        </NavContainer>
     )
 
     const getScreen = () => {
@@ -73,7 +80,7 @@ export default function Home(): JSX.Element {
             case 'conversations':
                 return <Main />
             case 'social':
-                return <Main />
+                return <PeopleView />
             case 'messaging':
                 return <MessagingContainer exit={handleConversationExit}/>
             case 'profile':

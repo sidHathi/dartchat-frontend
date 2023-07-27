@@ -2,12 +2,12 @@ import React, { useContext, useMemo } from 'react';
 import { Box, HStack, Heading, Spacer } from 'native-base';
 import IconButton from '../generics/IconButton';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
-import ProfileImage from '../generics/ProfileImage';
+import IconImage from '../generics/IconImage';
 import { useAppSelector } from '../../redux/hooks';
 import { chatSelector } from '../../redux/slices/chatSlice';
 import { Pressable } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { userConversationsSelector } from '../../redux/slices/userConversationsSlice';
+import { userDataSelector } from '../../redux/slices/userDataSlice';
 
 export default function ChatHeader({
     convoName,
@@ -22,7 +22,7 @@ export default function ChatHeader({
 }): JSX.Element {
     const { user } = useContext(AuthIdentityContext);
     const { currentConvo } = useAppSelector(chatSelector);
-    const { userConversations } = useAppSelector(userConversationsSelector);
+    const { userConversations } = useAppSelector(userDataSelector);
 
     const profileImage = useMemo(() => {
         if (!user || !currentConvo) {
@@ -32,7 +32,7 @@ export default function ChatHeader({
         if (matchingProfiles.length < 1 || !matchingProfiles[0].avatar) {
             return <IconButton label='profile' size={30} additionalProps={{marginX: '6px'}} onPress={onProfileOpen}/>
         }
-        return <ProfileImage imageUri={matchingProfiles[0].avatar.tinyUri} size={30} onPress={onProfileOpen} nbProps={{mx: '6px'}}/>
+        return <IconImage imageUri={matchingProfiles[0].avatar.tinyUri} size={30} onPress={onProfileOpen} nbProps={{mx: '6px'}}/>
     }, [user, currentConvo, onProfileOpen]);
 
     const chatAvatar = useMemo(() => {
@@ -41,14 +41,14 @@ export default function ChatHeader({
         if (!currentConvo.group && user) {
             const otherParticipants = currentConvo.participants.filter((p) => p.id !== user.id);
             if (otherParticipants.length > 0 && otherParticipants[0].avatar) {
-                return <ProfileImage imageUri={otherParticipants[0].avatar.tinyUri}  size={30} />
+                return <IconImage imageUri={otherParticipants[0].avatar.tinyUri}  size={30} />
             }
         }
         const matchingUserConvos = userConversations.filter((p) => p.cid === currentConvo.id);
         if (matchingUserConvos.length < 1 || !matchingUserConvos[0].avatar) {
             return <IconButton label='profile' size={30} />
         }
-        return <ProfileImage imageUri={matchingUserConvos[0].avatar.tinyUri}  size={30} />
+        return <IconImage imageUri={matchingUserConvos[0].avatar.tinyUri}  size={30} />
     }, [userConversations, currentConvo]);
 
     const chatName = useMemo(() => {

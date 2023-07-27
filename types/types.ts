@@ -7,6 +7,8 @@ export type UserData = {
     phone?: string;
     conversations?: ConversationPreview[];
     avatar?: AvatarImage;
+    contacts?: string[];
+    archivedConvos?: string[];
 };
 
 export type UIScreen = 'messaging' |
@@ -60,6 +62,7 @@ export type Conversation = {
     group: boolean;
     polls?: Poll[];
     events?: CalendarEvent[];
+    customLikeIcon?: LikeIcon;
 };
 
 export type ConversationPreview = {
@@ -142,4 +145,12 @@ export type CalendarEvent = {
 export type ObjectRef = {
     type: string;
     id: string;
+};
+
+export type LikeIcon = {
+    type: 'none' | 'icon' | 'img';
+    emptyImageUri?: string;
+    partialImageUri?: string;
+    activeImageUri?: string;
+    iconName?: string;
 };

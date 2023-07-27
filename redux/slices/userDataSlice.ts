@@ -1,32 +1,49 @@
 import { createSlice, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
-import { Message, ConversationPreview, Conversation, AvatarImage } from '../../types/types';
+import { Message, ConversationPreview, Conversation, AvatarImage, UserData } from '../../types/types';
 import { RootState } from '../store';
 import { Socket } from 'socket.io-client';
 import { UsersApi } from '../../requests/usersApi';
 import { ConversationsApi } from '../../requests/conversationsApi';
+import { getNewContacts } from '../../utils/messagingUtils';
 
 const initialState: {
     userConversations: ConversationPreview[];
     lastReceivedMessageId: string;
     needsServerSync: boolean;
     requestLoading: boolean;
+    contacts?: string[];
+    archivedConvos?: string[];
 } = {
     userConversations: [],
     lastReceivedMessageId: '',
     needsServerSync: false,
-    requestLoading: false
+    requestLoading: false,
 };
 
-export const userConversationsSlice = createSlice({
+export const userDataSlice = createSlice({
     name: 'userConversations',
     initialState,
     reducers: {
+        initReduxUser: (state, action: PayloadAction<UserData>) => ({
+            ...state,
+            userConversations: action.payload.conversations || [],
+            contacts: action.payload.contacts || [],
+            archivedConvos: action.payload.archivedConvos || [],
+        }),
         setConversations: (state, action: PayloadAction<ConversationPreview[]>) => {
             return ({
                 ...state,
                 userConversations: action.payload
             })
         },
+        setContacts: (state, action: PayloadAction<string[] | undefined>) => ({
+            ...state,
+            contacts: action.payload
+        }),
+        setArchivedConvos: (state, action: PayloadAction<string[] | undefined>) => ({
+            ...state,
+            archivedConvos: action.payload
+        }),
         handleNewMessage: (state, action: PayloadAction<{
             cid: string, message: Message, messageForCurrent: boolean
         }>) => {
@@ -72,6 +89,7 @@ export const userConversationsSlice = createSlice({
                 name = otherParticipant.displayName;
                 recipientId = otherParticipant.id;
             }
+            const newContacts = getNewContacts(newConvo.participants.map((p) => p.id), uid, state.contacts || []);
             return ({
                 ...state,
                 userConversations: [
@@ -85,7 +103,9 @@ export const userConversationsSlice = createSlice({
                         avatar: newConvo.avatar,
                         recipientId
                     }
-                ]
+                ],
+                contacts: [...(state.contacts || []), ...newContacts],
+                archivedConvos: state.archivedConvos?.filter((c) => c !== newConvo.id)
             });
         },
         readConversationMessages: (state, action: PayloadAction<string>) => {
@@ -137,28 +157,44 @@ export const userConversationsSlice = createSlice({
                 ]
             };
         },
-        leaveConversation: (state, action: PayloadAction<string>) => {
+        handleUserConvoLeave: (state, action: PayloadAction<string>) => {
             const cid = action.payload;
             return {
                 ...state,
-                userConversations: state.userConversations.filter((c) => c.cid !== cid)
+                userConversations: state.userConversations.filter((c) => c.cid !== cid),
+                archivedConvos: [
+                    ...(state.archivedConvos || []),
+                    cid
+                ] || undefined
+            }
+        },
+        handleArchiveConvoRemoval: (state, action: PayloadAction<string>) => {
+            const cid = action.payload;
+            return {
+                ...state,
+                archivedConvos: state.archivedConvos?.filter((c) => c !== cid)
             }
         }
     }
 });
 
-const userConversationsReducer = userConversationsSlice.reducer;
+const userDataReducer = userDataSlice.reducer;
 
 export const {
+    initReduxUser,
     setConversations,
+    setContacts,
+    setArchivedConvos,
     handleNewMessage,
     deleteConversation,
     addConversation,
     readConversationMessages,
     setNeedsServerSync,
     setRequestLoading,
-    handleUpdatedChat
-} = userConversationsSlice.actions;
+    handleUpdatedChat,
+    handleUserConvoLeave,
+    handleArchiveConvoRemoval
+} = userDataSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
     try {
@@ -177,8 +213,11 @@ export const pullLatestPreviews = (usersApi: UsersApi): ThunkAction<void, RootSt
 
     try {
         const updatedUser = await usersApi.getCurrentUser();
-        if (updatedUser && updatedUser.conversations) {
-            dispatch(setConversations(updatedUser.conversations));
+        console.log(updatedUser);
+        if (updatedUser) {
+            updatedUser.conversations && dispatch(setConversations(updatedUser.conversations));
+            dispatch(setContacts(updatedUser.contacts || []));
+            dispatch(setArchivedConvos(updatedUser.archivedConvos || []));
         }
         dispatch(setRequestLoading(false)); 
     } catch (err) {
@@ -187,16 +226,31 @@ export const pullLatestPreviews = (usersApi: UsersApi): ThunkAction<void, RootSt
     }
 };
 
-export const joinConversation = (cid: string, conversationsApi: ConversationsApi, usersApi: UsersApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
+export const joinConversation = (cid: string, conversationsApi: ConversationsApi, usersApi: UsersApi, onComplete?: () => void): ThunkAction<void, RootState, any, any> => async (dispatch) => {
     try {
         dispatch(setRequestLoading(true));
         await conversationsApi.joinChat(cid);
+        dispatch(handleArchiveConvoRemoval(cid));
         dispatch(pullLatestPreviews(usersApi));
+        onComplete && onComplete();
     } catch (err) {
         dispatch(setRequestLoading(false));
         console.log(err);
     }
-}
+};
 
-export const userConversationsSelector = (state: RootState) => state.userConversationsReducer;
-export default userConversationsReducer;
+export const removeArchivedConvo = (cid: string, usersApi: UsersApi, onComplete?: () => void): ThunkAction<void, RootState, any, any> => async (dispatch) => {
+    try {
+        dispatch(setRequestLoading(true));
+        await usersApi.removeArchivedConvo(cid);
+        dispatch(handleArchiveConvoRemoval(cid));
+        dispatch(pullLatestPreviews(usersApi));
+        onComplete && onComplete();
+    } catch (err) {
+        dispatch(setRequestLoading(false));
+        console.log(err);
+    }
+};
+
+export const userDataSelector = (state: RootState) => state.userDataReducer;
+export default userDataReducer;
