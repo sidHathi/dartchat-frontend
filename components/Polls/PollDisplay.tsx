@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useCallback, useState, useEffect } from 'react';
-import { Poll, AvatarImage } from '../../types/types';
+import { Poll, AvatarImage, UserConversationProfile } from '../../types/types';
 import { Box, HStack, VStack, Text, Heading, Icon, Spacer, ScrollView, Pressable, Button } from 'native-base';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
@@ -56,7 +56,7 @@ export default function PollDisplay({
             if (!currentConvo) return undefined;
             try {
                 const fetchedPoll = await conversationsApi.getPoll(currentConvo.id, pid);
-                console.log(fetchedPoll);
+                // console.log(fetchedPoll);
                 setPoll(fetchedPoll)
                 return fetchedPoll;
             } catch (err) {
@@ -101,7 +101,7 @@ export default function PollDisplay({
 
     const getProfileForId = useCallback((id: string) => {
         if (!currentConvo || !poll) return undefined;
-        const matches = currentConvo.participants.filter((p) => {
+        const matches = currentConvo.participants.filter((p: UserConversationProfile) => {
             return p.id === id;
         });
         if (matches.length > 0) return matches[0];

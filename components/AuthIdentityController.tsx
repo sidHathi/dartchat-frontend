@@ -13,12 +13,13 @@ import { storeUserData, getStoredUserData, deleteStoredUserData } from '../local
 import Spinner from 'react-native-spinkit';
 import { Center } from 'native-base';
 import NetworkContext from '../contexts/NetworkContext';
+import secureStore from '../localStore/secureStore';
 
 export default function AuthIdentityController(props: PropsWithChildren<{children: ReactNode}>): JSX.Element {
     const { children } = props;
     const { usersApi } = useRequest();
     const { socket, disconnected: socketDisconnected } = useContext(SocketContext);
-    const { networkConnected } = useContext(NetworkContext);
+    const { apiReachable } = useContext(NetworkContext);
 
     const [user, setUser] = useState<UserData | undefined>(undefined);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,6 +28,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     const dispatch = useAppDispatch();
 
     const logOut = async () => {
+        user && (await secureStore.dumpSecrets(user.id));
         await auth().signOut();
         setUser(undefined);
         setIsAuthenticated(false);
@@ -67,7 +69,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     };
 
     const initAppUser = useCallback((newUser: UserData) => {
-        console.log('intializing app');
+        // console.log('intializing app');
         setUser(newUser);
         setNeedsSetup(false);
         dispatch(initReduxUser(newUser));
@@ -81,35 +83,38 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     }, [socket]);
 
     useEffect(() => {
-        return auth().onAuthStateChanged(async (authUser) => {
-            console.log(authUser);
-            console.log(socketDisconnected);
+        const unsubscribe = auth().onAuthStateChanged(async (authUser) => {
             if (authUser && authUser.email) {
                 setUser({email: authUser.email, id: authUser.uid});
                 setIsAuthenticated(true);
                 setLoading(true);
                 try {
-                    if (networkConnected) {
-                        console.log('fetching user data')
-                        const serverUser = await getUserData(usersApi);
-                        if (serverUser && ('handle' in serverUser)) {
-                            initAppUser(serverUser);
-                            storeUserData(serverUser);
-                        } else {
-                            console.log('not initialized')
-                            setNeedsSetup(true);
-                            setLoading(false);
+                    if (apiReachable) {
+                        // console.log('fetching user data')
+                        try {
+                            const serverUser = await getUserData(usersApi);
+                            if (serverUser && ('handle' in serverUser)) {
+                                initAppUser(serverUser);
+                                await storeUserData(serverUser);
+                                return;
+                            } else if (serverUser) {
+                                // console.log('not initialized')
+                                setNeedsSetup(true);
+                                setLoading(false);
+                                return;
+                            }
+                        } catch (err) {
+                            console.log(err);
                         }
-                    } else {
-                        const localUser = await getStoredUserData()
-                        if (localUser && localUser.handle && localUser.id === authUser.uid) {
-                            initAppUser(localUser)
-                        }
-                        setLoading(false);
+                    }
+                    const localUser = await getStoredUserData();
+                    console.log(`local user: ${localUser}`);
+                    if (localUser && localUser.handle && localUser.id === authUser.uid) {
+                        initAppUser(localUser);
                     }
                     setLoading(false);
                 } catch (error) {
-                    console.log(error);
+                    // console.log(error);
                     setLoading(false);
                 } finally {
                     setLoading(false);
@@ -119,17 +124,19 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                 setIsAuthenticated(false);
                 setNeedsSetup(true);
                 if (socket) {
-                    console.log('socket disconnecting');
+                    // console.log('socket disconnecting');
                     socket.emit('forceDisconnect');
                     socket.disconnect();
                 }
                 setLoading(false);
             }
         });
-    }, [networkConnected]);
+
+        return unsubscribe();
+    }, [apiReachable, socket]);
 
     const isSetup = () => {
-        if (!needsSetup && user && user.handle && user.secureKey) {
+        if (!needsSetup && user && user.handle) {
             return true;
         }
         return false;
@@ -146,11 +153,11 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
         createUser,
         modifyUser}}>
         {isAuthenticated ? 
-            loading || ((!networkConnected || socketDisconnected) && !isSetup()) ?
+            (loading || (!apiReachable && !isSetup())) ?
                 getLoadingScreen() :
-            isSetup() ? 
-                children :
-            <IdentitySetup />
+                isSetup() ? 
+                    children :
+                    <IdentitySetup />
         : <AuthUIController />}
     </AuthIdentityContext.Provider>
 }

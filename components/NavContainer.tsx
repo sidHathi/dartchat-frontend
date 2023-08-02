@@ -26,7 +26,7 @@ export default function NavContainer({ children }:
     const { user } = useContext(AuthIdentityContext)
     const { uiState: navState, navSwitch } = useContext(UIContext);
     const screenHeight = Dimensions.get('window').height;
-    const { networkConnected } = useContext(NetworkContext);
+    const { networkConnected, apiReachable } = useContext(NetworkContext);
     const { disconnected: socketDisconnected } = useContext(SocketContext); 
 
     const handleNewMessage = () => {
@@ -84,7 +84,7 @@ export default function NavContainer({ children }:
             </HStack>
         </Center>
         {
-            (!networkConnected || socketDisconnected) &&
+            (!networkConnected || !apiReachable) &&
             <Box marginTop='-150px' zIndex='1003'>
                 <NetworkDisconnectionAlert type={networkConnected ? 'server' : 'network'} />
             </Box>

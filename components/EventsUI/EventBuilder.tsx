@@ -11,6 +11,7 @@ import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
 import useRequest from "../../requests/useRequest";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import SocketContext from "../../contexts/SocketContext";
+import { useKeyboard } from "@react-native-community/hooks";
 
 type ReminderTime = '@' | '10min' | '30min' | '1hr' | '1day' | 'none';
 
@@ -26,6 +27,7 @@ export default function EventBuilder({
     const { socket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
+    const { keyboardShown, keyboardHeight } = useKeyboard();
 
     const [eventName, setEventName] = useState<string | undefined>();
     const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -192,6 +194,7 @@ export default function EventBuilder({
                     objectRef: ref
                 }
                 dispatch(sendNewMessage({socket, message}));
+                socket.emit('scheduleEvent', currentConvo.id, event);
                 close();
             }
         } catch (err) {
@@ -200,7 +203,7 @@ export default function EventBuilder({
         }
     }, [buildEvent])
 
-    return <View w='100%'  h={`${2*screenHeight/3}px`} maxH={`${3*screenHeight/4}px`}>
+    return <View w='100%'  h={keyboardShown ? `${keyboardHeight + 2*screenHeight/3}px`: `${2*screenHeight/3}px`} maxH={`${3*screenHeight/4}px`}>
         <Box w='96%' minH='100%' flexShrink='0'>
             <Heading fontSize='lg' mb='12px'>
                 Create an Event

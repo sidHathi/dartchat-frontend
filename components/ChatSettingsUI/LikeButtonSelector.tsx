@@ -101,7 +101,7 @@ export default function LikeButtonSelector({
     const submitVisible = useMemo(() => {
         if ((likeImageActive || likeImageEmpty || likeImagePartial) || (reset && currentConvo?.customLikeIcon)) return true;
         return false;
-    }, [likeImageActive, likeImageEmpty, likeImagePartial]);
+    }, [likeImageActive, likeImageEmpty, likeImagePartial, reset]);
 
     const ButtonPreview = ({variant, image} : {
             variant: string, image?: Asset
@@ -146,9 +146,9 @@ export default function LikeButtonSelector({
     };
 
     const resetVisible = useMemo(() => {
-        if (likeImageActive || likeImageEmpty || likeImagePartial || currentConvo?.customLikeIcon) return true;
+        if (likeImageActive || likeImageEmpty || likeImagePartial || (currentConvo?.customLikeIcon && !reset)) return true;
         return false;
-    }, [edited, likeImageActive, likeImageEmpty, likeImagePartial, currentConvo]);
+    }, [edited, likeImageActive, likeImageEmpty, likeImagePartial, currentConvo, reset]);
 
     const resetIcons = () => {
         setEdited(true);

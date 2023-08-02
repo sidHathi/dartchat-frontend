@@ -38,7 +38,6 @@ export default function UserDetailsModal({
 
     const handleMessage = useCallback(() => {
         if (!user) return;
-        console.log(profile);
         const seedConvo: Conversation = {
             id: uuid.v4() as string,
             settings: {},

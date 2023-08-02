@@ -4,7 +4,7 @@ import { FlatList, HStack, Box, View, Heading, Spacer, Center } from 'native-bas
 import { chatSelector, pullGallery } from '../../redux/slices/chatSlice';
 import useRequest from '../../requests/useRequest';
 import { Dimensions, NativeSyntheticEvent } from 'react-native';
-import { Message, MessageMedia } from '../../types/types';
+import { DecryptedMessage, Message, MessageMedia } from '../../types/types';
 import GalleryImage from './GalleryImage';
 import Spinner from 'react-native-spinkit';
 import { NativeScrollEvent } from 'react-native';
@@ -88,12 +88,12 @@ export default function MediaGallery(): JSX.Element {
         const padding = 6;
         const whitespace = padding * (2*imagesPerRow + 1);
         const imageWidth = (screenWidth - whitespace)/imagesPerRow;
-        console.log(row);
+        // console.log(row);
         if (!row) return null;
         return <HStack px={`${padding}px`} pt={`${padding}px`}>
             {
                 row.map((ref, idx) => {
-                    return <TouchableOpacity onPress={() => handleMessageSelect(ref.mid, ref.idx)}>
+                    return <TouchableOpacity onPress={() => handleMessageSelect(ref.mid, ref.idx)} key={idx.toString()}>
                         <Box px={`${padding}px`} key={index * imagesPerRow + idx}>
                             <GalleryImage 
                                 media={ref.media}
@@ -135,7 +135,7 @@ export default function MediaGallery(): JSX.Element {
             />
 
             <FullScreenMediaFrame
-                message={selectedMessage}
+                message={selectedMessage as DecryptedMessage}
                 setMessage={setSelectedMessage}
                 startIndex={selectedMessageStartIndex}
                 />

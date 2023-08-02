@@ -52,6 +52,7 @@ export const apiService: ApiService = {
                 ...headers,
                 ...options?.headers,
             },
+            timeout: 5000 // 5 sec
         });
     },
     init: function(baseURL: string) : void {

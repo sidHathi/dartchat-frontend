@@ -65,7 +65,6 @@ export default function IdentitySetup(): JSX.Element {
         createUser({
             ...user,
             handle,
-            secureKey,
             displayName,
             phone,
             avatar: await getUserAvatarFromImage()

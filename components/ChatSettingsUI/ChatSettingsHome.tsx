@@ -41,10 +41,10 @@ export default function ChatSettingsHome({
 
     const confirmUserLeaves = useCallback(() => {
         if (!user || !currentConvo || !socket) return;
+        const userProfile = currentConvo.participants.find(p => p.id === user.id);
         dispatch(leaveChat(user.id, conversationsApi, () => {
             dispatch(handleUserConvoLeave(currentConvo.id));
-            socket.emit('removeConversationUser', currentConvo.id, user.id);
-            dispatch(exitConvo());
+            socket && userProfile && socket.emit('removeConversationUser', currentConvo.id, userProfile);
             navSwitch('conversations');
         }));
     }, [socket, dispatch, user, conversationsApi, currentConvo]);
@@ -150,7 +150,15 @@ export default function ChatSettingsHome({
         if (updates.newName || updates.newAvatar) {
             dispatch(updateConversationDetails(updates, conversationsApi, () => {
                 dispatch(handleUpdatedChat({cid: currentConvo?.id, ...updates}));
-                socket && socket.emit('updateConversationDetails')
+                if (socket && currentConvo) {
+                    socket.emit('updateConversationDetails');
+                    if (newAvatar) {
+                        socket.emit('newAvatar', currentConvo.id);
+                    }
+                    if (newName) {
+                        socket.emit('newName', currentConvo.id, newName);
+                    }
+                }
             }));
         }
         setImageUploading(false);

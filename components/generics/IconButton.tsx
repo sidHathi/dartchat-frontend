@@ -78,7 +78,7 @@ export default function IconButton({label, size, color, onPress, shadow, disable
         }
     }
 
-    return <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={0.5}>
+    return <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={0.5} hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
         <Box bgColor='rgba(255, 255, 255, 0.1)' {...additionalProps} shadow={shadow || 'none'} borderRadius={size/2} opacity={disabled ? '0.5' : '1'}>
             {getIcon()}
         </Box>

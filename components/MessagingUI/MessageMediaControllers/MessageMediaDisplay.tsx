@@ -22,8 +22,8 @@ export default function MessageMediaDisplay({
     }, 0);
 
     useEffect(() => {
-        console.log(media.length);
-        console.log(mediaWidth);
+        // console.log(media.length);
+        // console.log(mediaWidth);
     }, []);
     
     return <View
@@ -36,7 +36,7 @@ export default function MessageMediaDisplay({
             marginTop: 18,
             width: Math.min(screenWidth, mediaWidth),
             overflow: 'visible', 
-            marginLeft: Math.max(-18, 225 - mediaWidth)
+            marginLeft: Math.min(Math.max(-18, 225 - mediaWidth), 0)
         }}
         ref={scrollRef}
         showsHorizontalScrollIndicator={true}

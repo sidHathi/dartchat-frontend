@@ -1,4 +1,4 @@
-import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia, LikeIcon } from "./types";
+import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia, LikeIcon, Message } from "./types";
 
 export type ServerConversationPreview = {
     cid: string;
@@ -22,16 +22,9 @@ export type RawUserData = {
     archivedConvos?: string[];
 };
 
-export type SocketMessage = {
-    id: string;
-    content: string;
-    media?: MessageMedia[];
+
+export type SocketMessage = Omit<Message, 'timestamp'> & {
     timestamp: string;
-    senderId: string;
-    likes: string[];
-    replyRef?: ReplyRef;
-    senderProfile?: UserConversationProfile;
-    objectRef?: ObjectRef;
 };
 
 export type RawConversation = {
@@ -69,3 +62,11 @@ export type RawPoll = {
     expirationDate: string;
     messageId?: string;
 }
+
+export type PNType = 'message' | 'like' | 'newConvo';
+
+export type PNPacket = {
+    type: PNType;
+    stringifiedBody: string;
+    stringifiedDisplay?: string;
+};

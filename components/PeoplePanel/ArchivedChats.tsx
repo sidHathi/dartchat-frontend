@@ -44,7 +44,7 @@ export default function ArchivedChats(): JSX.Element {
     const rejoinConvo = useCallback((cid: string) => {
         if (socket && user) {
             dispatch(joinConversation(cid, conversationsApi, usersApi, () => {
-                socket.emit('newConversationUsers', cid, [buildDefaultProfileForUser(user)])
+                socket.emit('newConversationUsers', cid, [buildDefaultProfileForUser(user)]);
             }));
         }
     }, [socket, conversationsApi, usersApi, user]);
@@ -55,19 +55,19 @@ export default function ArchivedChats(): JSX.Element {
 
     const getConvoAvatarElem = (convo: Conversation) => {
         if (convo.avatar) {
-            return <IconImage imageUri={convo.avatar.mainUri} size={90} shadow='9' />;
+            return <IconImage imageUri={convo.avatar.mainUri} size={72} shadow='9' />;
         }
-        return <IconButton label='profile' size={90} shadow="9" />;
+        return <IconButton label='profile' size={72} shadow="9" />;
     }
 
     const convoCard = (convo: Conversation) => {
         return <Box w='100%' borderRadius='12px' bgColor='#f5f5f5' p='12px' my='6px'>
             <HStack px='12px' space={6} py='6px'>
                  <Spacer />
-                <VStack my='12px'>
+                <VStack my='6px'>
                     <Spacer />
-                    {getConvoAvatarElem(convo)}
                     <Center>
+                    {getConvoAvatarElem(convo)}
                     <Heading fontSize='md' mt='12px'>
                         {convo.name}
                     </Heading>

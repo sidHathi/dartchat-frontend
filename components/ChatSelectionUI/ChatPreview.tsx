@@ -39,14 +39,14 @@ export default function ChatPreview({
                 </Box>
                 <VStack h='100%'>
                     <Spacer />
-                    <Heading fontSize='md'>
+                    <Heading fontSize='md' mb='2px'>
                         {chat.name}
                     </Heading>
                     <MentionsTextDisplay
                         message={{
                             content: chat.lastMessageContent || 'New conversation',
                         }}
-                        color='gray.700' fontSize='xs'  maxWidth={`${screenWidth - 200}px`} noOfLines={2} />
+                        color='gray.700' fontSize='sm' maxWidth={`${screenWidth - 200}px`} noOfLines={2} />
                     {/* <Text color='gray.700' fontSize='xs'  maxWidth={`${screenWidth - 200}px`} noOfLines={2}>
                         {chat.lastMessageContent || 'New conversation'}
                     </Text> */}

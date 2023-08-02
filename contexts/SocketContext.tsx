@@ -33,7 +33,7 @@ const heartCheck: any = {
                 socket.send("ping");
             }
             self.serverTimeoutObj = setTimeout(() => {
-                socket.connect();//本库提供
+                socket.connect();
             }, self.timeout)
         }, hc.timeout)
     }
@@ -133,6 +133,10 @@ export function SocketContextProvider({children} :PropsWithChildren<{
             heartCheck.reset(heartCheck).start(heartCheck, socket);
         });
 
+        socket.on('pong', async () => {
+            await new Promise((res) => setTimeout(res, 5000));
+            socket.emit('ping');
+        });
     }, [networkConnected, socket]);
 
     return (

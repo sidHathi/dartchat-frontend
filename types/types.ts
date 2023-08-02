@@ -2,19 +2,25 @@ export type UserData = {
     id: string;
     email: string;
     handle?: string;
-    secureKey?: string;
     displayName?: string;
     phone?: string;
     conversations?: ConversationPreview[];
     avatar?: AvatarImage;
     contacts?: string[];
     archivedConvos?: string[];
+    publicKey?: string;
+    keySalt?: string; // base64 encoded random prime number
+    secrets?: string;
 };
 
 export type UIScreen = 'messaging' |
     'conversations' |
     'social' |
     'profile';
+
+type MessageType = 'plainText' | 'media' | 'ref' | 'system';
+
+type EncryptionLevel = 'none' | 'privateKey' | 'group' | 'doubleRatchet';
 
 export type UIState = {
     screen: UIScreen;
@@ -31,18 +37,32 @@ export type UserConversationProfile = {
     notifications?: NotificationStatus
 };
 
-export type Message = {
+type MessageBase = {
     id: string;
-    content: string;
-    media?: MessageMedia[];
     timestamp: Date;
+    messageType: MessageType;
+    encryptionLevel: EncryptionLevel;
     senderId: string;
     likes: string[];
-    replyRef?: ReplyRef;
-    mentions?: UserConversationProfile[];
     senderProfile?: UserConversationProfile;
+    delivered?: boolean;
+    mentions?: UserConversationProfile[];
+    replyRef?: ReplyRef;
+};
+
+export type EncryptionFields = {
+    content: string;
+    media?: MessageMedia[];
     objectRef?: ObjectRef;
 };
+
+export type DecryptedMessage = MessageBase & EncryptionFields;
+
+export type EncryptedMessage = MessageBase & {
+    encryptedFields: string;
+};
+
+export type Message = DecryptedMessage | EncryptedMessage;
 
 export type ReplyRef = {
     id: string;
@@ -73,6 +93,9 @@ export type ConversationPreview = {
     avatar?: AvatarImage;
     lastMessageTime: Date;
     recipientId?: string;
+    group: boolean;
+    publicKey?: string;
+    keyUpdate?: string;
 };
 
 export type UserProfile = {

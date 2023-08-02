@@ -3,7 +3,7 @@ import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { View, Box, Input, HStack, VStack, ScrollView, Heading, Text, Button, Icon, IconButton, Spacer, Select, CheckIcon, Center } from 'native-base';
 import { Dimensions } from "react-native";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { Poll, Message, ObjectRef } from "../../types/types";
+import { Poll, Message, ObjectRef, UserConversationProfile } from "../../types/types";
 import uuid from 'react-native-uuid';
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
@@ -11,6 +11,7 @@ import SocketContext from "../../contexts/SocketContext";
 import { handleNewMessage } from "../../redux/slices/userDataSlice";
 import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
+import { useKeyboard } from "@react-native-community/hooks";
 
 type Timeframe = 'hr' | 'day' | 'week';
 
@@ -26,6 +27,7 @@ export default function PollBuilder({
     const { socket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
+    const { keyboardShown, keyboardHeight } = useKeyboard();
 
     const [question, setQuestion] = useState<string | undefined>();
     const [options, setOptions] = useState<string[]>([
@@ -95,7 +97,7 @@ export default function PollBuilder({
         if (!user || !currentConvo || !socket) return;
         const poll = await constructPoll();
         if (!poll) return;
-        const userMatches = currentConvo.participants.filter(u => u.id === user.id);
+        const userMatches = currentConvo.participants.filter((u: UserConversationProfile) => u.id === user.id);
         const ref: ObjectRef = {
             id: poll.id,
             type: 'poll'
@@ -113,6 +115,7 @@ export default function PollBuilder({
         if (socket && currentConvo) {
             console.log('sending message')
             dispatch(sendNewMessage({socket, message}));
+            socket.emit('schedulePoll', currentConvo.id, poll);
             // dispatch(handleNewMessage({cid: currentConvo.id, message: message, messageForCurrent: true}));
             close();
         }
@@ -166,7 +169,7 @@ export default function PollBuilder({
         setOptions(newOptions);
     }, [options])
 
-    return <View h={`${0.8*screenHeight - 90}px`} flexShrink='0' w='100%'>
+    return <View h={keyboardShown ? `${0.8*screenHeight - 90 + keyboardHeight}px`:`${0.8*screenHeight - 90}px`} flexShrink='0' w='100%'>
         <Box w='96%' m='auto' h='100%' flexShrink='0'>
             <Heading fontSize='lg'>
                 Create a Poll

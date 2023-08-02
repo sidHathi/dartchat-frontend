@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
-import { Message, ConversationPreview, Conversation, AvatarImage, UserData } from '../../types/types';
+import { Message, ConversationPreview, Conversation, AvatarImage, UserData, DecryptedMessage } from '../../types/types';
 import { RootState } from '../store';
 import { Socket } from 'socket.io-client';
 import { UsersApi } from '../../requests/usersApi';
@@ -13,6 +13,7 @@ const initialState: {
     requestLoading: boolean;
     contacts?: string[];
     archivedConvos?: string[];
+    publicKey?: string;
 } = {
     userConversations: [],
     lastReceivedMessageId: '',
@@ -29,6 +30,7 @@ export const userDataSlice = createSlice({
             userConversations: action.payload.conversations || [],
             contacts: action.payload.contacts || [],
             archivedConvos: action.payload.archivedConvos || [],
+            publicKey: action.payload.publicKey
         }),
         setConversations: (state, action: PayloadAction<ConversationPreview[]>) => {
             return ({
@@ -45,9 +47,9 @@ export const userDataSlice = createSlice({
             archivedConvos: action.payload
         }),
         handleNewMessage: (state, action: PayloadAction<{
-            cid: string, message: Message, messageForCurrent: boolean
+            cid: string, message: DecryptedMessage, messageForCurrent: boolean
         }>) => {
-            console.log('handling new message');
+            // console.log('handling new message');
             const { cid, message, messageForCurrent } = action.payload;
             const matches = state.userConversations.filter((c) => c.cid === cid);
             if (matches.length > 0 && message.id !== state.lastReceivedMessageId) {
@@ -78,7 +80,7 @@ export const userDataSlice = createSlice({
             newConvo: Conversation,
             uid: string
         }>) => {
-            console.log('adding conversation');
+            // console.log('adding conversation');
             const { newConvo, uid } = action.payload;
             if (state.userConversations.map((c) => c.cid).includes(newConvo.id)) return state;
             const lastMessage = newConvo.messages.length > 0 ? newConvo.messages[newConvo.messages.length - 1] : undefined;
@@ -90,6 +92,7 @@ export const userDataSlice = createSlice({
                 recipientId = otherParticipant.id;
             }
             const newContacts = getNewContacts(newConvo.participants.map((p) => p.id), uid, state.contacts || []);
+            const decryptedLastMessage = lastMessage as DecryptedMessage;
             return ({
                 ...state,
                 userConversations: [
@@ -97,11 +100,12 @@ export const userDataSlice = createSlice({
                     {
                         cid: newConvo.id,
                         name,
-                        lastMessageContent: lastMessage ? lastMessage.content : '',
+                        lastMessageContent: decryptedLastMessage ? decryptedLastMessage.content : '',
                         lastMessageTime: lastMessage ? lastMessage?.timestamp : new Date(),
                         unSeenMessages: 0,
                         avatar: newConvo.avatar,
-                        recipientId
+                        recipientId,
+                        group: newConvo.group
                     }
                 ],
                 contacts: [...(state.contacts || []), ...newContacts],
@@ -174,6 +178,12 @@ export const userDataSlice = createSlice({
                 ...state,
                 archivedConvos: state.archivedConvos?.filter((c) => c !== cid)
             }
+        },
+        setPublicKey: (state, action: PayloadAction<string>) => {
+            return {
+                ...state,
+                publicKey: action.payload
+            }
         }
     }
 });
@@ -193,7 +203,8 @@ export const {
     setRequestLoading,
     handleUpdatedChat,
     handleUserConvoLeave,
-    handleArchiveConvoRemoval
+    handleArchiveConvoRemoval,
+    setPublicKey
 } = userDataSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
@@ -208,18 +219,19 @@ export const handleConversationDelete = (cid: string, conversationsApi: Conversa
     }
 };
 
-export const pullLatestPreviews = (usersApi: UsersApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
+export const pullLatestPreviews = (usersApi: UsersApi, onComplete?: () => void): ThunkAction<void, RootState, any, any> => async (dispatch) => {
     dispatch(setRequestLoading(true));
 
     try {
         const updatedUser = await usersApi.getCurrentUser();
-        console.log(updatedUser);
+        // console.log(updatedUser);
         if (updatedUser) {
             updatedUser.conversations && dispatch(setConversations(updatedUser.conversations));
             dispatch(setContacts(updatedUser.contacts || []));
             dispatch(setArchivedConvos(updatedUser.archivedConvos || []));
         }
         dispatch(setRequestLoading(false)); 
+        onComplete && onComplete();
     } catch (err) {
         console.log(err);
         dispatch(setRequestLoading(false));

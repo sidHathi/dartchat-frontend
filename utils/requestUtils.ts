@@ -1,4 +1,4 @@
-import { UserData, Message, Conversation, CursorContainer, CalendarEvent } from "../types/types"
+import { UserData, Message, Conversation, CursorContainer, CalendarEvent, SocketEvent } from "../types/types"
 import { RawUserData, SocketMessage, RawConversation, RawCalendarEvent } from "../types/rawTypes";
 import { AxiosRequestConfig } from "axios";
 
@@ -68,6 +68,19 @@ export const parseEvent = (raw: any): CalendarEvent => {
             ...casted,
             date: new Date(Date.parse(casted.date))
         } as CalendarEvent;
+    } catch (err) {
+        console.error(err);
+        return raw;
+    }
+};
+
+export const parseSocketEvent = (raw: any): SocketEvent => {
+    try {
+        const casted = raw as any;
+        return {
+            ...casted,
+            timestamp: new Date(Date.parse(casted.timestamp))
+        } as SocketEvent;
     } catch (err) {
         console.error(err);
         return raw;

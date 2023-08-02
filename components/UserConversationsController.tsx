@@ -8,11 +8,11 @@ import { SocketMessage } from '../types/rawTypes';
 import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser } from '../redux/slices/chatSlice';
+import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered } from '../redux/slices/chatSlice';
 import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews } from '../redux/slices/userDataSlice';
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
-import { autoGenGroupAvatar } from '../utils/messagingUtils';
+import { autoGenGroupAvatar, constructNewConvo } from '../utils/messagingUtils';
 
 export default function UserConversationsController({
     children
@@ -40,18 +40,11 @@ export default function UserConversationsController({
     useEffect(() => {
         if (!socket || !user) return;
         socket.on('newConversation', async (newConvo: Conversation) => {
-            console.log('new conversation message received!');
+            // console.log('new conversation message received!');
             if (userConversations.map(c => c.cid).includes(newConvo.id)) return; 
-            let name = newConvo.name;
-            if (!newConvo.group) {
-                name = newConvo.participants.filter((p) => p.id !== user.id)[0].displayName;
-            }
+            const completedConvo = await constructNewConvo(newConvo, user);
             dispatch(addConversation({
-                newConvo: {
-                    ...newConvo,
-                    avatar: await autoGenGroupAvatar(newConvo.participants, user.id),
-                    name
-                },
+                newConvo: completedConvo,
                 uid: user.id
             }));
             socket.emit('joinRoom', userConversations.map(c => c.cid));
@@ -69,7 +62,7 @@ export default function UserConversationsController({
             const message = parseSocketMessage(newMessage);
 
             const messageForCurrent: boolean = message.senderId === user?.id ||(currentConvo !== undefined && currentConvo.id === cid && currentConvo.messages.filter(m => m.id === message.id).length < 1);
-            console.log(messageForCurrent);
+            // console.log(messageForCurrent);
             if (messageForCurrent) {
                 socket.emit('messagesRead', currentConvo?.id);
                 dispatch(receiveNewMessage({message, cid}));
@@ -104,7 +97,7 @@ export default function UserConversationsController({
         socket.on('newLikeEvent', (cid: string, mid: string, uid: string, event: SocketEvent) => {
             if (receivedEvents.has(event.id) || currentConvo?.id !== cid) return;
             setReceivedEvents(receivedEvents.add(event.id));
-            console.log('new like received');
+            // console.log('new like received');
             dispatch(receiveNewLike({
                 messageId: mid,
                 userId: uid,
@@ -144,6 +137,15 @@ export default function UserConversationsController({
             }
             dispatch(pullLatestPreviews(usersApi));
         })
+    }, [socket, currentConvo]);
+
+    useEffect(() => {
+        if (!socket || !currentConvo) return;
+        socket.on('messageDelivered', (cid: string, mid: string) => {
+            if (cid === currentConvo.id) {
+                dispatch(handleMessageDelivered(mid))
+            }
+        });
     }, [socket, currentConvo]);
 
     const createNewConversation = (newConvo: Conversation) => {

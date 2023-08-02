@@ -1,5 +1,5 @@
 import React from 'react';
-import { Message, UserConversationProfile } from '../../types/types';
+import { DecryptedMessage, Message, UserConversationProfile } from '../../types/types';
 
 import {View, Box, HStack, VStack, Text, Spacer, Pressable} from 'native-base';
 import IconButton from '../generics/IconButton';
@@ -10,7 +10,7 @@ export default function ReplyMessageDisplay({
     participants, message, handleDeselect
 } : {
     participants: {[key: string]: UserConversationProfile}
-    message: Message,
+    message: DecryptedMessage,
     handleDeselect: () => void
 }): JSX.Element {
     return <View w='100%' marginBottom='-4px'>

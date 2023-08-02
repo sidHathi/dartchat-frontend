@@ -35,7 +35,7 @@ export default function RemoveUserModal({
     const confirmDelete = useCallback(() => {
         if (!profile || !currentConvo) return;
         dispatch(removeUser(profile.id, conversationsApi, () => {
-            socket && socket.emit('removeConversationUser', currentConvo.id, profile.id);
+            socket && socket.emit('removeConversationUser', currentConvo.id, profile);
             handleClose();
             onRemove && onRemove();
         }));

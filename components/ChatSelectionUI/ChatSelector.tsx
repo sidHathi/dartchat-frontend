@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Pressable, VStack, Text, Box, Spinner, ScrollView } from "native-base";
 
@@ -13,24 +13,33 @@ import ConfirmationModal from "../generics/ConfirmationModal";
 import ConversationsContext from "../../contexts/ConversationsContext";
 import SocketContext from "../../contexts/SocketContext";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { deleteConversation, readConversationMessages, userDataSelector } from "../../redux/slices/userDataSlice";
-import { updateUserConversations } from "../../utils/identityUtils";
+import { deleteConversation, handleUserConvoLeave, readConversationMessages, userDataSelector } from "../../redux/slices/userDataSlice";
+import { buildDefaultProfileForUser, updateUserConversations } from "../../utils/identityUtils";
 import { parseConversation } from "../../utils/requestUtils";
-import { pullConversation, setConvo } from "../../redux/slices/chatSlice";
+import { chatSelector, leaveChat, pullConversation, setConvo } from "../../redux/slices/chatSlice";
 import NetworkContext from "../../contexts/NetworkContext";
 
-export default function ChatSelector({openChat}: {openChat: () => void}): JSX.Element {
+export default function ChatSelector({
+    openChat,
+    closeChat
+}: {
+    openChat: () => void;
+    closeChat: () => void;
+}): JSX.Element {
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { networkConnected } = useContext(NetworkContext);
     const { userConversations } = useAppSelector(userDataSelector);
+    const { requestLoading } = useAppSelector(chatSelector);
     const { deleteConversation: socketDelete } = useContext(ConversationsContext);
     const { conversationsApi, usersApi } = useRequest();
     const dispatch = useAppDispatch();
 
-    const [dcModalOpan, setDcModalOpen] = useState(false);
+    const [dcModalOpen, setDcModalOpen] = useState(false);
     const [upForDelete, setUpForDelete] = useState<undefined | ConversationPreview>();
     const [deleteLoadingId, setDeleteLoadingId] = useState<string | undefined>();
+    const [upForLeave, setUpForLeave] = useState<ConversationPreview | undefined>();
+    const [confirmLeaveModalOpen, setConfirmLeaveModalOpen] = useState(false);
 
     if (!user || userConversations.length === 0) {
         return <>
@@ -39,11 +48,12 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
 
     const handleSelect = (chat: ConversationPreview) => {
         if (!networkConnected) return;
-        dispatch(pullConversation(chat.cid, conversationsApi));
+        dispatch(pullConversation(chat.cid, conversationsApi, undefined, () => {
+            closeChat();
+        }));
         dispatch(readConversationMessages(chat.cid));
         if (socket) {
             socket.emit("messagesRead", chat.cid);
-            dispatch(readConversationMessages(chat.cid));
         }
         openChat();
     }
@@ -62,25 +72,42 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
         }
     };
 
+    const handleLeaveChat = useCallback(() => {
+        if (!upForLeave || !user || !socket) return;
+
+        dispatch(leaveChat(user.id, conversationsApi, () => {
+            dispatch(handleUserConvoLeave(upForLeave.cid));
+            socket && socket.emit('removeConversationUser', upForLeave.cid, buildDefaultProfileForUser(user));
+        }));
+    }, [upForLeave, user, socket]);
+
     const closeModal = () => setDcModalOpen(false);
 
-    const modalConfirm = () => {
+    const deleteConfirm = () => {
         setDcModalOpen(false);
         handleDelete(upForDelete);
     }
 
-    const openConfirmModal = (chat: ConversationPreview) => {
-        console.log('opening modal');
+    const openDeleteConfirmModal = (chat: ConversationPreview) => {
         setUpForDelete(chat);
         setDcModalOpen(true);
     }
 
-    const DeleteButton = (chat: ConversationPreview) => 
+    const openLeaveConfirmModal = (chat: ConversationPreview) => {
+        setUpForLeave(chat);
+        setConfirmLeaveModalOpen(true);
+    };
+
+    const RightButton = (chat: ConversationPreview) => 
         <Animated.View>
-            <Pressable onPress={() => openConfirmModal(chat)}>
+            <Pressable onPress={() => {
+                !chat.group ? openDeleteConfirmModal(chat) : openLeaveConfirmModal(chat);
+            }}>
             <TouchableOpacity 
                 activeOpacity={0.5}
-                onPress={() => openConfirmModal(chat)} 
+                onPress={() => {
+                    !chat.group ? openDeleteConfirmModal(chat) : openLeaveConfirmModal(chat);
+                }}
                 style={{
                     margin: 'auto',
                     height: '100%'
@@ -88,8 +115,8 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
                 <Box pr='18px' pl='6px' m='auto'>
                     <Box m='auto' w='50px' bgColor='#f5f5f5' borderRadius='30px' h='50px' display='flex' pt='10px' shadow='0'>
                         {
-                            !(deleteLoadingId && chat.cid === deleteLoadingId) ?
-                            <IconButton label='delete' size={30} color='salmon' shadow='none' additionalProps={{margin: 'auto'}}/> :
+                            !((deleteLoadingId && chat.cid === deleteLoadingId) || requestLoading) ?
+                            <IconButton label={chat.group ? 'leave' : 'delete'} size={30} color='salmon' shadow='none' additionalProps={{margin: 'auto'}}/> :
                             <Spinner color='black' />
                         }
                     </Box>
@@ -105,7 +132,7 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
                 [...userConversations].sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime()).map((chat) =>
                     <Swipeable
                         key={chat.cid}
-                        renderRightActions={() => DeleteButton(chat)}>
+                        renderRightActions={() => RightButton(chat)}>
                         <ChatPreview 
                             key={chat.cid} 
                             chat={chat}
@@ -118,11 +145,20 @@ export default function ChatSelector({openChat}: {openChat: () => void}): JSX.El
         
     </ScrollView>
         <ConfirmationModal
-            isOpen={dcModalOpan}
+            isOpen={dcModalOpen}
             onClose={closeModal}
-            onConfirm={modalConfirm}
+            onConfirm={deleteConfirm}
             title='Confirm Deletion'
             content='This action cannot be reversed'
+            size='md'
+        />
+
+        <ConfirmationModal
+            isOpen={confirmLeaveModalOpen}
+            onClose={() => setConfirmLeaveModalOpen(false)}
+            onConfirm={handleLeaveChat}
+            title='Confirm Leave'
+            content={`You will no longer be a member of "${upForLeave?.name}" if you select confirm.`}
             size='md'
         />
     </>

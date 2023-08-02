@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon } from "../../types/types";
+import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon, DecryptedMessage } from "../../types/types";
 import { RootState } from "../store";
 import { Socket } from "socket.io-client";
 import uuid from 'react-native-uuid';
@@ -9,7 +9,7 @@ import { findPrivateMessageIdForUser } from "../../utils/messagingUtils";
 
 const initialState: {
     currentConvo?: Conversation;
-    galleryMessages?: Message[];
+    galleryMessages?: DecryptedMessage[];
     needsScroll: boolean;
     requestLoading: boolean;
     silent: boolean;
@@ -176,12 +176,12 @@ export const chatSlice = createSlice({
             messageId: string, userId: string, event: SocketEvent
         }>) => {
             const { messageId, userId, event } = action.payload;
-            console.log('liking message');
-            console.log(state.currentConvo?.messages.map((m) => m.id));
+            // console.log('liking message');
+            // console.log(state.currentConvo?.messages.map((m) => m.id));
             if (!state.currentConvo) return state;
             const message = state.currentConvo.messages.filter((m) => m.id === messageId).at(0);
             if (message && event.type === 'newLike' && message.likes.includes(userId)) return;
-            console.log('currentConvo exists');
+            // console.log('currentConvo exists');
             return ({
                 ...state,
                 currentConvo: {
@@ -300,7 +300,12 @@ export const chatSlice = createSlice({
         },
         handleAddUsers: (state, action: PayloadAction<UserConversationProfile[]>) => {
             if (!state.currentConvo) return state;
-            const newProfiles = action.payload.filter((p) => !state.currentConvo?.participants.includes(p));
+            const added = new Set<string>();
+            const newProfiles = action.payload.filter((p) => {
+                if (added.has(p.id)) return false;
+                added.add(p.id);
+                return !state.currentConvo?.participants.map((p) => p.id).includes(p.id)
+            });
             return {
                 ...state,
                 currentConvo: {
@@ -322,7 +327,7 @@ export const chatSlice = createSlice({
                 }
             }
         },
-        handleNewGalleryMessages: (state, action: PayloadAction<Message[]>) => {
+        handleNewGalleryMessages: (state, action: PayloadAction<DecryptedMessage[]>) => {
             if (!state.currentConvo) return state;
             const currGallery = state.galleryMessages || [];
             return {
@@ -334,6 +339,24 @@ export const chatSlice = createSlice({
             return {
                 ...state,
                 galleryCursor: action.payload
+            }
+        },
+        handleMessageDelivered: (state, action: PayloadAction<string>) => {
+            if (!state.currentConvo) return;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    messages: state.currentConvo.messages.map((m) => {
+                        if (m.id === action.payload) {
+                            return {
+                                ...m,
+                                delivered: true
+                            } as Message;
+                        }
+                        return m;
+                    })
+                }
             }
         }
     }
@@ -361,10 +384,11 @@ export const {
     handleAddUsers,
     handleNewLikeIcon,
     handleNewGalleryMessages,
-    setGalleryCursor
+    setGalleryCursor,
+    handleMessageDelivered
  } = chatSlice.actions;
 
-export const pullConversation = (cid: string, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch) => {
+export const pullConversation = (cid: string, api: ConversationsApi, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch) => {
     try {
         dispatch(setRequestLoading(true));
 
@@ -377,8 +401,11 @@ export const pullConversation = (cid: string, api: ConversationsApi): ThunkActio
         }
         dispatch(setConvo(apiConvo));
         dispatch(setRequestLoading(false));
+        onComplete && onComplete();
     } catch (err) {
         console.log(err);
+        dispatch(setRequestLoading(false));
+        onFailure && onFailure();
         return;
     }
 };
@@ -431,7 +458,7 @@ export const updateConversationProfile = (updatedProfile: UserConversationProfil
 
     dispatch(setRequestLoading(true));
     try {
-        console.log('updating profile');
+        // console.log('updating profile');
         const res = await api.updateConversationProfile(currentConvo.id, updatedProfile);
         if (res) {
             dispatch(handleUpdatedProfile(updatedProfile));
@@ -450,7 +477,7 @@ export const updateConversationDetails = (updates: {newAvatar?: AvatarImage, new
 
     dispatch(setRequestLoading(true));
     try {
-        console.log('updating profile');
+        // console.log('updating profile');
         await api.updateConversationDetails(currentConvo.id, updates);
         dispatch(updateChatDetails(updates));
         onSuccess && onSuccess();
@@ -468,9 +495,9 @@ export const pullConversationDetails = (api: ConversationsApi): ThunkAction<void
 
     dispatch(setRequestLoading(true));
     try {
-        console.log('updating profile');
+        // console.log('updating profile');
         const updatedConvo = await api.getConversationInfo(currentConvo.id);
-        console.log(updatedConvo);
+        // console.log(updatedConvo);
         dispatch(updateChatDetails({
             newName: updatedConvo.name,
             newAvatar: updatedConvo.avatar,
@@ -493,7 +520,7 @@ export const updateUserNotStatus = (uid: string, newStatus: NotificationStatus, 
         const cid = currentConvo.id;
         await api.updateUserNotStatus(cid, newStatus);
         dispatch(handleNewUserNotStatus({uid, newStatus}));
-        console.log('notifications status updated');
+        // console.log('notifications status updated');
         dispatch(setRequestLoading(false));
     } catch (err) {
         console.log(err);
@@ -611,7 +638,7 @@ export const pullGallery = (api: ConversationsApi): ThunkAction<void, RootState,
         } else {
             dispatch(setGalleryCursor(undefined));
         }
-        dispatch(handleNewGalleryMessages(messages));
+        dispatch(handleNewGalleryMessages(messages as DecryptedMessage[]));
         dispatch(setRequestLoading(false));
     } catch (err) {
         dispatch(setRequestLoading(false));

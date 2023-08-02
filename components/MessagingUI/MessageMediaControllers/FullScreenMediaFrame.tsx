@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import ImageView from 'react-native-image-viewing';
-import { MessageMedia, Message } from "../../../types/types";
+import { MessageMedia, Message, DecryptedMessage } from "../../../types/types";
 import { Box, HStack, Spacer } from 'native-base';
 import IconButton from "../../generics/IconButton";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
@@ -15,7 +15,7 @@ export default function FullScreenMediaFrame({
     handleReply,
     startIndex,
 }: {
-    message: Message | undefined,
+    message: DecryptedMessage | undefined,
     setMessage: (message: Message | undefined) => void;
     handleReply?: () => void;
     startIndex?: number;

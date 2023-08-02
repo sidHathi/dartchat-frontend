@@ -8,6 +8,10 @@ export type UsersApi = {
     updateUser: (updatedUser: UserData) => Promise<UserData | never>;
     addUserPushToken: (token: string) => Promise<boolean | never>;
     removeArchivedConvo: (cid: string) => Promise<any | never>;
+    readConversationKeyUpdates: (cids: string[]) => Promise<any | never>;
+    setKeySalt: (salt: string) => Promise<any | never>;
+    setUserSecret: (secret: string) => Promise<any | never>;
+    updatePublicKey: (newKey: string) => Promise<any | never>;
 };
 
 export default function usersApi(apiService: ApiService): UsersApi {
@@ -87,11 +91,83 @@ export default function usersApi(apiService: ApiService): UsersApi {
         })
     };
 
+    const readConversationKeyUpdates = (cids: string[]): Promise<any | never> => {
+        return apiService.request({
+            method: 'POST',
+            url: `/users/me/readKeyUpdates`,
+            data: {
+                cids
+            }
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+            return Promise.reject(res);
+        }).catch((err) => {
+            return Promise.reject(err);
+        })
+    };
+
+    const setKeySalt = (salt: string): Promise<any | never> => {
+        return apiService.request({
+            method: 'POST',
+            url: `/users/me/setKeySalt`,
+            data: {
+                salt
+            }
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+            return Promise.reject(res);
+        }).catch((err) => {
+            return Promise.reject(err);
+        })
+    };
+
+    const setUserSecret = (secret: string): Promise<any | never> => {
+        return apiService.request({
+            method: 'POST',
+            url: `/users/me/setSecret`,
+            data: {
+                secret
+            }
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+            return Promise.reject(res);
+        }).catch((err) => {
+            return Promise.reject(err);
+        })
+    };
+
+    const updatePublicKey = (newKey: string): Promise<any | never> => {
+        return apiService.request({
+            method: 'POST',
+            url: `/users/me/updatePublicKey`,
+            data: {
+                publicKey: newKey
+            }
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+            return Promise.reject(res);
+        }).catch((err) => {
+            return Promise.reject(err);
+        })
+    };
+
     return {
         getCurrentUser,
         createNewUser,
         updateUser,
         addUserPushToken,
-        removeArchivedConvo
+        removeArchivedConvo,
+        readConversationKeyUpdates,
+        setKeySalt,
+        setUserSecret,
+        updatePublicKey
     };
 }

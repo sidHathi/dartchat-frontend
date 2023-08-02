@@ -29,7 +29,7 @@ export default function MessageMediaFrame({
     return (
     <Pressable onPress={() => {
         if (media.type.includes('image')) {
-            console.log('media selected');
+            // console.log('media selected');
             handleSelect();
         }
     }}>

@@ -31,7 +31,7 @@ export default function EventDisplay({
         const getEvent = async () => {
             const newEvent = await conversationsApi.getEvent(currentConvo.id, eid);
             setEvent(newEvent);
-            console.log(newEvent)
+            // console.log(newEvent)
         }
         getEvent();
     }, [eid, currentConvo]);
@@ -45,7 +45,6 @@ export default function EventDisplay({
         }
         if (event !== newEvent) {
             setEvent(newEvent);
-            if (socket && currentConvo) socket.emit('eventRsvp', currentConvo.id, event.id, 'undecided');
         }
     }, [user, event, socket, currentConvo])
 
@@ -99,6 +98,7 @@ export default function EventDisplay({
         const uid = user.id;
         if (event.going.includes(uid)) {
             clearUser(uid);
+            if (socket && currentConvo) socket.emit('eventRsvp', currentConvo.id, event.id, 'undecided');
             return;
         }
         const newEvent = {
@@ -118,6 +118,7 @@ export default function EventDisplay({
         const uid = user.id;
         if (event.notGoing.includes(uid)) {
             clearUser(uid);
+            if (socket && currentConvo) socket.emit('eventRsvp', currentConvo.id, event.id, 'undecided');
             return;
         }
         const newEvent = {

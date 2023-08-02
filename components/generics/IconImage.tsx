@@ -19,7 +19,7 @@ export default function IconImage({
 }): JSX.Element {
     return (
         onPress ?
-            <TouchableOpacity onPress={onPress} activeOpacity={0.5}>
+            <TouchableOpacity onPress={onPress} activeOpacity={0.5} hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
                 <Box w={`${size}px`} h={`${size}px`} borderRadius={size} shadow={shadow} {...nbProps}>
                     <FastImage source={{
                         uri: imageUri,

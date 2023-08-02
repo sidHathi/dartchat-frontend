@@ -21,7 +21,7 @@ export default function ChatController({
     const screenHeight = Dimensions.get('window').height;
     const { currentConvo } = useAppSelector(chatSelector);
     const { disconnected: socketDisconnected } = useContext(SocketContext);
-    const { networkConnected } = useContext(NetworkContext);
+    const { networkConnected, apiReachable } = useContext(NetworkContext);
 
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
@@ -102,7 +102,7 @@ export default function ChatController({
                 </View>
             }
         {
-            (!networkConnected || socketDisconnected) &&
+            (!networkConnected || !apiReachable) &&
             <Box marginTop='-180px' zIndex='1003'>
                 <NetworkDisconnectionAlert type={networkConnected ? 'server' : 'network'} />
             </Box>

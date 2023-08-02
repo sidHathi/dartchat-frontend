@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
-import { Box, Center, Pressable, View } from 'native-base';
+import { Box, Center, Pressable, View, Text } from 'native-base';
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { chatSelector, loadAdditionalMessages, loadMessagesToDate, sendNewLike } from "../../redux/slices/chatSlice";
-import { Message, UserConversationProfile } from "../../types/types";
+import { DecryptedMessage, Message, UserConversationProfile } from "../../types/types";
 import MessageDisplay from "./MessageDisplay";
 import SocketContext from "../../contexts/SocketContext";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
+import { getDateTimeString } from "../../utils/messagingUtils";
 
 export default function MessageList({
     setReplyMessage,
@@ -40,7 +41,6 @@ export default function MessageList({
 
     const goToReply = (message: Message) => {
         setSelectedMid(undefined);
-        console.log(indexMap);
         if (message.replyRef && listRef.current && (message.replyRef.id in indexMap)) {
             listRef.current.scrollToIndex({
                 index: indexMap[message.replyRef.id],
@@ -61,7 +61,6 @@ export default function MessageList({
 
     useEffect(() => {
         if (replyFetch && (replyFetch in indexMap) && currentConvo && indexMap[replyFetch] < currentConvo.messages.length) {
-            console.log('scrolling to index ' + indexMap[replyFetch].toString());
             listRef.current?.scrollToIndex({
                 index: indexMap[replyFetch],
                 animated: true
@@ -88,7 +87,20 @@ export default function MessageList({
         const message = item;
         if (!message) return null;
 
+        let timeDif = 0;
+        if (currentConvo && index > 0) {
+            timeDif = (message.timestamp.getTime() - currentConvo.messages[index - 1].timestamp.getTime()) / 60000; // timeDif in minutes
+        }
+
         return (
+            <>
+            {timeDif < -10 &&
+            <Center mt='12px' mb='6px'>
+                <Text fontSize='xs' color='gray.500' textAlign='center'>
+                    { getDateTimeString(message.timestamp) }
+                </Text>
+            </Center>
+            }
             <Pressable 
             pt={currentConvo && index === currentConvo.messages.length - 1 ? '40px' : '0px'}
             onPress={() => {
@@ -99,7 +111,7 @@ export default function MessageList({
             }}>
                 <MessageDisplay
                     key={message.id}
-                    message={message}
+                    message={message as DecryptedMessage}
                     participants={profiles}
                     selected={message.id === selectedMid}
                     handleSelect={() => {
@@ -123,6 +135,7 @@ export default function MessageList({
                     handleProfileSelect={handleProfileSelect}
                 />
             </Pressable>
+            </>
         );
     };
 
@@ -134,7 +147,7 @@ export default function MessageList({
         onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
             const {contentOffset, contentSize} = event.nativeEvent;
             if (contentOffset.y > contentSize.height - 800 && messageCursor) {
-                console.log('fetching messages');
+                // console.log('fetching messages');
                 dispatch(loadAdditionalMessages(conversationsApi));
             }
         }}

@@ -59,7 +59,7 @@ export default function Home(): JSX.Element {
 
     const Main = (): JSX.Element => <>
         <NavContainer>
-            <ChatSelector openChat={() => navSwitch('messaging')}/>
+            <ChatSelector openChat={() => navSwitch('messaging')} closeChat={() => navSwitch('conversations')} />
         </NavContainer>
     </>
 

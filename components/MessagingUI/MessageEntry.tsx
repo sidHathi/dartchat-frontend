@@ -45,13 +45,14 @@ export default function MessageEntry({
     const { keyboardShown, keyboardHeight } = useKeyboard();
 
     const { user } = useContext(AuthIdentityContext);
-    const { socket, disconnected: socketDisconnected } = useContext(SocketContext);
+    const { socket, disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { networkConnected } = useContext(NetworkContext);
 
     const [messageText, setMessageText] = useState<string | undefined>(undefined);
     const [mediaProgress, setMediaProgress] = useState<{[id: string]: number}>({});
     const [mediaLoading, setMediaLoading] = useState(false);
+    const [socketReconnectSent, setSocketReconnectSent] = useState(false);
 
     // Need better way to render mentions inline as the user is typing -> version of MessageText for input??
 
@@ -69,7 +70,7 @@ export default function MessageEntry({
                         ...mediaProgress,
                         [mediaBuffer.id]: (taskSnapshot.bytesTransferred/taskSnapshot.totalBytes)
                     })
-                    console.log(mediaProgress)
+                    // console.log(mediaProgress)
                 });
                 return task.then(async (): Promise<MessageMedia> => {
                     const downloadUri = await getDownloadUrl(loc);
@@ -99,9 +100,10 @@ export default function MessageEntry({
     }, [user, currentConvo])
 
     const handleMessageSend = useCallback(async () => {
-        console.log('button pressed');
+        // console.log('button pressed');
         setPollBuilderOpen(false);
         setEventBuilderOpen(false);
+        await checkSocketReconnect();
         if (!user || (!messageText && !selectedMediaBuffer) || !networkConnected || socketDisconnected) {
             console.log('unable to send');
             return;
@@ -132,7 +134,8 @@ export default function MessageEntry({
             replyRef,
             media: messageMedia,
             senderProfile: userProfile,
-            mentions: mentions
+            mentions: mentions,
+            delivered: false
         }
         if (socket && currentConvo) {
             console.log('sending message')
@@ -148,7 +151,17 @@ export default function MessageEntry({
         return;
     }, [selectedMediaBuffer, messageText, user, networkConnected, currentConvo, socket]);
 
-    return <Box w='100%' paddingBottom={keyboardShown && !eventBuilderOpen && !pollBuilderOpen ? `${keyboardHeight + 24}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
+    const checkSocketReconnect = useCallback(async () => {
+        if (!socketReconnectSent && (!socket || socketDisconnected)) {
+            console.log('reseting socket');
+            setSocketReconnectSent(true);
+            resetSocket();
+            await new Promise(res => setTimeout(res, 1000));
+            setSocketReconnectSent(false);
+        }
+    }, [socketReconnectSent, socket, socketDisconnected, resetSocket]);
+
+    return <Box w='100%' paddingBottom={keyboardShown && !eventBuilderOpen && !pollBuilderOpen ? `${keyboardHeight + 12}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible' mt={keyboardShown ? '24px': '0px'}>
         {
             selectedMediaBuffer &&
             <MediaBufferDisplay
@@ -180,11 +193,13 @@ export default function MessageEntry({
             <Box flex='1'>
             <MentionsInput
                 onPressIn={() => {
+                    checkSocketReconnect()
                     setPollBuilderOpen(false)
                     setEventBuilderOpen(false)
                 }}
                 messageText={messageText}
                 setMessageText={setMessageText}
+                onChange={checkSocketReconnect}
                 />
             </Box>
             <VStack>

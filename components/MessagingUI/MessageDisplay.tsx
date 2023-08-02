@@ -1,7 +1,7 @@
 import React, { useState, useContext, useCallback, useMemo } from "react";
 import { Box, HStack, Spacer, VStack, Text, Pressable, Center } from 'native-base';
 import IconButton from "../generics/IconButton";
-import { Message, UserConversationProfile } from "../../types/types";
+import { DecryptedMessage, Message, UserConversationProfile } from "../../types/types";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Dimensions } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
@@ -13,6 +13,7 @@ import PollDisplay from "../Polls/PollDisplay";
 import { getDateTimeString } from "../../utils/messagingUtils";
 import EventDisplay from "../EventsUI/EventDisplay";
 import LikeButton from "./LikeButton";
+import Spinner from "react-native-spinkit";
 
 export default function MessageDisplay({ 
         message,
@@ -25,7 +26,7 @@ export default function MessageDisplay({
         handleMediaSelect,
         handleProfileSelect
     } : {
-    message: Message, 
+    message: DecryptedMessage, 
     participants: {[key: string]: UserConversationProfile},
     selected: boolean,
     handleSelect: () => void,
@@ -138,7 +139,7 @@ export default function MessageDisplay({
                         <VStack overflowX='visible'>
                             {
                                 !isSystemMessage &&
-                                <Text color='coolGray.600' fontSize='10px'>{senderName}</Text>
+                                <Text color='coolGray.600' fontSize='xs'>{senderName}</Text>
                             }
                             {
                                 message.media &&
@@ -147,7 +148,7 @@ export default function MessageDisplay({
                                 }}/>
                             }
                             {/* <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'}>{message.content}</Text> */}
-                            <MessageTextDisplay message={message} fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} />
+                            <MessageTextDisplay message={message} fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} textAlign={isSystemMessage ? 'center' : 'left'} />
                         </VStack>
                     </Box>
                     }
@@ -160,7 +161,7 @@ export default function MessageDisplay({
                                 Sent {message && message.timestamp && getDateTimeString(message.timestamp)}
                             </Text>
                         </Center>
-                        {message.likes.length > 0 &&
+                        {message.likes?.length > 0 &&
                         <Box>
                             <HStack space={2}>
                                 {
@@ -188,7 +189,7 @@ export default function MessageDisplay({
                                     })
                                 }
                             </HStack>
-                            <Text fontSize='10px' paddingTop='2px'>{`${message.likes.length}`} Like{message.likes.length > 1 && 's'}</Text> 
+                            <Text fontSize='xs' paddingTop='2px'>{`${message.likes.length}`} Like{message.likes.length > 1 && 's'}</Text> 
                         </Box>
                         }
                     </VStack>
@@ -196,7 +197,11 @@ export default function MessageDisplay({
             </VStack>
             <Spacer />
             <VStack paddingTop={isSystemMessage ? '6px': '12px'} space={3} mb={isSystemMessage ? '12px': '0px'}>
-                <LikeButton message={message} onPress={handleLike} />
+                {
+                    (message.delivered === undefined || message.delivered) ?
+                    <LikeButton message={message} onPress={handleLike} /> :
+                    <Spinner type='ThreeBounce' size={20} />
+                }
                 {
                     message.media &&
                     <Spacer />
