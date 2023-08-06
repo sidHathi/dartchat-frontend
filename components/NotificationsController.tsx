@@ -9,9 +9,12 @@ import { getBackgroundUpdateFlag, setBackgroundUpdateFlag } from '../localStore/
 import messaging from '@react-native-firebase/messaging';
 import SocketContext from '../contexts/SocketContext';
 import { PNPacket } from '../types/rawTypes';
-import { constructNewConvo, parsePNLikeEvent, parsePNMessage, parsePNNewConvo } from '../utils/messagingUtils';
+import { constructNewConvo } from '../utils/messagingUtils';
+import { parsePNLikeEvent, parsePNMessage, parsePNNewConvo } from '../utils/notificationUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import UIContext from '../contexts/UIContext';
+import { ConversationPreview, DecryptedMessage } from '../types/types';
+import UserSecretsContext from '../contexts/UserSecretsContext';
 
 export default function NotificationsController(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -21,6 +24,7 @@ export default function NotificationsController(): JSX.Element {
     const { user } = useContext(AuthIdentityContext);
     const { userConversations } = useAppSelector(userDataSelector);
     const { navSwitch } = useContext(UIContext);
+    const { secrets, handleNewEncryptedConversation } = useContext(UserSecretsContext);
     
     useEffect(() => { 
         const eventListener = AppState.addEventListener('change', async (nextState) => {
@@ -28,7 +32,8 @@ export default function NotificationsController(): JSX.Element {
                 try {
                     console.log('pulling notification updates');
                     if (currentConvo) {
-                        dispatch(pullConversation(currentConvo.id, conversationsApi));
+                        const secretKey = (secrets && currentConvo.id in secrets) ? secrets[currentConvo.id] : undefined;
+                        dispatch(pullConversation(currentConvo.id, conversationsApi, secretKey));
                     }
                     const userData = await getUserData(usersApi);
                     if (userData && userData.conversations) {
@@ -60,10 +65,12 @@ export default function NotificationsController(): JSX.Element {
                                 dispatch(receiveNewMessage({message: parsedPNM.message, cid: parsedPNM.cid}));
                             }
                             if (parsedPNM) {
+                                const secretKey = secrets ? secrets[parsedPNM.cid] : undefined;
                                 dispatch(handleNewMessage({
                                     cid: parsedPNM.cid,
-                                    message: parsedPNM.message,
-                                    messageForCurrent: parsedPNM.cid === currentConvo?.id
+                                    message: parsedPNM.message as DecryptedMessage,
+                                    messageForCurrent: parsedPNM.cid === currentConvo?.id,
+                                    secretKey
                                 }));
                             }
                             break;
@@ -80,13 +87,18 @@ export default function NotificationsController(): JSX.Element {
                         case 'newConvo':
                             const parsedPNC = parsePNNewConvo(messageData.stringifiedBody);
                             if (parsedPNC && user) {
-                                if (userConversations.map(c => c.cid).includes(parsedPNC.id)) return; 
-                                const completedConvo = await constructNewConvo(parsedPNC, user);
+                                if (userConversations.map(c => c.cid).includes(parsedPNC.convo.id)) return; 
+                                const completedConvo = await constructNewConvo(parsedPNC.convo, user);
+                                let secretKey: Uint8Array | undefined = undefined;
+                                if (completedConvo.publicKey && parsedPNC.keyMap && parsedPNC.keyMap[user.id]) {
+                                    secretKey = await handleNewEncryptedConversation(completedConvo.id, parsedPNC.keyMap[user.id], completedConvo.publicKey);
+                                }
                                 dispatch(addConversation({
                                     newConvo: completedConvo,
-                                    uid: user.id
+                                    uid: user.id,
+                                    secretKey
                                 }));
-                                socket?.emit('joinRoom', userConversations.map(c => c.cid));
+                                socket?.emit('joinRoom', userConversations.map((c: ConversationPreview) => c.cid));
                             }
                             break;
                     }
@@ -113,7 +125,8 @@ export default function NotificationsController(): JSX.Element {
             console.log(pnData);
             console.log(`OPENEDPN: ${parsed}`);
             if (parsed) {
-                dispatch(pullConversation(parsed.cid, conversationsApi, () => {
+                const secretKey = (secrets && parsed.cid in secrets) ? secrets[parsed.cid] : undefined;
+                dispatch(pullConversation(parsed.cid, conversationsApi, secretKey, () => {
                     navSwitch('messaging');
                 }))
             }

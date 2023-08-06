@@ -1,9 +1,10 @@
-import { UserConversationProfile, AvatarImage, ConversationPreview, Message, SocketEvent, Conversation, UserData } from "../types/types";
+import { UserConversationProfile, AvatarImage, ConversationPreview, Message, SocketEvent, Conversation, UserData, DecryptedMessage, EncryptedMessage, DecryptedConversation } from "../types/types";
 import { getDownloadUrl } from "../firebase/cloudStore";
 import { parseValue } from "react-native-controlled-mentions";
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
 import { launchImageLibrary, Asset } from "react-native-image-picker";
 import { parseConversation, parseSocketEvent, parseSocketMessage } from "./requestUtils";
+import { decodeKey, decryptMessage, encryptMessage } from "./encryptionUtils";
 
 export const findPrivateMessageIdForUser = (recipientProfile: UserConversationProfile, userConversations: ConversationPreview[]): string | undefined => {
     const matches = userConversations.filter((preview) => {
@@ -81,36 +82,6 @@ export const getNewContacts = (candidates: string[], uid: string, currentContact
     });
 };
 
-export const parsePNMessage = (stringifiedBody: string): {
-    cid: string;
-    message: Message
-} | undefined => {
-    const parsedBody = JSON.parse(stringifiedBody);
-    if (!('cid' in parsedBody) || !('message' in parsedBody)) return undefined;
-    return {
-        cid: parsedBody['cid'],
-        message: parseSocketMessage(parsedBody)
-    };
-};
-
-export const parsePNLikeEvent = (stringifiedBody: string): {
-    cid: string
-    senderId: string;
-    event: SocketEvent;
-    mid: string;
-} | undefined => {
-    const parsedBody = JSON.parse(stringifiedBody);
-    if (!('senderId' in parsedBody) || 
-        !('event' in parsedBody) || 
-        !('cid' in parsedBody) ||
-        !('mid' in parsedBody)) return undefined;
-    return {
-        cid: parsedBody['cid'],
-        senderId: parsedBody['senderId'],
-        event: parseSocketEvent(parsedBody['event']),
-        mid: parsedBody['mid']
-    };
-};
 
 export const autoGenGroupAvatar = async (participants: UserConversationProfile[], userId?: string): Promise<AvatarImage | undefined> => {
     if (participants.length > 2) {
@@ -128,10 +99,6 @@ export const autoGenGroupAvatar = async (participants: UserConversationProfile[]
     return undefined;
 };
 
-export const parsePNNewConvo = (stringifiedBody: string): Conversation => {
-    const parsedBody = JSON.parse(stringifiedBody);
-    return parseConversation(parsedBody);
-};
 
 export const constructNewConvo = async (raw: Conversation, user: UserData): Promise<Conversation> => {
     let name = raw.name;
@@ -145,15 +112,56 @@ export const constructNewConvo = async (raw: Conversation, user: UserData): Prom
     }
 };
 
-export const parsePNDisplay = (stringifiedDisplay: string | undefined): {
-    title: string;
-    body: string;
-    imageUri?: string;
-} | undefined => {
-    if (!stringifiedDisplay) return undefined;
-    const parsed = JSON.parse(stringifiedDisplay);
-    if (parsed && 'title' in parsed && 'body' in parsed) {
-        return parsed;
+export const handlePossiblyEncryptedConversation = (convo: Conversation, secretKey?: Uint8Array) => {
+    try {
+        if (!secretKey || !convo.encryptionLevel || convo.encryptionLevel === 'none') return convo as DecryptedConversation;
+        return {
+            ...convo,
+            messages: filterEncryptedMessages(convo.messages, secretKey)
+        } as DecryptedConversation;
+    } catch (err) {
+        console.log(err);
+        return convo as DecryptedConversation;
     }
-    return undefined;
+}
+
+export const filterEncryptedMessages = (messages: Message[], convoSecretKey: Uint8Array): DecryptedMessage[] => {
+    try {
+        return messages
+            .map(message => {
+                return handlePossiblyEncryptedMessage(message, convoSecretKey);
+            })
+            .filter((decrypted) => decrypted !== undefined) as DecryptedMessage[];
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+};
+
+export const handlePossiblyEncryptedMessage = (message: Message, convoSecretKey?: Uint8Array) => {
+    try {
+        if (!convoSecretKey || !message.encryptionLevel || message.encryptionLevel === 'none') {
+            return message as DecryptedMessage;
+        }
+        if (!message.senderProfile || !message.senderProfile.publicKey) return undefined;
+        const publicKey = message.senderProfile.publicKey;
+        const decodedPublicKey = decodeKey(publicKey);
+        const decrypted = decryptMessage(message as EncryptedMessage, convoSecretKey, decodedPublicKey);
+        if (!decrypted || (!decrypted.content && !decrypted.objectRef && !decrypted.media)) return undefined;
+        return decrypted;
+    } catch (err) {
+        console.log(err);
+        return undefined;
+    }
+};
+
+export const encryptMessageForConvo = (message: DecryptedMessage, convo: Conversation, userSecretKey?: Uint8Array): Message => {
+    try {
+        if (!convo.publicKey || !convo.encryptionLevel || convo.encryptionLevel === 'none' || !userSecretKey) return message as Message;
+        const decodedPublicKey = decodeKey(convo.publicKey);
+        return encryptMessage(message, userSecretKey, decodedPublicKey) as Message;
+    } catch (err) {
+        console.log(err);
+        return message;
+    }
 };

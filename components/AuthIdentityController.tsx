@@ -23,12 +23,13 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
 
     const [user, setUser] = useState<UserData | undefined>(undefined);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [needsSetup, setNeedsSetup] = useState(true);
+    const [needsSetup, setNeedsSetup] = useState(false);
     const [loading, setLoading] = useState(false);
     const dispatch = useAppDispatch();
 
     const logOut = async () => {
         user && (await secureStore.dumpSecrets(user.id));
+        await deleteStoredUserData();
         await auth().signOut();
         setUser(undefined);
         setIsAuthenticated(false);
@@ -69,7 +70,8 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     };
 
     const initAppUser = useCallback((newUser: UserData) => {
-        // console.log('intializing app');
+        console.log('intializing app');
+        console.log(newUser);
         setUser(newUser);
         setNeedsSetup(false);
         dispatch(initReduxUser(newUser));
@@ -92,7 +94,9 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                     if (apiReachable) {
                         // console.log('fetching user data')
                         try {
+                            // console.log(authUser);
                             const serverUser = await getUserData(usersApi);
+                            // console.log(serverUser);
                             if (serverUser && ('handle' in serverUser)) {
                                 initAppUser(serverUser);
                                 await storeUserData(serverUser);
@@ -108,7 +112,9 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                         }
                     }
                     const localUser = await getStoredUserData();
-                    console.log(`local user: ${localUser}`);
+                    console.log(`local user:`);
+                    // console.log(localUser);
+                    // console.log(authUser.uid);
                     if (localUser && localUser.handle && localUser.id === authUser.uid) {
                         initAppUser(localUser);
                     }
@@ -135,12 +141,14 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
         return unsubscribe();
     }, [apiReachable, socket]);
 
-    const isSetup = () => {
+
+
+    const isSetup = useCallback(() => {
         if (!needsSetup && user && user.handle) {
             return true;
         }
         return false;
-    }
+    }, [needsSetup, user]);
 
     const getLoadingScreen = () => <Center flex='1' bgColor='#f5f5f5'>
         <Spinner type='CircleFlip' color='black' />

@@ -17,8 +17,6 @@ export default function IdentitySetup(): JSX.Element {
     const { isAuthenticated, user, createUser } = useContext(AuthIdentityContext);
 
     const [handle, setHandle] = useState<string | undefined>(undefined);
-    const [secureKey, setSecureKey] = useState<string | undefined>(undefined);
-    const [confirmKey, setConfirmKey] = useState<string | undefined>(undefined);
     const [displayName, setDisplayName] = useState<string | undefined>(undefined);
     const [phone, setPhone] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | undefined>(undefined);
@@ -55,13 +53,6 @@ export default function IdentitySetup(): JSX.Element {
     const handleSubmit = async () => {
         // console.log('submitting');
         if (!isAuthenticated || !user) return;
-        if (!secureKey || secureKey.length < 6) {
-            setError('Secure key must be 6 digits long');
-            return;
-        } else if (secureKey !== confirmKey) {
-            setError('Encryption keys do not match');
-            return;
-        }
         createUser({
             ...user,
             handle,
@@ -132,52 +123,6 @@ export default function IdentitySetup(): JSX.Element {
 
                     <Box>
                     <Text fontSize='xs' color='coolGray.600'>
-                        Choose a 6-digit encryption key
-                        <Text fontWeight='bold'> *</Text>
-                    </Text>
-                    <Input
-                        placeholder='123456'
-                        value={secureKey}
-                        onChangeText={setSecureKey}
-                        w='100%'
-                        h='40px'
-                        // borderRadius='20px'
-                        paddingX='20px'
-                        marginRight='8px'
-                        // backgroundColor='#f1f1f1'
-                        isRequired
-                        variant="underlined"
-                        keyboardType='numeric'
-                        maxLength={6}
-                        type='password'
-                    />
-                    </Box>
-
-                    <Box>
-                    <Text fontSize='xs' color='coolGray.600'>
-                        Confirm encryption key
-                        <Text fontWeight='bold'> *</Text>
-                    </Text>
-                    <Input
-                        placeholder='123456'
-                        value={confirmKey}
-                        onChangeText={setConfirmKey}
-                        w='100%'
-                        h='40px'
-                        // borderRadius='20px'
-                        paddingX='20px'
-                        marginRight='8px'
-                        // backgroundColor='#f1f1f1'
-                        isRequired
-                        variant="underlined"
-                        keyboardType='numeric'
-                        maxLength={6}
-                        type='password'
-                    />
-                    </Box>
-
-                    <Box>
-                    <Text fontSize='xs' color='coolGray.600'>
                        {'Name (optional)'}
                     </Text>
                     <Input
@@ -218,8 +163,8 @@ export default function IdentitySetup(): JSX.Element {
                 </Center>
                 }
                 </FormControl>
-                <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={handleSubmit} variant='solid' color='white' marginY='12px' disabled={!handle || !secureKey}
-                opacity={(!handle || !secureKey) ? 0.5 : 1}>
+                <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={handleSubmit} variant='solid' color='white' marginY='12px' disabled={!handle}
+                opacity={(!handle) ? 0.5 : 1}>
                     Continue
                 </Button>
                 {error &&

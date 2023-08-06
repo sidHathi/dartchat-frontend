@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Heading, HStack, Spacer, Text, VStack, ScrollView } from 'native-base';
 import { UserConversationProfile } from '../../types/types';
 import ProfilesSearch from '../MessagingUI/ProfileSearch';
@@ -11,6 +11,7 @@ import { Touchable } from 'react-native';
 import { useAppSelector } from '../../redux/hooks';
 import { chatSelector } from '../../redux/slices/chatSlice';
 import { useKeyboard } from "@react-native-community/hooks";
+import { current } from '@reduxjs/toolkit';
 
 export default function NewMemberSearch({
     selectedNewMembers,
@@ -27,6 +28,10 @@ export default function NewMemberSearch({
             setSelectedNewMembers(selectedNewMembers.filter((pnm) => pnm.id !== id));
         }
     };
+
+    const convoEncrypted = useMemo(() => {
+        return currentConvo?.encryptionLevel !== 'none' || currentConvo.encryptionLevel === undefined
+    }, [currentConvo]);
 
     const PNMCard = ({
         profile
@@ -69,7 +74,12 @@ export default function NewMemberSearch({
 
     return <Box mb='12px' pb={keyboardShown ? `${keyboardHeight}px` : '0px'}>
         <Heading fontSize='lg' mb='12px'>Search</Heading>
-        <ProfilesSearch isGroup selectedProfiles={selectedNewMembers || []} setSelectedProfiles={setSelectedNewMembers} addedProfiles={currentConvo?.participants}/>
+        <ProfilesSearch 
+            isGroup 
+            encrypted={convoEncrypted}
+            selectedProfiles={selectedNewMembers || []} 
+            setSelectedProfiles={setSelectedNewMembers} 
+            addedProfiles={currentConvo?.participants}/>
         <ScrollView maxHeight='500px'>
         {
             selectedNewMembers && selectedNewMembers.length > 0 && 

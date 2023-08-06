@@ -5,7 +5,7 @@ import { getDateTimeString } from "../../utils/messagingUtils";
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Dimensions } from "react-native";
 import uuid from 'react-native-uuid';
-import { CalendarEvent, Message, ObjectRef } from "../../types/types";
+import { CalendarEvent, DecryptedMessage, Message, ObjectRef } from "../../types/types";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
 import useRequest from "../../requests/useRequest";
@@ -184,14 +184,16 @@ export default function EventBuilder({
                 };
                 const messageId = uuid.v4().toString();
                 const userMatches = currentConvo.participants.filter(u => u.id === user.id);
-                const message: Message = {
+                const message: DecryptedMessage = {
                     id: messageId,
                     content: `Event: ${eventName}`,
                     timestamp: new Date(),
                     senderId: user.id,
                     likes: [],
                     senderProfile: userMatches.length > 0 ? userMatches[0] : undefined,
-                    objectRef: ref
+                    objectRef: ref,
+                    messageType: 'user',
+                    encryptionLevel: 'none'
                 }
                 dispatch(sendNewMessage({socket, message}));
                 socket.emit('scheduleEvent', currentConvo.id, event);

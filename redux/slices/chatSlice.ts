@@ -1,20 +1,24 @@
 import { createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon, DecryptedMessage } from "../../types/types";
+import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon, DecryptedMessage, DecryptedConversation } from "../../types/types";
 import { RootState } from "../store";
 import { Socket } from "socket.io-client";
 import uuid from 'react-native-uuid';
 import { ConversationsApi } from "../../requests/conversationsApi";
 import { AvatarImage } from "../../types/types";
-import { findPrivateMessageIdForUser } from "../../utils/messagingUtils";
+import { filterEncryptedMessages, findPrivateMessageIdForUser, handlePossiblyEncryptedConversation, handlePossiblyEncryptedMessage } from "../../utils/messagingUtils";
+import secureStore from "../../localStore/secureStore";
 
 const initialState: {
-    currentConvo?: Conversation;
+    currentConvo?: DecryptedConversation;
     galleryMessages?: DecryptedMessage[];
     needsScroll: boolean;
     requestLoading: boolean;
     silent: boolean;
     messageCursor?: string;
     galleryCursor?: string;
+    silentKeyMap?: { [key: string]: string };
+    onSilentCreate?: () => void;
+    secretKey?: Uint8Array;
 } = {
     needsScroll: false,
     requestLoading: false,
@@ -25,20 +29,32 @@ export const chatSlice = createSlice({
     name: 'chat',
     initialState,
     reducers: {
-        setConvo: (state, action: PayloadAction<Conversation | undefined>) => ({
+        setConvo: (state, action: PayloadAction<{
+            convo?: Conversation,
+            secretKey?: Uint8Array
+        }>) => ({
             ...state, 
             silent: false, 
-            currentConvo: action.payload,
+            currentConvo: action.payload.convo ?handlePossiblyEncryptedConversation(action.payload.convo, action.payload.secretKey) : undefined,
+            secretKey: action.payload.secretKey,
             galleryMessages: undefined,
             galleryCursor: undefined,
         }),
-        setConvoSilently: (state, action: PayloadAction<Conversation>) => ({
+        setConvoSilently: (state, action: PayloadAction<{
+            convo: Conversation,
+            secretKey?: Uint8Array,
+            userKeyMap?: {[key: string]: string},
+            onSilentCreate?: () => void;
+        }>) => ({
             ...state, 
-            currentConvo: action.payload,
+            currentConvo: handlePossiblyEncryptedConversation(action.payload.convo, action.payload.secretKey),
+            secretKey: action.payload.secretKey,
             silent: true,
             messageCursor: undefined,
             galleryMessages: undefined,
             galleryCursor: undefined,
+            silentKeyMap: action.payload.userKeyMap,
+            onSilentCreate: action.payload.onSilentCreate
         }),
         exitConvo: (state) => ({
              ...state, 
@@ -47,10 +63,16 @@ export const chatSlice = createSlice({
              messageCursor: undefined,
              galleryMessages: undefined,
              galleryCursor: undefined,
+             secretKey: undefined,
         }),
         addMessageHistory: (state, action: PayloadAction<Message[]>) => {
             if (!state.currentConvo) return state;
             const mIds = state.currentConvo.messages.map((m) => m.id);
+
+            let decryptedMessages = action.payload as DecryptedMessage[];
+            if (state.secretKey) {
+                decryptedMessages = filterEncryptedMessages(decryptedMessages, state.secretKey);
+            }
             return {
                 ...state,
                 silent: false,
@@ -58,30 +80,42 @@ export const chatSlice = createSlice({
                     ...state.currentConvo,
                     messages: [
                         ...state.currentConvo.messages,
-                        ...action.payload.filter((m) =>
+                        ...decryptedMessages.filter((m) =>
                         !mIds.includes(m.id))
                     ]
                 }
             };
         },
         sendNewMessage: (state, action: PayloadAction<{
-            socket: Socket, message: Message
+            socket: Socket,
+            message: Message
         }>) => {
             const { socket, message } = action.payload;
             if (state.currentConvo) {
                 if (state.silent) {
-                    socket.emit('newPrivateMessage', state.currentConvo, message);
+                    console.log(state.silentKeyMap);
+                    socket.emit('newPrivateMessage', state.currentConvo, message, state.silentKeyMap);
+                    state.onSilentCreate && state.onSilentCreate();
                     return {
                         ...state,
-                        silent: false
+                        silent: false,
+                        silentKeyMap: undefined,
+                        onSilentCreate: undefined
                     };
+                }
+
+                let decrypted = message as DecryptedMessage;
+                if (state.secretKey) {
+                    const unsafeDecrypted = handlePossiblyEncryptedMessage(decrypted, state.secretKey);
+                    if (!unsafeDecrypted) return state;
+                    decrypted = unsafeDecrypted;
                 }
                 socket.emit('newMessage', state.currentConvo.id, message);
                 return ({
                     ...state,
                     currentConvo: {
                             ...state.currentConvo,
-                            messages: [message, ...state.currentConvo.messages]
+                            messages: [decrypted, ...state.currentConvo.messages]
                         }
                 });
             }
@@ -93,12 +127,19 @@ export const chatSlice = createSlice({
             if (!state.currentConvo) return state;
             const { message, cid } = action.payload;
             if ((state.currentConvo.messages.map(m => m.id).includes(message.id)) || (cid && cid !== state.currentConvo.id)) return state;
+
+            let decrypted = message as DecryptedMessage;
+            if (state.secretKey) {
+               const unsafeDecrypted = handlePossiblyEncryptedMessage(decrypted, state.secretKey);
+               if (!unsafeDecrypted) return state;
+               decrypted = unsafeDecrypted;
+            }
             return ({
                 ...state,
                 needsScroll: true,
                 currentConvo: {
                   ...state.currentConvo,
-                    messages: [message, ...state.currentConvo.messages]
+                    messages: [decrypted, ...state.currentConvo.messages]
                 }
             });
         },
@@ -176,12 +217,9 @@ export const chatSlice = createSlice({
             messageId: string, userId: string, event: SocketEvent
         }>) => {
             const { messageId, userId, event } = action.payload;
-            // console.log('liking message');
-            // console.log(state.currentConvo?.messages.map((m) => m.id));
             if (!state.currentConvo) return state;
             const message = state.currentConvo.messages.filter((m) => m.id === messageId).at(0);
             if (message && event.type === 'newLike' && message.likes.includes(userId)) return;
-            // console.log('currentConvo exists');
             return ({
                 ...state,
                 currentConvo: {
@@ -352,12 +390,19 @@ export const chatSlice = createSlice({
                             return {
                                 ...m,
                                 delivered: true
-                            } as Message;
+                            } as DecryptedMessage;
                         }
                         return m;
                     })
                 }
             }
+        },
+        setSecretKey: (state, action: PayloadAction<Uint8Array>) => {
+            if (!state.currentConvo) return;
+            return {
+                ...state,
+                secretKey: action.payload
+            };
         }
     }
 });
@@ -385,11 +430,13 @@ export const {
     handleNewLikeIcon,
     handleNewGalleryMessages,
     setGalleryCursor,
-    handleMessageDelivered
+    handleMessageDelivered,
+    setSecretKey
  } = chatSlice.actions;
 
-export const pullConversation = (cid: string, api: ConversationsApi, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch) => {
+export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
     try {
+        const { secretKey: currSecretKey } = getState().chatReducer;
         dispatch(setRequestLoading(true));
 
         const cursorContainer: CursorContainer = { cursor: null };
@@ -399,7 +446,10 @@ export const pullConversation = (cid: string, api: ConversationsApi, onComplete?
         } else {
             dispatch(setMessageCursor(undefined));
         }
-        dispatch(setConvo(apiConvo));
+        dispatch(setConvo({
+            convo: apiConvo,
+            secretKey: secretKey || currSecretKey
+        }));
         dispatch(setRequestLoading(false));
         onComplete && onComplete();
     } catch (err) {
@@ -580,16 +630,22 @@ export const leaveChat = (uid: string, api: ConversationsApi, onComplete?: () =>
     }
 };
 
-export const openPrivateMessage = (seedConvo: Conversation, uid: string, userConversations: ConversationPreview[], api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => (dispatch) => {
+export const openPrivateMessage = (seedConvo: Conversation, uid: string, userConversations: ConversationPreview[], api: ConversationsApi, recipientKeyMap?: {[key: string]: string}, secretKey?: Uint8Array, onSilentCreate?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch) => {
     const recipientProfiles = seedConvo.participants.filter((p) => p.id !== uid);
     if (recipientProfiles.length < 1) return;
     const recipientProfile = recipientProfiles[0];
     const existingCid = findPrivateMessageIdForUser(recipientProfile, userConversations);
     if (!existingCid) {
-        dispatch(setConvoSilently(seedConvo));
+        dispatch(setConvoSilently({
+            convo: seedConvo,
+            secretKey,
+            userKeyMap: recipientKeyMap,
+            onSilentCreate
+        }));
     } else {
-        dispatch(setConvo(undefined));
-        dispatch(pullConversation(existingCid, api));
+        dispatch(setConvo({}));
+        const storedSecretKey = await secureStore.getSecretKeyForKey(uid, seedConvo.id)
+        dispatch(pullConversation(existingCid, api, storedSecretKey));
     }
 };
 

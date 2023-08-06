@@ -2,20 +2,20 @@ import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messag
 import { setBackgroundUpdateFlag } from '../localStore/store';
 import notifee from '@notifee/react-native';
 import { PNPacket } from '../types/rawTypes';
-import { parsePNDisplay } from '../utils/messagingUtils';
+import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationKey, parsePNDisplay, parsePNNewConvo } from '../utils/notificationUtils';
 
-const displayNotification = async (message: FirebaseMessagingTypes.RemoteMessage) => {
-    const packet = message.data ? message.data as PNPacket : undefined;
-    const parsedPacket = parsePNDisplay(packet?.stringifiedDisplay);
-    if (packet && parsedPacket) {
-        notifee.displayNotification({
-            title: parsedPacket.title,
-            body: parsedPacket.body,
-            android: {
-              channelId: packet.type,
-            },
-          });
-    }
+const displayNotification = async (displayFields: {
+    title: string,
+    body: string,
+    imageUri?: string,
+}, type: string) => {
+    notifee.displayNotification({
+        title: displayFields.title,
+        body: displayFields.body,
+        android: {
+            channelId: type,
+        },
+        });
 }
 
 export const requestUserPermission = async () => {
@@ -30,8 +30,20 @@ export const requestUserPermission = async () => {
 }
 
 export const setBackgroundNotifications = () => messaging().setBackgroundMessageHandler(async remoteMessage => {
-    displayNotification(remoteMessage);
-    if (remoteMessage.notification) {
-        await setBackgroundUpdateFlag(true);
+    await setBackgroundUpdateFlag(true);
+    if (!remoteMessage.data) return;
+    if (remoteMessage.data.type === 'newConvo' && remoteMessage.data.stringifiedBody) {
+        const parsedConvo = parsePNNewConvo(remoteMessage.data.stringifiedBody as string);
+        if (parsedConvo?.keyMap) {
+            handleBackgroundConversationKey(parsedConvo.keyMap, parsedConvo.convo);
+        }
+    } else if (remoteMessage.data.type === 'message') {
+        const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
+        const displayFields = getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey) ;
+        if (displayFields) {
+            displayNotification(displayFields, remoteMessage.data.type);
+        }
+    } else {
+        displayNotification(getUnencryptedDisplayFields(remoteMessage.data as PNPacket), remoteMessage.data.type);
     }
 });

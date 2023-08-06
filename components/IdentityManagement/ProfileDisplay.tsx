@@ -47,7 +47,7 @@ export default function ProfileDisplay({
                     }
                     <VStack h='100%'>
                         <Spacer />
-                        <Heading maxWidth='90%' maxH='100px'>
+                        <Heading maxWidth='300px' maxH='100px'>
                             { user && (user.displayName || user.handle || user.email) }
                         </Heading>
                         <Text fontSize='xs'>

@@ -14,6 +14,7 @@ import { NetworkContextProvider } from './contexts/NetworkContext';
 import { LogBox } from "react-native";
 import { requestUserPermission } from './firebase/pushNotifications';
 import NotificationsController from './components/NotificationsController';
+import UserSecretsController from './components/UserSecretsController';
 
 LogBox.ignoreLogs([
   'In React 18, SSRProvider is not necessary and is a noop. You can remove it from your app.',
@@ -32,12 +33,14 @@ export default function App(): JSX.Element {
           <NetworkContextProvider>
             <SocketContextProvider>
               <AuthIdentityController>
-                <UIContextProvider>
-                  <NotificationsController />
-                    <Box flex='1'>
+                <UserSecretsController>
+                  <UIContextProvider>
+                    <NotificationsController />
+                      <Box flex='1'>
                         <Home />
-                    </Box>
-                </UIContextProvider>
+                      </Box>
+                  </UIContextProvider>
+                </UserSecretsController>
               </AuthIdentityController>
             </SocketContextProvider>
           </NetworkContextProvider>

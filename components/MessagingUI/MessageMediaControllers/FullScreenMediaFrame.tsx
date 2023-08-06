@@ -16,7 +16,7 @@ export default function FullScreenMediaFrame({
     startIndex,
 }: {
     message: DecryptedMessage | undefined,
-    setMessage: (message: Message | undefined) => void;
+    setMessage: (message: DecryptedMessage | undefined) => void;
     handleReply?: () => void;
     startIndex?: number;
 }): JSX.Element {

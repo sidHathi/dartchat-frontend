@@ -10,6 +10,7 @@ import Spinner from "react-native-spinkit";
 import SocketContext from "../../contexts/SocketContext";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { buildDefaultProfileForUser } from "../../utils/identityUtils";
+import UserSecretsContext from "../../contexts/UserSecretsContext";
 
 export default function ArchivedChats(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -17,6 +18,7 @@ export default function ArchivedChats(): JSX.Element {
     const { user } = useContext(AuthIdentityContext);
     const { socket } = useContext(SocketContext);
     const { conversationsApi, usersApi } = useRequest();
+    const { forgetConversationKeys } = useContext(UserSecretsContext);
 
     const [archivedConvoData, setArchivedConvoData] = useState<Conversation[] | undefined>();
     const [pullRequestLoading, setPullRequestLoading] = useState(false);
@@ -50,7 +52,9 @@ export default function ArchivedChats(): JSX.Element {
     }, [socket, conversationsApi, usersApi, user]);
 
     const archiveRemove = useCallback((cid: string) => {
-        dispatch(removeArchivedConvo(cid, usersApi));
+        dispatch(removeArchivedConvo(cid, usersApi, () => {
+            forgetConversationKeys(cid);
+        }));
     }, [usersApi]);
 
     const getConvoAvatarElem = (convo: Conversation) => {

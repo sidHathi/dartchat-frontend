@@ -33,7 +33,7 @@ export default function MessageDisplay({
     handleLike: () => void,
     handleReply: () => void,
     handleReplySelect?: () => void,
-    handleMediaSelect?: (message: Message, index: number) => void,
+    handleMediaSelect?: (message: DecryptedMessage, index: number) => void,
     handleProfileSelect?: (profile: UserConversationProfile) => void
 }): JSX.Element {
     const screenWidth = Dimensions.get('window').width;

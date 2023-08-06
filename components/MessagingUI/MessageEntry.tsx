@@ -2,7 +2,7 @@ import React, { useState, useContext, useCallback, useMemo } from "react";
 import { Box, HStack, VStack, Spacer} from 'native-base';
 import IconButton from "../generics/IconButton";
 import { Dimensions } from "react-native";
-import { Message, MessageMedia, MessageMediaBuffer, ReplyRef, UserConversationProfile } from '../../types/types';
+import { DecryptedMessage, Message, MessageMedia, MessageMediaBuffer, ReplyRef, UserConversationProfile } from '../../types/types';
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import uuid from 'react-native-uuid';
 import SocketContext from "../../contexts/SocketContext";
@@ -15,9 +15,10 @@ import MediaBufferDisplay from "./MessageMediaControllers/MediaBufferDisplay";
 import { getDownloadUrl, storeMessagingImage } from "../../firebase/cloudStore";
 import Spinner from "react-native-spinkit";
 import MentionsInput from "./Mentions/MentionsInput";
-import { getMentionsFromMessage } from "../../utils/messagingUtils";
+import { encryptMessageForConvo, getMentionsFromMessage } from "../../utils/messagingUtils";
 import PollBuilder from "../Polls/PollBuilder";
 import EventBuilder from "../EventsUI/EventBuilder";
+import UserSecretsContext from "../../contexts/UserSecretsContext";
 
 export default function MessageEntry({
     replyMessage, 
@@ -30,7 +31,7 @@ export default function MessageEntry({
     eventBuilderOpen,
     setEventBuilderOpen,
 }: {
-    replyMessage?: Message,
+    replyMessage?: DecryptedMessage,
     onSend?: () => void,
     openContentMenu?: () => void,
     selectedMediaBuffer?: MessageMediaBuffer[],
@@ -48,6 +49,7 @@ export default function MessageEntry({
     const { socket, disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { networkConnected } = useContext(NetworkContext);
+    const { secrets } = useContext(UserSecretsContext);
 
     const [messageText, setMessageText] = useState<string | undefined>(undefined);
     const [mediaProgress, setMediaProgress] = useState<{[id: string]: number}>({});
@@ -125,7 +127,7 @@ export default function MessageEntry({
             }
         }
         const mentions = currentConvo && messageText ? getMentionsFromMessage(messageText, currentConvo.participants) : undefined;
-        const message: Message = {
+        const message: DecryptedMessage = {
             id: id.toString(),
             content: messageText || "",
             timestamp: new Date(),
@@ -135,12 +137,16 @@ export default function MessageEntry({
             media: messageMedia,
             senderProfile: userProfile,
             mentions: mentions,
-            delivered: false
+            delivered: false,
+            messageType: 'user',
+            encryptionLevel: 'none'
         }
         if (socket && currentConvo) {
-            console.log('sending message')
-            dispatch(sendNewMessage({socket, message}));
-            dispatch(handleNewMessage({cid: currentConvo.id, message: message, messageForCurrent: true}));
+            console.log('sending message');
+            const userSecretKey = secrets ? secrets.userSecretKey : undefined;
+            const encryptedMessage = encryptMessageForConvo(message, currentConvo, userSecretKey);
+            dispatch(sendNewMessage({socket, message: encryptedMessage}));
+            dispatch(handleNewMessage({cid: currentConvo.id, message: encryptedMessage, messageForCurrent: true}));
             setMessageText(undefined);
             onSend && onSend();
         } else {

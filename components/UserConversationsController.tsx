@@ -3,7 +3,7 @@ import ConversationsContext from '../contexts/ConversationsContext';
 import { Socket } from 'socket.io-client';
 import SocketContext from '../contexts/SocketContext';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
-import { Conversation, ConversationPreview, SocketEvent, UserConversationProfile } from '../types/types';
+import { Conversation, ConversationPreview, DecryptedMessage, SocketEvent, UserConversationProfile } from '../types/types';
 import { SocketMessage } from '../types/rawTypes';
 import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
@@ -13,19 +13,22 @@ import { addConversation, userDataSelector, handleNewMessage, deleteConversation
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
 import { autoGenGroupAvatar, constructNewConvo } from '../utils/messagingUtils';
+import UserSecretsContext from '../contexts/UserSecretsContext';
 
 export default function UserConversationsController({
     children
 }: PropsWithChildren<{children: ReactNode}>): JSX.Element {
     const { socket } = useContext(SocketContext);
     const { navSwitch } = useContext(UIContext);
+    const { secrets, handleNewEncryptedConversation, forgetConversationKeys } = useContext(UserSecretsContext);
     const { user } = useContext(AuthIdentityContext);
-    const [ccid, setCcid] = useState('');
-    const [receivedEvents, setReceivedEvents] = useState<Set<string>>(new Set<string>());
     const dispatch = useAppDispatch();
     const { userConversations, needsServerSync }: {userConversations: ConversationPreview[], needsServerSync: boolean} = useAppSelector(userDataSelector);
     const { currentConvo }: {currentConvo?: Conversation} = useAppSelector(chatSelector);
     const { conversationsApi, usersApi } = useRequest();
+
+    const [ccid, setCcid] = useState('');
+    const [receivedEvents, setReceivedEvents] = useState<Set<string>>(new Set<string>());
 
     const convoDelete = useCallback((cid: string) => {
         dispatch(handleConversationDelete(cid, conversationsApi));
@@ -39,13 +42,21 @@ export default function UserConversationsController({
 
     useEffect(() => {
         if (!socket || !user) return;
-        socket.on('newConversation', async (newConvo: Conversation) => {
+        socket.on('newConversation', async (newConvo: Conversation, encryptedSecretKey?: string) => {
             // console.log('new conversation message received!');
             if (userConversations.map(c => c.cid).includes(newConvo.id)) return; 
             const completedConvo = await constructNewConvo(newConvo, user);
+            let secretKey: Uint8Array | undefined = undefined;
+            if (encryptedSecretKey && completedConvo.publicKey) {
+                console.log(encryptedSecretKey);
+                secretKey = await handleNewEncryptedConversation(completedConvo.id, encryptedSecretKey, completedConvo.publicKey);
+                console.log('newConvo secret key added');
+                console.log(completedConvo);
+            }
             dispatch(addConversation({
                 newConvo: completedConvo,
-                uid: user.id
+                uid: user.id,
+                secretKey
             }));
             socket.emit('joinRoom', userConversations.map(c => c.cid));
         });
@@ -59,19 +70,21 @@ export default function UserConversationsController({
         if (!socket || !user) return;
         socket.emit('joinRoom', userConversations.map(c => c.cid));
         socket.on('newMessage', async (cid: string, newMessage: SocketMessage) => {
-            const message = parseSocketMessage(newMessage);
+            const message = parseSocketMessage(newMessage) as DecryptedMessage;
 
             const messageForCurrent: boolean = message.senderId === user?.id ||(currentConvo !== undefined && currentConvo.id === cid && currentConvo.messages.filter(m => m.id === message.id).length < 1);
             // console.log(messageForCurrent);
             if (messageForCurrent) {
                 socket.emit('messagesRead', currentConvo?.id);
                 dispatch(receiveNewMessage({message, cid}));
-            } 
+            }
+            const secretKey = secrets ? secrets[cid] : undefined;
 
             dispatch(handleNewMessage({
                 cid,
                 message,
-                messageForCurrent
+                messageForCurrent,
+                secretKey
             }));
         });
     }, [currentConvo, socket, user]);
@@ -86,6 +99,7 @@ export default function UserConversationsController({
                     dispatch(exitConvo());
                     navSwitch('conversations');
                 }
+                forgetConversationKeys(cid);
             } catch (err) {
                 console.log(err);
             }

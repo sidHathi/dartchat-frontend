@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect, useCallback } from 'react';
-import { Conversation, Message, MessageMedia, MessageMediaBuffer, UserConversationProfile } from '../../types/types';
+import { Conversation, DecryptedMessage, Message, MessageMedia, MessageMediaBuffer, UserConversationProfile } from '../../types/types';
 import {Box, VStack, HStack, Spacer, Heading, Pressable, Center} from 'native-base';
 import { View } from 'react-native';
 import MessageEntry from './MessageEntry';
@@ -21,11 +21,11 @@ export default function ChatDisplay({closeOverlays}: {
     const { currentConvo } = useAppSelector(chatSelector);
 
     const [selectedMid, setSelectedMid] = useState<string | undefined>(undefined);
-    const [replyMessage, setReplyMessage] = useState<Message | undefined>(undefined);
+    const [replyMessage, setReplyMessage] = useState<DecryptedMessage | undefined>(undefined);
     const [profiles, setProfiles] = useState<{[id: string]: UserConversationProfile}>({});
     const [contentMenuOpen, setContentMenuOpen] = useState(false);
     const [selectedMediaBuffer, setSelectedMediaBuffer] = useState<MessageMediaBuffer[] | undefined>(undefined);
-    const [selectedMediaMessage, setSelectedMediaMessage] = useState<Message | undefined>();
+    const [selectedMediaMessage, setSelectedMediaMessage] = useState<DecryptedMessage | undefined>();
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
     const [pollBuilderOpen, setPollBuilderOpen] = useState(false);
     const [eventBuilderOpen, setEventBuilderOpen] = useState(false);
@@ -40,7 +40,7 @@ export default function ChatDisplay({closeOverlays}: {
         ));
     }, []);
 
-    const handleMediaSelect = (message: Message, index: number) => {
+    const handleMediaSelect = (message: DecryptedMessage, index: number) => {
         setSelectedMediaMessage(message);
         setSelectedMediaIndex(index);
     };

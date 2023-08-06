@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useContext, useMemo } from 'react';
 import { ConversationPreview } from '../../types/types';
 
 import { Box, HStack, Spacer, Pressable, Center, Heading, Text, VStack } from 'native-base';
 import { Image, Dimensions } from 'react-native';
 import IconImage from '../generics/IconImage';
 import MentionsTextDisplay from '../MessagingUI/Mentions/MentionsTextDisplay';
-import { getTimeString } from '../../utils/messagingUtils';
+import { getTimeString, handlePossiblyEncryptedMessage } from '../../utils/messagingUtils';
+import UserSecretsContext from '../../contexts/UserSecretsContext';
+import { decryptJSON } from '../../utils/encryptionUtils';
 
 export default function ChatPreview({
     chat,
@@ -15,7 +17,26 @@ export default function ChatPreview({
     onSelect : () => void
 }) : JSX.Element {
     const screenWidth = Dimensions.get('window').width;
+
+    const { secrets } = useContext(UserSecretsContext);
     const lastMessageTimeStr = getTimeString(chat.lastMessageTime);
+
+    const safeLastMessageContent = useMemo(() => {
+        const secretKey = secrets ? secrets[chat.cid] : undefined;
+        if (chat.lastMessage) {
+            const safeMessage = handlePossiblyEncryptedMessage(chat.lastMessage, secretKey);
+            if (safeMessage) {
+                const content = safeMessage.content;
+                if ((!content || content.length < 1) && safeMessage.media) {
+                    return 'Media:';
+                }  else if ((!content || content.length < 1)) {
+                    return 'New conversation';
+                }
+                return content;
+            }
+        } 
+        return 'New conversation';
+    }, [chat]);
 
     return <Pressable onPress={onSelect}>
         <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='7' style={{shadowOpacity: 0.07}} mx='12px'>
@@ -44,7 +65,7 @@ export default function ChatPreview({
                     </Heading>
                     <MentionsTextDisplay
                         message={{
-                            content: chat.lastMessageContent || 'New conversation',
+                            content: safeLastMessageContent,
                         }}
                         color='gray.700' fontSize='sm' maxWidth={`${screenWidth - 200}px`} noOfLines={2} />
                     {/* <Text color='gray.700' fontSize='xs'  maxWidth={`${screenWidth - 200}px`} noOfLines={2}>

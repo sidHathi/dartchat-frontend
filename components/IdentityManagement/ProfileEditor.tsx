@@ -23,7 +23,6 @@ export default function ProfileEditor({
     const [handle, setHandle] = useState<string | undefined>(undefined);
     const [displayName, setDisplayName] = useState<string | undefined>(undefined);
     const [phone, setPhone] = useState<string | undefined>(undefined);
-    const [secureKey, setSecureKey] = useState<string | undefined>(undefined);
     const [selectedProfile, setSelectedProfile] = useState<Image | undefined>(undefined);
     const [imageUploading, setImageUploading] = useState(false);
     const [imageUploadProgress, setImageUploadProgress] = useState<number>(0);
@@ -33,7 +32,6 @@ export default function ProfileEditor({
         setHandle(user.handle);
         setDisplayName(user.displayName);
         setPhone(user.phone);
-        setSecureKey(user.secureKey);
     }, []);
 
     const editField = ({value, setValue, prompt, keyboardType}: {
@@ -164,11 +162,6 @@ export default function ProfileEditor({
                             prompt: 'Edit your phone number'
                         })}
 
-                        {editField({
-                            value: secureKey,
-                            setValue: setSecureKey,
-                            prompt: 'Edit your secureKey'
-                        })}
                     </VStack>
 
                     <Button colorScheme='dark' my='6px' borderRadius='24px' px='24px' variant='subtle' onPress={onSubmit}>

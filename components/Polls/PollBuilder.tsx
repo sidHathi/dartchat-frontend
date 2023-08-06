@@ -3,7 +3,7 @@ import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { View, Box, Input, HStack, VStack, ScrollView, Heading, Text, Button, Icon, IconButton, Spacer, Select, CheckIcon, Center } from 'native-base';
 import { Dimensions } from "react-native";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import { Poll, Message, ObjectRef, UserConversationProfile } from "../../types/types";
+import { Poll, Message, ObjectRef, UserConversationProfile, DecryptedMessage } from "../../types/types";
 import uuid from 'react-native-uuid';
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
@@ -103,14 +103,16 @@ export default function PollBuilder({
             type: 'poll'
         };
         const messageId = uuid.v4().toString();
-        const message: Message = {
+        const message: DecryptedMessage = {
             id: messageId,
             content: `Poll: ${question}`,
             timestamp: new Date(),
             senderId: user.id,
             likes: [],
             senderProfile: userMatches.length > 0 ? userMatches[0] : undefined,
-            objectRef: ref
+            objectRef: ref,
+            messageType: 'user',
+            encryptionLevel: 'none'
         };
         if (socket && currentConvo) {
             console.log('sending message')

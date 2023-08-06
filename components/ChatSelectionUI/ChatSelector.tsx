@@ -18,6 +18,7 @@ import { buildDefaultProfileForUser, updateUserConversations } from "../../utils
 import { parseConversation } from "../../utils/requestUtils";
 import { chatSelector, leaveChat, pullConversation, setConvo } from "../../redux/slices/chatSlice";
 import NetworkContext from "../../contexts/NetworkContext";
+import UserSecretsContext from "../../contexts/UserSecretsContext";
 
 export default function ChatSelector({
     openChat,
@@ -29,6 +30,7 @@ export default function ChatSelector({
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { networkConnected } = useContext(NetworkContext);
+    const { secrets } = useContext(UserSecretsContext);
     const { userConversations } = useAppSelector(userDataSelector);
     const { requestLoading } = useAppSelector(chatSelector);
     const { deleteConversation: socketDelete } = useContext(ConversationsContext);
@@ -41,14 +43,12 @@ export default function ChatSelector({
     const [upForLeave, setUpForLeave] = useState<ConversationPreview | undefined>();
     const [confirmLeaveModalOpen, setConfirmLeaveModalOpen] = useState(false);
 
-    if (!user || userConversations.length === 0) {
-        return <>
-        </>
-    }
 
     const handleSelect = (chat: ConversationPreview) => {
         if (!networkConnected) return;
-        dispatch(pullConversation(chat.cid, conversationsApi, undefined, () => {
+        
+        const secretKey = (secrets && chat.cid in secrets) ? secrets[chat.cid] : undefined;
+        dispatch(pullConversation(chat.cid, conversationsApi, secretKey, undefined, () => {
             closeChat();
         }));
         dispatch(readConversationMessages(chat.cid));
@@ -72,13 +72,17 @@ export default function ChatSelector({
         }
     };
 
-    const handleLeaveChat = useCallback(() => {
+    const handleLeaveChat = useCallback(async () => {
         if (!upForLeave || !user || !socket) return;
 
-        dispatch(leaveChat(user.id, conversationsApi, () => {
+        try {
+            await conversationsApi.leaveChat(upForLeave.cid);
             dispatch(handleUserConvoLeave(upForLeave.cid));
             socket && socket.emit('removeConversationUser', upForLeave.cid, buildDefaultProfileForUser(user));
-        }));
+            setConfirmLeaveModalOpen(false);
+        } catch (err) {
+            console.log(err);
+        }
     }, [upForLeave, user, socket]);
 
     const closeModal = () => setDcModalOpen(false);
@@ -124,6 +128,11 @@ export default function ChatSelector({
             </TouchableOpacity>
             </Pressable>
         </Animated.View>
+
+    if (!user || userConversations.length === 0) {
+        return <>
+        </>;
+    }
 
     return <><ScrollView style={{flex: 1}}>
         <VStack space={3} py='24px'>

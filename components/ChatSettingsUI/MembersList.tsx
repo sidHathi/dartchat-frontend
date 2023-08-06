@@ -13,6 +13,8 @@ import uuid from 'react-native-uuid';
 import { userDataSelector } from '../../redux/slices/userDataSlice';
 import RemoveUserModal from './RemoveUserModal';
 import UserDetailsModal from './UserDetailsModal';
+import UserSecretsContext from '../../contexts/UserSecretsContext';
+import { getNewMemberKeys } from '../../utils/encryptionUtils';
 
 export default function MembersList({
     exit
@@ -25,6 +27,7 @@ export default function MembersList({
     const { currentConvo } = useAppSelector(chatSelector);
     const { userConversations } = useAppSelector(userDataSelector);
     const { conversationsApi } = useRequest();
+    const { secrets } = useContext(UserSecretsContext);
 
     const [addMenuOpen, setAddMenuOpen] = useState(false);
     const [userDetailModal, setUserDetailModalOpen] = useState(false);
@@ -35,9 +38,15 @@ export default function MembersList({
     const participants = useMemo(() => currentConvo?.participants || [], [currentConvo]);
 
     const handleOpenButton = useCallback(() => {
-        if (currentConvo && addMenuOpen && selectedNewMembers && selectedNewMembers.length > 0) {
+        if (currentConvo && socket && socket.connected && addMenuOpen && selectedNewMembers && selectedNewMembers.length > 0) {
+            let keyMap: { [id: string]: string } | undefined = undefined;
+            if (currentConvo?.encryptionLevel && currentConvo.encryptionLevel !== 'none' && currentConvo.publicKey && secrets && secrets[currentConvo.id]) {
+                const secretKey = secrets[currentConvo.id];
+                keyMap = getNewMemberKeys(selectedNewMembers, secretKey);
+            }
+
             dispatch(addUsers(selectedNewMembers, conversationsApi, () => {
-                socket && socket.emit('newConversationUsers', currentConvo.id, selectedNewMembers);
+                socket && socket.emit('newConversationUsers', currentConvo.id, selectedNewMembers, keyMap);
                 setSelectedNewMembers(undefined);
             }));
         }

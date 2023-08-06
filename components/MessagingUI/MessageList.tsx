@@ -21,12 +21,12 @@ export default function MessageList({
     handleMediaSelect,
     handleProfileSelect
 }: {
-    setReplyMessage: (message: Message | undefined) => void;
+    setReplyMessage: (message: DecryptedMessage | undefined) => void;
     selectedMid: string | undefined;
     setSelectedMid: (id: string | undefined) => void;
     profiles: {[id: string]: UserConversationProfile};
     closeContentMenu: () => void;
-    handleMediaSelect: (message: Message, index: number) => void;
+    handleMediaSelect: (message: DecryptedMessage, index: number) => void;
     handleProfileSelect: (profile: UserConversationProfile) => void;
 }): JSX.Element {
     const dispatch = useAppDispatch();
@@ -81,7 +81,7 @@ export default function MessageList({
     }, [currentConvo, requestLoading]);
 
     const renderMessage = ({item, index}: {
-        item?: Message,
+        item?: DecryptedMessage,
         index: number
     }) => {
         const message = item;
@@ -141,9 +141,9 @@ export default function MessageList({
 
     return <FlatList
         ref={listRef}
-        data={currentConvo?.messages}
+        data={currentConvo?.messages || []}
         renderItem={renderMessage}
-        keyExtractor={(item: Message) => item.id}
+        keyExtractor={(item: DecryptedMessage) => item.id}
         onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
             const {contentOffset, contentSize} = event.nativeEvent;
             if (contentOffset.y > contentSize.height - 800 && messageCursor) {

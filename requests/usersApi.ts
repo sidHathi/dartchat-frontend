@@ -10,7 +10,7 @@ export type UsersApi = {
     removeArchivedConvo: (cid: string) => Promise<any | never>;
     readConversationKeyUpdates: (cids: string[]) => Promise<any | never>;
     setKeySalt: (salt: string) => Promise<any | never>;
-    setUserSecret: (secret: string) => Promise<any | never>;
+    setUserSecrets: (secret: string) => Promise<any | never>;
     updatePublicKey: (newKey: string) => Promise<any | never>;
 };
 
@@ -102,7 +102,6 @@ export default function usersApi(apiService: ApiService): UsersApi {
             if (res && res.data) {
                 return res.data;
             }
-            return Promise.reject(res);
         }).catch((err) => {
             return Promise.reject(err);
         })
@@ -119,24 +118,22 @@ export default function usersApi(apiService: ApiService): UsersApi {
             if (res && res.data) {
                 return res.data;
             }
-            return Promise.reject(res);
         }).catch((err) => {
             return Promise.reject(err);
         })
     };
 
-    const setUserSecret = (secret: string): Promise<any | never> => {
+    const setUserSecrets = (secrets: string): Promise<any | never> => {
         return apiService.request({
             method: 'POST',
-            url: `/users/me/setSecret`,
+            url: `/users/me/setSecrets`,
             data: {
-                secret
+                secrets
             }
         }).then((res) => {
             if (res && res.data) {
                 return res.data;
             }
-            return Promise.reject(res);
         }).catch((err) => {
             return Promise.reject(err);
         })
@@ -153,7 +150,6 @@ export default function usersApi(apiService: ApiService): UsersApi {
             if (res && res.data) {
                 return res.data;
             }
-            return Promise.reject(res);
         }).catch((err) => {
             return Promise.reject(err);
         })
@@ -167,7 +163,7 @@ export default function usersApi(apiService: ApiService): UsersApi {
         removeArchivedConvo,
         readConversationKeyUpdates,
         setKeySalt,
-        setUserSecret,
+        setUserSecrets,
         updatePublicKey
     };
 }

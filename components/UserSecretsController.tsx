@@ -1,29 +1,14 @@
 import React, { PropsWithChildren, ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
 import secureStore from '../localStore/secureStore';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
-import { decodeKey, decryptJSON, decryptUserKeys } from '../utils/encryptionUtils';
+import { decodeKey, decryptJSON, decryptString, decryptUserKeys, encodeKey, encryptJSON, encryptUserSecrets } from '../utils/encryptionUtils';
 import useRequest from '../requests/useRequest';
 import { ConversationPreview } from '../types/types';
 import UserPinController from './EncryptionUI/UserPinController';
 import auth from '@react-native-firebase/auth';
+import UserSecretsContext from '../contexts/UserSecretsContext';
 
-type UserSecretsContextType = {
-    secrets: {
-        [key: string]: Uint8Array;
-    } | undefined;
-    secretsLoading: boolean;
-    initUserSecret: (userSecretKey: Uint8Array) => void;
-    handleDBSecrets: (decodedSecrets: {[key: string]: string}) => void;
-};
-
-export const UserSecretsContext = createContext<UserSecretsContextType>({
-    secrets: undefined,
-    secretsLoading: true,
-    initUserSecret: () => {},
-    handleDBSecrets: () => {}
-});
-
-export default function UserSecretsContextProvider({
+export default function UserSecretsController({
     children
 }: PropsWithChildren<{
     children: ReactNode
@@ -31,36 +16,69 @@ export default function UserSecretsContextProvider({
     const { user } = useContext(AuthIdentityContext);
     const { usersApi } = useRequest();
 
-    const [userKey, setUserKey] = useState<string | undefined>();
+    const [userPinKey, setUserPinKey] = useState<string | undefined>();
     const [secrets, setSecrets] = useState<{
         [key: string]: Uint8Array;
     } | undefined>(undefined);
     const [secretsLoading, setSecretsLoading] = useState(true);
 
-    const checkForUpdates = useCallback(async () => {
-        if (!user || !secrets?.userSecretKey) return;
+    const updateDBSecrets = useCallback(async (newSecrets: {
+        [key: string]: Uint8Array
+    }) => {
+        console.log(userPinKey);
+        if (!userPinKey || !user || !user.keySalt) return false;
+        console.log('pin variables exist');
+        try {
+            const encodedSecrets = Object.fromEntries(
+                Object.entries(newSecrets).map(([key, val]) => [key, encodeKey(val)])
+            );
+            console.log(encodedSecrets);
+            const encryptedSecrets = encryptUserSecrets(userPinKey, user.keySalt, encodedSecrets);
+            console.log('encrypted secrets:')
+            console.log(encryptedSecrets);
+            await usersApi.setUserSecrets(encryptedSecrets);
+            return true;
+        } catch (err) {
+            console.log('db update error');
+            console.log(err);
+            return false;
+        }
+    }, [secrets, usersApi, user, userPinKey]);
+    
+    const checkForUpdates = useCallback(async (currSecrets: { [key: string]: Uint8Array } | undefined) => {
+        if (!user || !currSecrets?.userSecretKey) return;
         setSecretsLoading(true);
         try {
             const latestUser = await usersApi.getCurrentUser();
             const updates: {[key: string]: Uint8Array} = {};
             if (!latestUser.conversations) return
             await Promise.all(
-                    latestUser.conversations.map(async (c: ConversationPreview) => {
+                latestUser.conversations.map(async (c: ConversationPreview) => {
                     if (c.keyUpdate && c.publicKey) {
+                        console.log('implementing key update');
+                        console.log(c.keyUpdate);
+                        console.log(c.publicKey);
+                        console.log(currSecrets.userSecretKey);
                         const decodedPublicKey = decodeKey(c.publicKey);
-                        const decryptedUpdate = decryptJSON(secrets.userSecretKey, c.keyUpdate, decodedPublicKey);
-                        if (decryptedUpdate && 'newKey' in decryptedUpdate) {
-                            await secureStore.updateUserSecretKeyStore(user.id, c.cid, decryptedUpdate.newKey);
-                            updates[c.cid] = decodeKey(decryptedUpdate.newKey);
+                        const newKeyObj = decryptJSON(currSecrets.userSecretKey, c.keyUpdate, decodedPublicKey);
+                        console.log(newKeyObj);
+                        if (newKeyObj && newKeyObj.secretKey) {
+                            await secureStore.addSecureKey(user.id, c.cid, newKeyObj.secretKey);
+                            updates[c.cid] = decodeKey(newKeyObj.secretKey);
                         }
                     }
                 })
             );
-            setSecrets({
-                ...secrets,
+            const newSecrets = {
+                ...currSecrets,
                 ...updates,
-            });
-            await usersApi.readConversationKeyUpdates(Object.keys(updates));
+            };
+            console.log('new user secrets:')
+            console.log(newSecrets);
+            if (await updateDBSecrets(newSecrets)) {
+                await usersApi.readConversationKeyUpdates(Object.keys(updates));
+                setSecrets(newSecrets);
+            }
             setSecretsLoading(false);
             return;
         } catch (err) {
@@ -68,55 +86,83 @@ export default function UserSecretsContextProvider({
             console.log(err);
             return;
         }
-    }, [user, secrets]);
+    }, [user, updateDBSecrets]);
 
     const getSecrets = useCallback(async () => {
         if (!user) return;
         try {
+            console.log('getting user secrets')
             const storedSecrets = await secureStore.getUserSecretKeyStore(user.id);
             if (storedSecrets && 'userSecretKey' in storedSecrets) {
-                setSecrets(storedSecrets);
-            } else if (user.id && user.secrets && user.keySalt && userKey) {
+                const decodedSecrets = (Object.fromEntries(
+                    Object.entries(storedSecrets).map(([key, val]) => [key, decodeKey(val as string)])
+                ));
+                setSecrets(decodedSecrets);
+                return decodedSecrets;
+            } else if (user && user.secrets && user.keySalt && userPinKey) {
                 // if this is a new device but the user has entered their pin
-                const decryptedSecrets = await decryptUserKeys(userKey, user.keySalt, user.secrets);
+                const decryptedSecrets = await decryptUserKeys(userPinKey, user.keySalt, user.secrets);
                 const decodedSecrets = Object.fromEntries(
                     Object.entries(decryptedSecrets).map(([key, val]) => {
                         return [key, decodeKey(val as string)]
                     })
                 );
                 if (decodedSecrets && 'userSecretKey' in decodedSecrets) {
+                    console.log('initializing secure store')
+                    await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
                     setSecrets(decodedSecrets);
+                    return decodedSecrets;
                 }
             }
         } catch (err) {
             console.log(err);
             return;
         }
-    }, [user, userKey]);
+    }, [user, userPinKey]);
 
     useEffect(() => {
-        if (userKey || !user) return;
-        const getUserKey = async () => {
-            const key = await secureStore.getUserPINEncryptionKey(user.id);
-            if (key) {
-                setUserKey(key);
+        if (userPinKey || !user) return;
+        const getuserPinKey = async () => {
+            console.log('pulling user key');
+            try {
+                setSecretsLoading(true);
+                const key = await secureStore.getUserPINEncryptionKey(user.id);
+                console.log(`key: ${key}`);
+                if (key) {
+                    setUserPinKey(key);
+                } else {
+                    setSecretsLoading(false);
+                }
+            } catch (err) {
+                console.log('keyfetch failed');
+                setSecretsLoading(false);
             }
         }
-        getUserKey();
-    }, [userKey])
+        getuserPinKey();
+    }, [userPinKey, user])
 
     useEffect(() => {
-        if (secrets || !userKey) return;
+        console.log('user secrets:')
+        console.log(secrets);
+        if (secrets || !userPinKey) return;
+        console.log('pulling user secrets');
+        setSecretsLoading(true);
         getSecrets()
-            .then(async () => {
-                await checkForUpdates();
+            .then(async (retrievedSecrets) => {
+                if (retrievedSecrets) {
+                    await checkForUpdates(retrievedSecrets);
+                }
                 setSecretsLoading(false);
             })
             .catch((err) => {
                 console.log(err);
                 setSecretsLoading(false);
             });
-    }, [secrets, userKey]);
+    }, [secrets, userPinKey, user]);
+
+    const initPinKey = (newPinKey: string) => {
+        setUserPinKey(newPinKey);
+    };
 
     const initUserSecret = (userSecretKey: Uint8Array) => {
         setSecrets({
@@ -124,7 +170,7 @@ export default function UserSecretsContextProvider({
         })
     };
 
-    const handleDBSecrets = useCallback((decryptedSecrets: {[key: string]: string}) => {
+    const handleNewDBSecrets = useCallback((decryptedSecrets: {[key: string]: string}) => {
         const newSecrets = Object.fromEntries(
             Object.entries(decryptedSecrets)
                 .map(([key, val]) => [key, decodeKey(val)])
@@ -132,11 +178,85 @@ export default function UserSecretsContextProvider({
         setSecrets(newSecrets);
     }, [secrets]);
 
+    const handleNewEncryptedConversation = useCallback(async (cid: string, encryptedPrivateKey: string, publicKey: string) => {
+        if (!secrets || secretsLoading || !user || !userPinKey || !user.keySalt) {
+            return undefined;
+        } else if (cid in secrets) {
+            return secrets[cid];
+        }
+        // this needs to add the secret to locally stored secrets, add the secret to secrets context, and encrypt the new secrets object for addition to the user's database secrets
+        console.log('handling new encrypted conversation keys');
+        const userSecretKey = secrets.userSecretKey;
+        const decodedPublicKey = decodeKey(publicKey);
+        console.log(`userSecretKey: ${userSecretKey}`);
+        if (!userSecretKey) return undefined;
+        const decryptedKeyMap = decryptJSON(userSecretKey, encryptedPrivateKey, decodedPublicKey) || {}; // base64
+        console.log(`decryptedKeyMap: ${decryptedKeyMap}`);
+        if (!decryptedKeyMap.secretKey) return undefined;
+        const decryptedKey = decryptedKeyMap.secretKey;
+        const newSecrets = {
+            ...secrets,
+            [cid]: decodeKey(decryptedKey)
+        }
+        if (await updateDBSecrets(newSecrets)) {
+            await secureStore.addSecureKey(user.id, cid, decryptedKey);
+            setSecrets(newSecrets);
+            console.log('successfully added new encrypted keys');
+            return decodeKey(decryptedKey);
+        }
+        return undefined;
+    }, [secrets, secretsLoading, user, userPinKey, updateDBSecrets]);
+
+    const handleNewConversationCreated = useCallback(async (cid: string, key: Uint8Array, encodedKey: string) => {
+        if (!user) return false;
+        try {
+            console.log('handling new conversation keys');
+            const newSecrets = {
+                ...secrets,
+                [cid]: key
+            };
+            if (await updateDBSecrets(newSecrets)) {
+                await secureStore.addSecureKey(user.id, cid, encodedKey);
+                setSecrets(newSecrets);
+                console.log('successfully created new encrypted keys');
+                return true;
+            }
+            return false;
+        } catch (err) {
+            console.log(err);
+            return false;
+        }
+    }, [secrets, user, updateDBSecrets]);
+
+    const forgetConversationKeys = useCallback(async (cid: string) => {
+        try {
+            if (secrets && cid in secrets) {   
+                const newSecrets = Object.fromEntries(
+                    Object.entries(secrets).filter(([s, _]) => s !== cid)
+                )
+                const updateRes = await updateDBSecrets(newSecrets);
+                if (!updateRes) return false;
+                setSecrets(
+                   newSecrets
+                )
+            }
+            user && await secureStore.removeKey(user.id, cid);
+            return true;
+        } catch (err) {
+            console.log(err);
+            return false;
+        }
+    }, [secrets]);
+
     return <UserSecretsContext.Provider value={{
         secrets,
         secretsLoading,
+        initPinKey,
         initUserSecret,
-        handleDBSecrets
+        handleNewDBSecrets,
+        handleNewEncryptedConversation,
+        handleNewConversationCreated,
+        forgetConversationKeys
     }}>
         {
             secrets ?

@@ -18,9 +18,9 @@ export type UIScreen = 'messaging' |
     'social' |
     'profile';
 
-type MessageType = 'plainText' | 'media' | 'ref' | 'system';
+type MessageType = 'user' | 'system';
 
-type EncryptionLevel = 'none' | 'privateKey' | 'group' | 'doubleRatchet';
+type EncryptionLevel = 'none' | 'encrypted' | 'doubleRatchet';
 
 export type UIState = {
     screen: UIScreen;
@@ -34,7 +34,8 @@ export type UserConversationProfile = {
     handle?: string;
     displayName: string;
     avatar?: AvatarImage;
-    notifications?: NotificationStatus
+    notifications?: NotificationStatus;
+    publicKey?: string;
 };
 
 type MessageBase = {
@@ -83,19 +84,26 @@ export type Conversation = {
     polls?: Poll[];
     events?: CalendarEvent[];
     customLikeIcon?: LikeIcon;
+    encryptionLevel?: EncryptionLevel;
+    publicKey?: string
+};
+
+export type DecryptedConversation = Omit<Conversation, 'messages'> & {
+    messages: DecryptedMessage[];
 };
 
 export type ConversationPreview = {
     cid: string;
     name: string;
     lastMessageContent?: string;
+    lastMessage?: Message;
     unSeenMessages: number;
     avatar?: AvatarImage;
     lastMessageTime: Date;
     recipientId?: string;
     group: boolean;
-    publicKey?: string;
     keyUpdate?: string;
+    publicKey?: string;
 };
 
 export type UserProfile = {
@@ -107,7 +115,7 @@ export type UserProfile = {
     alias?: string;
     // implement later!!
     avatar?: AvatarImage;
-    publicEncryptionKey?: string;
+    publicKey?: string;
 };
 
 export type SocketEvent = {

@@ -4,9 +4,11 @@ import { RootState } from '../store';
 import { Socket } from 'socket.io-client';
 import { UsersApi } from '../../requests/usersApi';
 import { ConversationsApi } from '../../requests/conversationsApi';
-import { getNewContacts } from '../../utils/messagingUtils';
+import { getNewContacts, handlePossiblyEncryptedMessage } from '../../utils/messagingUtils';
+import secureStore from '../../localStore/secureStore';
 
 const initialState: {
+    id: string;
     userConversations: ConversationPreview[];
     lastReceivedMessageId: string;
     needsServerSync: boolean;
@@ -15,6 +17,7 @@ const initialState: {
     archivedConvos?: string[];
     publicKey?: string;
 } = {
+    id: '',
     userConversations: [],
     lastReceivedMessageId: '',
     needsServerSync: false,
@@ -27,6 +30,7 @@ export const userDataSlice = createSlice({
     reducers: {
         initReduxUser: (state, action: PayloadAction<UserData>) => ({
             ...state,
+            id: action.payload.id,
             userConversations: action.payload.conversations || [],
             contacts: action.payload.contacts || [],
             archivedConvos: action.payload.archivedConvos || [],
@@ -47,18 +51,28 @@ export const userDataSlice = createSlice({
             archivedConvos: action.payload
         }),
         handleNewMessage: (state, action: PayloadAction<{
-            cid: string, message: DecryptedMessage, messageForCurrent: boolean
+            cid: string, 
+            message: Message, 
+            messageForCurrent: boolean,
+            secretKey?: Uint8Array
         }>) => {
             // console.log('handling new message');
-            const { cid, message, messageForCurrent } = action.payload;
+            const { 
+                cid, 
+                message, 
+                messageForCurrent,
+                secretKey
+            } = action.payload;
             const matches = state.userConversations.filter((c) => c.cid === cid);
-            if (matches.length > 0 && message.id !== state.lastReceivedMessageId) {
+            const decrypted = handlePossiblyEncryptedMessage(message, secretKey);
+            if (decrypted && matches.length > 0 && message.id !== state.lastReceivedMessageId) {
                 const convoToUpdate = matches[0];
                 const updatedConvo = {
                     ...convoToUpdate,
                     unSeenMessages: messageForCurrent ? 0 : convoToUpdate.unSeenMessages + 1,
-                    lastMessageContent: message.content,
-                    lastMessageTime: message.timestamp
+                    lastMessageContent: decrypted.content,
+                    lastMessageTime: decrypted.timestamp,
+                    lastMessage: message,
                 };
                 return ({
                     ...state,
@@ -78,10 +92,11 @@ export const userDataSlice = createSlice({
         },
         addConversation: (state, action: PayloadAction<{
             newConvo: Conversation,
-            uid: string
+            uid: string,
+            secretKey?: Uint8Array
         }>) => {
             // console.log('adding conversation');
-            const { newConvo, uid } = action.payload;
+            const { newConvo, uid, secretKey } = action.payload;
             if (state.userConversations.map((c) => c.cid).includes(newConvo.id)) return state;
             const lastMessage = newConvo.messages.length > 0 ? newConvo.messages[newConvo.messages.length - 1] : undefined;
             let name = newConvo.name;
@@ -92,7 +107,7 @@ export const userDataSlice = createSlice({
                 recipientId = otherParticipant.id;
             }
             const newContacts = getNewContacts(newConvo.participants.map((p) => p.id), uid, state.contacts || []);
-            const decryptedLastMessage = lastMessage as DecryptedMessage;
+            const decryptedLastMessage = lastMessage ? handlePossiblyEncryptedMessage(lastMessage, secretKey) : undefined;
             return ({
                 ...state,
                 userConversations: [
@@ -105,7 +120,8 @@ export const userDataSlice = createSlice({
                         unSeenMessages: 0,
                         avatar: newConvo.avatar,
                         recipientId,
-                        group: newConvo.group
+                        group: newConvo.group,
+                        publicKey: newConvo.publicKey
                     }
                 ],
                 contacts: [...(state.contacts || []), ...newContacts],

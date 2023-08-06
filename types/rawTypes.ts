@@ -1,13 +1,7 @@
-import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia, LikeIcon, Message } from "./types";
+import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia, LikeIcon, Message, ConversationPreview } from "./types";
 
-export type ServerConversationPreview = {
-    cid: string;
-    name: string;
-    lastMessageContent?: string;
-    unSeenMessages: number;
-    avatar?: any;
+export type ServerConversationPreview = Omit<ConversationPreview, 'lastMessageTime'> &  {
     lastMessageTime: string;
-    recipientId?: string;
 };
 
 export type RawUserData = {

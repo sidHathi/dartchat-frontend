@@ -7,6 +7,7 @@ import { Entypo } from '@expo/vector-icons';
 import useRequest from "../../requests/useRequest";
 import { UserConversationProfile, UserProfile } from "../../types/types";
 import IconImage from "../generics/IconImage";
+import { enc } from "react-native-crypto-js";
 
 const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => <Box w='100%' bgColor={searchSelected ? '#fefefe': 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px' style={{shadowOpacity: 0.12}}>
         {children}
@@ -14,11 +15,13 @@ const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children
 
 export default function ProfilesSearch({
         isGroup,
+        encrypted,
         selectedProfiles, 
         setSelectedProfiles,
         addedProfiles,
     } : {
         isGroup: boolean;
+        encrypted: boolean;
         selectedProfiles: UserConversationProfile[];
         setSelectedProfiles: (selectedProfiles: UserConversationProfile[]) => void;
         addedProfiles?: UserConversationProfile[];
@@ -40,14 +43,20 @@ export default function ProfilesSearch({
 
     const maxSelected = () => !isGroup && selectedProfiles.length > 0;
 
+    const filterMatches = (raw: UserProfile[]) => {
+        return raw
+            .filter((profile) => {
+                return (profile.id !== user?.id)
+                    && (!encrypted || profile.publicKey)
+            });
+    };
+
     const pullMatchingUsers = (qString: string) => {
         if (!qString) return;
         return profilesApi.findProfile(qString)
             .then((matches) => {
                 if (matches.length > 0) {
-                    setMatchingProfiles(matches.filter(profile => {
-                        return profile.id !== user?.id
-                    }));
+                    setMatchingProfiles(filterMatches(matches));
                 } else {
                     setMatchingProfiles([]);
                 }
@@ -77,7 +86,8 @@ export default function ProfilesSearch({
                 displayName: profile.displayName,
                 avatar: profile.avatar || undefined,
                 handle: profile.handle,
-                notifications: 'all'
+                notifications: 'all',
+                publicKey: profile.publicKey
             }]);
             setQueryString(undefined);
             setSearchSelected(false);
