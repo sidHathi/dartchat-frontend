@@ -71,7 +71,13 @@ export type ReplyRef = {
     senderId: string;
     media?: boolean;
     mentions?: UserConversationProfile[];
-}
+};
+
+export type KeyInfo = {
+    createdAt: Date;
+    privilegedUsers: string[];
+    numberOfMessages: number;
+};
 
 export type Conversation = {
     id: string;
@@ -85,7 +91,8 @@ export type Conversation = {
     events?: CalendarEvent[];
     customLikeIcon?: LikeIcon;
     encryptionLevel?: EncryptionLevel;
-    publicKey?: string
+    publicKey?: string;
+    keyInfo?: KeyInfo;
 };
 
 export type DecryptedConversation = Omit<Conversation, 'messages'> & {

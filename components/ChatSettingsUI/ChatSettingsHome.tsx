@@ -99,6 +99,9 @@ export default function ChatSettingsHome({
             case 'events':
                 openExpandedView('events');
                 break;
+            case 'encryption':
+                openExpandedView('encryption');
+                break;
             case 'leave':
                 setConfirmLeaveModalOpen(true);
             default:

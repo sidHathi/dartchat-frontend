@@ -155,7 +155,7 @@ export default function MessageEntry({
             console.log(currentConvo);
         }
         return;
-    }, [selectedMediaBuffer, messageText, user, networkConnected, currentConvo, socket]);
+    }, [selectedMediaBuffer, messageText, user, networkConnected, currentConvo, socket, secrets]);
 
     const checkSocketReconnect = useCallback(async () => {
         if (!socketReconnectSent && (!socket || socketDisconnected)) {

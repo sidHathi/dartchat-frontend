@@ -28,7 +28,7 @@ export const parseSocketMessage = (data: any): Message => {
         return {
             ...casted,
             timestamp: new Date(Date.parse(casted.timestamp))
-        }
+        } as Message;
     } catch (err) {
         console.error(err);
         return data;
@@ -41,7 +41,11 @@ export const parseConversation = (data: any) : Conversation => {
         if (!casted.messages || casted.messages.length < 1) return data;
         return {
             ...casted,
-            messages: casted.messages.map((m) => parseSocketMessage(m))
+            messages: casted.messages.map((m) => parseSocketMessage(m)),
+            keyInfo: casted.keyInfo ? {
+                ...casted.keyInfo,
+                createdAt: new Date(Date.parse(casted.keyInfo.createdAt))
+            } : undefined
         }
     } catch (err) {
         console.error(err);

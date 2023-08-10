@@ -23,7 +23,7 @@ export default function ChatBuilder({exit}: {
     }): JSX.Element {
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
-    const { handleNewConversationCreated } = useContext(UserSecretsContext);
+    const { handleNewConversationKey } = useContext(UserSecretsContext);
     const dispatch = useAppDispatch();
     const { conversationsApi } = useRequest();
     const { userConversations } = useAppSelector(userDataSelector);
@@ -129,7 +129,7 @@ export default function ChatBuilder({exit}: {
                 if (secretKey && encodedSecretKey) {
                     console.log('adding keys to store');
                     console.log(encodedSecretKey);
-                    handleNewConversationCreated(newConvo.id, secretKey, encodedSecretKey);
+                    handleNewConversationKey(newConvo.id, secretKey, encodedSecretKey);
                 }
             }
         } else if (user) {
@@ -138,10 +138,10 @@ export default function ChatBuilder({exit}: {
                 console.log('running private message key callback');
                 console.log(secretKey);
                 console.log(encodedSecretKey);
-                await handleNewConversationCreated(newConvo.id, secretKey, encodedSecretKey);
+                await handleNewConversationKey(newConvo.id, secretKey, encodedSecretKey);
             }
         }
-    }, [user, selectedProfiles, groupAvatar, isGroup, userConversations, getConversationKeys]);
+    }, [user, selectedProfiles, groupAvatar, isGroup, userConversations, getConversationKeys, encryptedGroup]);
 
     useEffect(() => {
         if (!isGroup) {

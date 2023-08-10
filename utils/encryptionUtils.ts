@@ -220,7 +220,7 @@ export const getNewMemberKeys = (
                     return [
                         nm.id, 
                         encryptJSON(secretKey, {
-                            secretKey
+                            secretKey: encodeKey(secretKey)
                         }, decodedPublicKey)
                     ]
                 })
@@ -232,7 +232,7 @@ export const getNewMemberKeys = (
     }
 }
 
-export const decodeKey = (key: string) => {
+export const decodeKey = (key: string): Uint8Array => {
     try {
         const decoded = decodeBase64(key)
         return decoded;

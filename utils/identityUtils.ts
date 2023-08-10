@@ -1,5 +1,5 @@
 import { UsersApi } from "../requests/usersApi";
-import { ConversationPreview, UserConversationProfile, UserData } from "../types/types";
+import { ConversationPreview, UserConversationProfile, UserData, UserProfile } from "../types/types";
 import { parseUserData } from "./requestUtils";
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
 
@@ -65,4 +65,15 @@ export const buildDefaultProfileForUser = (user: UserData): UserConversationProf
         avatar: user.avatar,
         notifications: 'all'
     };
-}
+};
+
+export const buildCProfileForUserProifle = (profile: UserProfile) => {
+    return {
+        id: profile.id,
+        displayName: profile.displayName,
+        avatar: profile.avatar || undefined,
+        handle: profile.handle,
+        notifications: 'all',
+        publicKey: profile.publicKey
+    } as UserConversationProfile
+};

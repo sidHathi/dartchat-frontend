@@ -82,7 +82,6 @@ export const getNewContacts = (candidates: string[], uid: string, currentContact
     });
 };
 
-
 export const autoGenGroupAvatar = async (participants: UserConversationProfile[], userId?: string): Promise<AvatarImage | undefined> => {
     if (participants.length > 2) {
         return {
@@ -98,7 +97,6 @@ export const autoGenGroupAvatar = async (participants: UserConversationProfile[]
     }
     return undefined;
 };
-
 
 export const constructNewConvo = async (raw: Conversation, user: UserData): Promise<Conversation> => {
     let name = raw.name;

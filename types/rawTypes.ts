@@ -1,4 +1,4 @@
-import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia, LikeIcon, Message, ConversationPreview } from "./types";
+import { ReplyRef, UserConversationProfile, Poll, CalendarEvent, ObjectRef, MessageMedia, LikeIcon, Message, ConversationPreview, Conversation, KeyInfo } from "./types";
 
 export type ServerConversationPreview = Omit<ConversationPreview, 'lastMessageTime'> &  {
     lastMessageTime: string;
@@ -21,18 +21,16 @@ export type SocketMessage = Omit<Message, 'timestamp'> & {
     timestamp: string;
 };
 
-export type RawConversation = {
-    id: string;
-    settings: any;
-    participants: UserConversationProfile[];
-    name: string;
-    avatar?: any;
+export type RawKeyInfo = {
+    createdAt: string;
+    privilegedUsers: string[];
+    numberOfMessages: number;
+};
+
+export type RawConversation = Omit<Conversation, 'messages' | 'keyInfo'> & {
     messages: SocketMessage[];
-    polls?: Poll[];
-    group: boolean;
-    events?: CalendarEvent[];
-    customLikeIcon?: LikeIcon;
-}
+    keyInfo?: RawKeyInfo;
+};
 
 export type RawCalendarEvent = {
     id: string;

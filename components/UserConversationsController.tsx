@@ -1,5 +1,4 @@
 import React, { useState, useContext, useEffect, PropsWithChildren, ReactNode, useCallback } from 'react';
-import ConversationsContext from '../contexts/ConversationsContext';
 import { Socket } from 'socket.io-client';
 import SocketContext from '../contexts/SocketContext';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
@@ -8,8 +7,8 @@ import { SocketMessage } from '../types/rawTypes';
 import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered } from '../redux/slices/chatSlice';
-import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews } from '../redux/slices/userDataSlice';
+import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered, setCCPublicKey, setSecretKey } from '../redux/slices/chatSlice';
+import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews, setPublicKey } from '../redux/slices/userDataSlice';
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
 import { autoGenGroupAvatar, constructNewConvo } from '../utils/messagingUtils';
@@ -162,26 +161,20 @@ export default function UserConversationsController({
         });
     }, [socket, currentConvo]);
 
-    const createNewConversation = (newConvo: Conversation) => {
-        if (socket && user) {
-            // socket.emit('newConversation', newConvo);
-            // dispatch(addConversation(newConvo));
-        }
-        return;
-    }
+    useEffect(() => {
+        if (!socket || !currentConvo) return;
+        socket.on('keyChange', async (cid: string, newPublicKey: string, encryptedKey: string) => {
+            console.log('key change received');
+            if (cid === currentConvo.id) {
+                if (newPublicKey === currentConvo.publicKey) return;
+                dispatch(setCCPublicKey(newPublicKey));
+            }
+            console.log(newPublicKey);
+            await handleNewEncryptedConversation(cid, encryptedKey, newPublicKey);
+        });
+    }, [socket, currentConvo]);
 
-    const deleteConversation = (conversationId: string) => {
-        if (socket) {
-            socket.emit('deleteConversation', conversationId);
-            dispatch(reduxDelete(conversationId));
-        }
-        return;
-    }
-
-    return <ConversationsContext.Provider value={{
-        createNewConversation,
-        deleteConversation
-    }}>
+    return <>
         {children}
-    </ConversationsContext.Provider>
+    </>;
 }

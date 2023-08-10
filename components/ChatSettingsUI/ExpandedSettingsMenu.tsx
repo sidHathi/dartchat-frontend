@@ -3,6 +3,7 @@ import MembersList from './MembersList';
 import MediaGallery from '../Galleries/MediaGallery';
 import PollGallery from '../Galleries/PollGallery';
 import EventGallery from '../Galleries/EventGallery';
+import EncryptionSettings from './EncryptionSettings/EncryptionSettings';
 
 export type MenuPage = 'members' | 'search' | 'gallery' | 'polls' | 'events' | 'encryption'; 
 
@@ -23,6 +24,8 @@ export default function ExpandedSettingsMenu({
                 return <PollGallery />;
             case 'events':
                 return <EventGallery />;
+            case 'encryption':
+                return <EncryptionSettings />;
             default:
                 return <></>;
         }

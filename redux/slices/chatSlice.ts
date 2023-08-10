@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon, DecryptedMessage, DecryptedConversation } from "../../types/types";
+import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon, DecryptedMessage, DecryptedConversation, KeyInfo } from "../../types/types";
 import { RootState } from "../store";
 import { Socket } from "socket.io-client";
 import uuid from 'react-native-uuid';
@@ -7,6 +7,7 @@ import { ConversationsApi } from "../../requests/conversationsApi";
 import { AvatarImage } from "../../types/types";
 import { filterEncryptedMessages, findPrivateMessageIdForUser, handlePossiblyEncryptedConversation, handlePossiblyEncryptedMessage } from "../../utils/messagingUtils";
 import secureStore from "../../localStore/secureStore";
+import { State } from "react-native-gesture-handler";
 
 const initialState: {
     currentConvo?: DecryptedConversation;
@@ -110,12 +111,17 @@ export const chatSlice = createSlice({
                     if (!unsafeDecrypted) return state;
                     decrypted = unsafeDecrypted;
                 }
+                const keyInfo: KeyInfo | undefined = {...state.currentConvo.keyInfo} as KeyInfo | undefined;
+                if (keyInfo && message.encryptionLevel === 'encrypted') {
+                    keyInfo.numberOfMessages += 1;
+                }
                 socket.emit('newMessage', state.currentConvo.id, message);
                 return ({
                     ...state,
                     currentConvo: {
                             ...state.currentConvo,
-                            messages: [decrypted, ...state.currentConvo.messages]
+                            messages: [decrypted, ...state.currentConvo.messages],
+                            keyInfo
                         }
                 });
             }
@@ -134,13 +140,18 @@ export const chatSlice = createSlice({
                if (!unsafeDecrypted) return state;
                decrypted = unsafeDecrypted;
             }
+            const keyInfo: KeyInfo | undefined = {...state.currentConvo.keyInfo} as KeyInfo | undefined;
+            if (keyInfo && message.encryptionLevel === 'encrypted') {
+                keyInfo.numberOfMessages += 1;
+            }
             return ({
                 ...state,
                 needsScroll: true,
                 currentConvo: {
                   ...state.currentConvo,
                     messages: [decrypted, ...state.currentConvo.messages]
-                }
+                },
+                keyInfo
             });
         },
         modifyConversationSettings: (state, action: PayloadAction<any>) => {
@@ -386,7 +397,7 @@ export const chatSlice = createSlice({
                 currentConvo: {
                     ...state.currentConvo,
                     messages: state.currentConvo.messages.map((m) => {
-                        if (m.id === action.payload) {
+                        if (m.id === action.payload && !m.delivered) {
                             return {
                                 ...m,
                                 delivered: true
@@ -398,14 +409,35 @@ export const chatSlice = createSlice({
             }
         },
         setSecretKey: (state, action: PayloadAction<Uint8Array>) => {
-            if (!state.currentConvo) return;
+            if (!state.currentConvo || state.secretKey === action.payload) return;
             return {
                 ...state,
                 secretKey: action.payload
             };
+        },
+        setKeyInfo: (state, action: PayloadAction<KeyInfo>) => {
+            if (!state.currentConvo) return;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    keyInfo: action.payload
+                }
+            }
+        },
+        setCCPublicKey: (state, action: PayloadAction<string>) => {
+            if (!state.currentConvo || state.currentConvo.publicKey === action.payload) return;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    publicKey: action.payload
+                }
+            }
         }
     }
 });
+
 export const { 
     setConvo,
     setConvoSilently,
@@ -431,7 +463,9 @@ export const {
     handleNewGalleryMessages,
     setGalleryCursor,
     handleMessageDelivered,
-    setSecretKey
+    setSecretKey,
+    setKeyInfo,
+    setCCPublicKey
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {

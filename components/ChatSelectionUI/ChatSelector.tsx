@@ -10,7 +10,6 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Animated from "react-native-reanimated";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import ConfirmationModal from "../generics/ConfirmationModal";
-import ConversationsContext from "../../contexts/ConversationsContext";
 import SocketContext from "../../contexts/SocketContext";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { deleteConversation, handleUserConvoLeave, readConversationMessages, userDataSelector } from "../../redux/slices/userDataSlice";
@@ -33,7 +32,6 @@ export default function ChatSelector({
     const { secrets } = useContext(UserSecretsContext);
     const { userConversations } = useAppSelector(userDataSelector);
     const { requestLoading } = useAppSelector(chatSelector);
-    const { deleteConversation: socketDelete } = useContext(ConversationsContext);
     const { conversationsApi, usersApi } = useRequest();
     const dispatch = useAppDispatch();
 
@@ -44,7 +42,7 @@ export default function ChatSelector({
     const [confirmLeaveModalOpen, setConfirmLeaveModalOpen] = useState(false);
 
 
-    const handleSelect = (chat: ConversationPreview) => {
+    const handleSelect = useCallback((chat: ConversationPreview) => {
         if (!networkConnected) return;
         
         const secretKey = (secrets && chat.cid in secrets) ? secrets[chat.cid] : undefined;
@@ -56,7 +54,7 @@ export default function ChatSelector({
             socket.emit("messagesRead", chat.cid);
         }
         openChat();
-    }
+    }, [secrets]);
 
     const handleDelete = async (chat: ConversationPreview | undefined) => {
         if (!chat || !user || !user.conversations) return;
@@ -64,7 +62,9 @@ export default function ChatSelector({
             setDeleteLoadingId(chat.cid);
             // await conversationsApi.deleteConversation(chat.cid);
             dispatch(deleteConversation(chat.cid));
-            socketDelete(chat.cid);
+            if (socket) {
+                socket.emit('deleteConversation', chat.cid);
+            }
             setDeleteLoadingId(undefined);
         } catch (err) {
             setDeleteLoadingId(undefined);

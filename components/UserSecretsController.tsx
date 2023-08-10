@@ -7,6 +7,8 @@ import { ConversationPreview } from '../types/types';
 import UserPinController from './EncryptionUI/UserPinController';
 import auth from '@react-native-firebase/auth';
 import UserSecretsContext from '../contexts/UserSecretsContext';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { chatSelector, setSecretKey } from '../redux/slices/chatSlice';
 
 export default function UserSecretsController({
     children
@@ -15,6 +17,8 @@ export default function UserSecretsController({
 }>): JSX.Element {
     const { user } = useContext(AuthIdentityContext);
     const { usersApi } = useRequest();
+    const dispatch = useAppDispatch();
+    const { currentConvo } = useAppSelector(chatSelector); 
 
     const [userPinKey, setUserPinKey] = useState<string | undefined>();
     const [secrets, setSecrets] = useState<{
@@ -181,19 +185,22 @@ export default function UserSecretsController({
     const handleNewEncryptedConversation = useCallback(async (cid: string, encryptedPrivateKey: string, publicKey: string) => {
         if (!secrets || secretsLoading || !user || !userPinKey || !user.keySalt) {
             return undefined;
-        } else if (cid in secrets) {
-            return secrets[cid];
-        }
+        } 
         // this needs to add the secret to locally stored secrets, add the secret to secrets context, and encrypt the new secrets object for addition to the user's database secrets
         console.log('handling new encrypted conversation keys');
         const userSecretKey = secrets.userSecretKey;
         const decodedPublicKey = decodeKey(publicKey);
         console.log(`userSecretKey: ${userSecretKey}`);
         if (!userSecretKey) return undefined;
+        console.log(publicKey);
         const decryptedKeyMap = decryptJSON(userSecretKey, encryptedPrivateKey, decodedPublicKey) || {}; // base64
         console.log(`decryptedKeyMap: ${decryptedKeyMap}`);
+        console.log(decryptedKeyMap);
         if (!decryptedKeyMap.secretKey) return undefined;
         const decryptedKey = decryptedKeyMap.secretKey;
+        if (cid in secrets && secrets[cid] === decryptedKey) {
+            return secrets[cid];
+        }
         const newSecrets = {
             ...secrets,
             [cid]: decodeKey(decryptedKey)
@@ -201,13 +208,16 @@ export default function UserSecretsController({
         if (await updateDBSecrets(newSecrets)) {
             await secureStore.addSecureKey(user.id, cid, decryptedKey);
             setSecrets(newSecrets);
+            if (currentConvo?.id === cid) {
+                dispatch(setSecretKey(decryptedKey));
+            }
             console.log('successfully added new encrypted keys');
             return decodeKey(decryptedKey);
         }
         return undefined;
     }, [secrets, secretsLoading, user, userPinKey, updateDBSecrets]);
 
-    const handleNewConversationCreated = useCallback(async (cid: string, key: Uint8Array, encodedKey: string) => {
+    const handleNewConversationKey = useCallback(async (cid: string, key: Uint8Array, encodedKey: string) => {
         if (!user) return false;
         try {
             console.log('handling new conversation keys');
@@ -218,6 +228,9 @@ export default function UserSecretsController({
             if (await updateDBSecrets(newSecrets)) {
                 await secureStore.addSecureKey(user.id, cid, encodedKey);
                 setSecrets(newSecrets);
+                if (currentConvo?.id === cid) {
+                    dispatch(setSecretKey(key));
+                }
                 console.log('successfully created new encrypted keys');
                 return true;
             }
@@ -255,7 +268,7 @@ export default function UserSecretsController({
         initUserSecret,
         handleNewDBSecrets,
         handleNewEncryptedConversation,
-        handleNewConversationCreated,
+        handleNewConversationKey,
         forgetConversationKeys
     }}>
         {

@@ -1,5 +1,5 @@
 import { ApiService } from "./request";
-import { AvatarImage, CalendarEvent, Conversation, CursorContainer, LikeIcon, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
+import { AvatarImage, CalendarEvent, Conversation, CursorContainer, KeyInfo, LikeIcon, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
 import { parseConversation, parseSocketMessage, addCursorToRequest, parseEvent } from "../utils/requestUtils";
 import { SocketMessage } from "../types/rawTypes";
 
@@ -28,6 +28,27 @@ export type ConversationsApi = {
     resetLikeIcon: (cid: string) => Promise<any | never>;
     getGallery: (cid: string, cursorContainer?: CursorContainer) => Promise<Message[] | never>;
     getConversationsForIds: (ids: string[]) => Promise<Conversation[] | never>;
+    getEncryptionData: (id: string, dateLimit?: Date) => Promise<{
+        minDate: Date;
+        data: {
+            id: string;
+            encryptedFields: string;
+            publicKey: string;
+        }[];
+    } | never>;
+    changeEncryptionKey: (
+        cid: string, 
+        publicKey: string,
+        userKeyMap: { [id: string]: string },
+        keyInfo?: KeyInfo) => Promise<any | never>;
+    pushReencryptedMessages: (cid: string, newData: {
+        minDate: Date;
+        data: {
+            id: string;
+            encryptedFields: string;
+            publicKey: string;
+        }[];
+    }) => Promise<any | never>;
 }
 
 export default function conversationsApi(apiService: ApiService): ConversationsApi {
@@ -350,6 +371,70 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
+    const getEncryptionData = (id: string, dateLimit?: Date) => {
+        return apiService.request({
+            method: 'POST',
+            url: `/conversations/${id}/getEncryptionData`,
+            data: {
+                dateLimit
+            }
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data as {
+                    minDate: Date;
+                    data: {
+                        id: string;
+                        encryptedFields: string;
+                        publicKey: string;
+                    }[];
+                };
+            }
+            return Promise.reject(res);
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
+    const changeEncryptionKey = (
+        cid: string, 
+        publicKey: string,
+        userKeyMap: { [id: string]: string },
+        keyInfo?: KeyInfo) => {
+        return apiService.request({
+            method: 'PUT',
+            url: `/conversations/${cid}/changeKeySet`,
+            data: {
+                publicKey,
+                userKeyMap,
+                keyInfo,
+            }
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
+    const pushReencryptedMessages = (cid: string, newData: {
+        minDate: Date;
+        data: {
+            id: string;
+            encryptedFields: string;
+            publicKey: string;
+        }[];
+    }) => {
+        return apiService.request({
+            method: 'POST',
+            url: `/conversations/${cid}/pushReencryptedMessages`,
+            data: newData
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
     return {
         getConversation,
         getConversationInfo,
@@ -371,6 +456,9 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         changeLikeIcon,
         resetLikeIcon,
         getGallery,
-        getConversationsForIds
+        getConversationsForIds,
+        getEncryptionData,
+        changeEncryptionKey,
+        pushReencryptedMessages
     }
 }

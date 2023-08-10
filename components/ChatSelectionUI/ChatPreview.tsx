@@ -36,7 +36,7 @@ export default function ChatPreview({
             }
         } 
         return 'New conversation';
-    }, [chat]);
+    }, [chat, secrets]);
 
     return <Pressable onPress={onSelect}>
         <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='7' style={{shadowOpacity: 0.07}} mx='12px'>
