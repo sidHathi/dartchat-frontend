@@ -391,7 +391,7 @@ export const chatSlice = createSlice({
             }
         },
         handleMessageDelivered: (state, action: PayloadAction<string>) => {
-            if (!state.currentConvo) return;
+            if (!state.currentConvo) return state;
             return {
                 ...state,
                 currentConvo: {
@@ -409,14 +409,14 @@ export const chatSlice = createSlice({
             }
         },
         setSecretKey: (state, action: PayloadAction<Uint8Array>) => {
-            if (!state.currentConvo || state.secretKey === action.payload) return;
+            if (!state.currentConvo || state.secretKey === action.payload) return state;
             return {
                 ...state,
                 secretKey: action.payload
             };
         },
         setKeyInfo: (state, action: PayloadAction<KeyInfo>) => {
-            if (!state.currentConvo) return;
+            if (!state.currentConvo) return state;
             return {
                 ...state,
                 currentConvo: {
@@ -426,12 +426,50 @@ export const chatSlice = createSlice({
             }
         },
         setCCPublicKey: (state, action: PayloadAction<string>) => {
-            if (!state.currentConvo || state.currentConvo.publicKey === action.payload) return;
+            if (!state.currentConvo || state.currentConvo.publicKey === action.payload) return state;
             return {
                 ...state,
                 currentConvo: {
                     ...state.currentConvo,
                     publicKey: action.payload
+                }
+            }
+        },
+        removeLocalMessage: (state, action: PayloadAction<string>) => {
+            if (!state.currentConvo) return state;
+            const id = action.payload;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    messages: state.currentConvo.messages.filter(m => m.id !== id)
+                }
+            };
+        },
+        handleMessageDelete: (state, action: PayloadAction<string>) => {
+            if (!state.currentConvo) return state;
+            const mid = action.payload;
+            const messageToDelete = state.currentConvo.messages.find((m) => m.id === mid);
+            if (!messageToDelete) return state;
+            const updatedMessage: DecryptedMessage = {
+                id: messageToDelete.id,
+                timestamp: messageToDelete.timestamp,
+                messageType: 'deletion',
+                encryptionLevel: 'none',
+                senderId: messageToDelete.senderId,
+                senderProfile: messageToDelete.senderProfile,
+                delivered: true,
+                content: 'Message deleted',
+                likes: []
+            };
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    messages: state.currentConvo.messages.map((m) => {
+                        if (m.id === mid) return updatedMessage;
+                        return m;
+                    })
                 }
             }
         }
@@ -465,7 +503,9 @@ export const {
     handleMessageDelivered,
     setSecretKey,
     setKeyInfo,
-    setCCPublicKey
+    setCCPublicKey,
+    removeLocalMessage,
+    handleMessageDelete
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {

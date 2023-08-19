@@ -2,15 +2,15 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { AppState } from 'react-native';
 import useRequest from '../requests/useRequest';
-import { chatSelector, pullConversation, receiveNewLike, receiveNewMessage } from '../redux/slices/chatSlice';
+import { chatSelector, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey } from '../redux/slices/chatSlice';
 import { getUserData } from '../utils/identityUtils';
 import { addConversation, handleNewMessage, pullLatestPreviews, setConversations, userDataSelector } from '../redux/slices/userDataSlice';
 import { getBackgroundUpdateFlag, setBackgroundUpdateFlag } from '../localStore/store';
 import messaging from '@react-native-firebase/messaging';
 import SocketContext from '../contexts/SocketContext';
-import { PNPacket } from '../types/rawTypes';
+import { PNPacket } from '../types/types';
 import { constructNewConvo } from '../utils/messagingUtils';
-import { parsePNLikeEvent, parsePNMessage, parsePNNewConvo } from '../utils/notificationUtils';
+import { parsePNLikeEvent, parsePNMessage, parsePNNewConvo, parsePNSecrets } from '../utils/notificationUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import UIContext from '../contexts/UIContext';
 import { ConversationPreview, DecryptedMessage } from '../types/types';
@@ -99,6 +99,19 @@ export default function NotificationsController(): JSX.Element {
                                     secretKey
                                 }));
                                 socket?.emit('joinRoom', userConversations.map((c: ConversationPreview) => c.cid));
+                            }
+                            break;
+                        case 'secrets':
+                            const parsedPNS = parsePNSecrets(messageData.stringifiedBody);
+                            if (parsedPNS && user) {
+                                if (!userConversations.find((c) => c.cid === parsedPNS.cid)) return;
+                                if (!(user.id in parsedPNS.newKeyMap)) return;
+                                if (parsedPNS.cid === currentConvo?.id) {
+                                    if (parsedPNS.newPublicKey === currentConvo?.publicKey) return;
+                                    dispatch(setCCPublicKey(parsedPNS.newPublicKey));
+                                }
+                                const newSecretKey = parsedPNS.newKeyMap[user.id]
+                                await handleNewEncryptedConversation(parsedPNS.cid, newSecretKey, parsedPNS.newPublicKey);
                             }
                             break;
                     }

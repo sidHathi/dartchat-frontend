@@ -3,7 +3,7 @@ import { Message, SocketEvent, Conversation } from '../types/types';
 import secureStore from "../localStore/secureStore";
 import { decodeKey, decryptString } from "./encryptionUtils";
 import { getStoredUserData } from "../localStore/store";
-import { PNPacket } from "../types/rawTypes";
+import { PNPacket } from "../types/types";
 import { handlePossiblyEncryptedMessage } from "./messagingUtils";
 
 export const parsePNMessage = (stringifiedBody: string): {
@@ -48,6 +48,21 @@ export const parsePNNewConvo = (stringifiedBody: string): {
         keyMap: parsedBody.keyMap || undefined
     };
 };
+
+export const parsePNSecrets = (stringifiedBody: string)  => {
+    try {
+        const parsedBody = JSON.parse(stringifiedBody);
+        if (!('cid' in parsedBody) || !('newPublicKey' in parsedBody) || !('newKeyMap' in parsedBody)) return;
+
+        return {
+            cid: parsedBody.cid,
+            newPublicKey: parsedBody.newPublicKey,
+            newKeyMap: parsedBody.newKeyMap
+        };
+    } catch (err) {
+        return undefined;
+    }
+}
 
 export const parsePNDisplay = (stringifiedDisplay: string | undefined): {
     title: string;

@@ -99,7 +99,7 @@ export default function ArchivedChats(): JSX.Element {
         </Box>
     }
 
-    return <View flex='1'>
+    return <View flex='1' px='12px'>
         <Text color='gray.500' fontWeight='bold' fontSize='xs'>
             Chats you left:
         </Text>

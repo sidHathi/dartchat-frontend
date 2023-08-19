@@ -48,7 +48,11 @@ export default function PollDisplay({
                     options: newOpts
                 });
             }
-        })
+        });
+
+        return () => {
+            socket.off('pollResponse');
+        }
     }, [socket, poll, currentConvo]);
 
     useEffect(() => {

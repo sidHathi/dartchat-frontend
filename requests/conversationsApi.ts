@@ -49,6 +49,7 @@ export type ConversationsApi = {
             publicKey: string;
         }[];
     }) => Promise<any | never>;
+    deleteMessage: (cid: string, mid: string) => Promise<any | never>;
 }
 
 export default function conversationsApi(apiService: ApiService): ConversationsApi {
@@ -435,6 +436,18 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
+    const deleteMessage = (cid: string, mid: string) => {
+        return apiService.request({
+            method: 'DELETE',
+            url: `/conversations/${cid}/${mid}`
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
     return {
         getConversation,
         getConversationInfo,
@@ -459,6 +472,7 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         getConversationsForIds,
         getEncryptionData,
         changeEncryptionKey,
-        pushReencryptedMessages
+        pushReencryptedMessages,
+        deleteMessage
     }
 }

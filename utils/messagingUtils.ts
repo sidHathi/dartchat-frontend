@@ -82,8 +82,8 @@ export const getNewContacts = (candidates: string[], uid: string, currentContact
     });
 };
 
-export const autoGenGroupAvatar = async (participants: UserConversationProfile[], userId?: string): Promise<AvatarImage | undefined> => {
-    if (participants.length > 2) {
+export const autoGenGroupAvatar = async (isGroup: boolean, participants: UserConversationProfile[], userId?: string): Promise<AvatarImage | undefined> => {
+    if (isGroup) {
         return {
             tinyUri: await getDownloadUrl('system/dcSquareLogo-tiny.jpg'),
             mainUri: await getDownloadUrl('system/dcSquareLogo-main.jpg'),
@@ -103,9 +103,15 @@ export const constructNewConvo = async (raw: Conversation, user: UserData): Prom
     if (!raw.group) {
         name = raw.participants.filter((p) => p.id !== user.id)[0].displayName;
     }
+    if (!raw.avatar) {
+        return {
+            ...raw,
+            avatar: await autoGenGroupAvatar(raw.group, raw.participants, user.id),
+            name
+        }
+    }
     return {
         ...raw,
-        avatar: await autoGenGroupAvatar(raw.participants, user.id),
         name
     }
 };

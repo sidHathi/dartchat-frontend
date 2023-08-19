@@ -60,7 +60,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
                 reconnectionDelay: 500,
                 reconnectionAttempts: Infinity, 
                 transports: ['websocket'],   
-                autoConnect: true
+                autoConnect: false
             });
             setSocket(newSocket);
             setDisconnected(false);
@@ -108,6 +108,12 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     }, [socket]);
 
     useEffect(() => {
+        if (socket && !socket.connected) {
+            socket.connect();
+        }
+    }, [socket]);
+
+    useEffect(() => {
         if (!socket || !networkConnected) return;
 
         socket.on('disconnect', async () => {
@@ -123,21 +129,44 @@ export function SocketContextProvider({children} :PropsWithChildren<{
             }
         });
 
-        socket.onAny(() => {
-            setDisconnected(false);
-            heartCheck.reset(heartCheck).start(heartCheck, socket);
-        })
+        return () => {
+            socket.off("disconnect");
+        }
+    }, [networkConnected, socket]);
 
-        socket.on('connected', () => {
+    useEffect(() => {
+        if (!socket) return;
+        socket.on('connect', () => {
             setDisconnected(false);
             heartCheck.reset(heartCheck).start(heartCheck, socket);
         });
+
+        return () => {
+            socket.off("connect");
+        }
+    }, [networkConnected, socket]);
+
+    useEffect(() => {
+        if (!socket) return;
 
         socket.on('pong', async () => {
             await new Promise((res) => setTimeout(res, 5000));
             socket.emit('ping');
         });
+
+        return () => {
+            socket.off('pong');
+        }
     }, [networkConnected, socket]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.onAny(() => {
+            setDisconnected(false);
+            heartCheck.reset(heartCheck).start(heartCheck, socket);
+        });
+    }, [socket])
 
     return (
         <SocketContext.Provider value={{socket, disconnected, resetSocket}}>

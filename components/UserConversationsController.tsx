@@ -7,7 +7,7 @@ import { SocketMessage } from '../types/rawTypes';
 import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered, setCCPublicKey, setSecretKey } from '../redux/slices/chatSlice';
+import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered, setCCPublicKey, setSecretKey, handleMessageDelete } from '../redux/slices/chatSlice';
 import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews, setPublicKey } from '../redux/slices/userDataSlice';
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
@@ -41,14 +41,13 @@ export default function UserConversationsController({
 
     useEffect(() => {
         if (!socket || !user) return;
-        socket.on('newConversation', async (newConvo: Conversation, encryptedSecretKey?: string) => {
+        socket.on('newConversation', async (newConvo: Conversation, keyMap?: { [id: string]: string }) => {
             // console.log('new conversation message received!');
             if (userConversations.map(c => c.cid).includes(newConvo.id)) return; 
             const completedConvo = await constructNewConvo(newConvo, user);
             let secretKey: Uint8Array | undefined = undefined;
-            if (encryptedSecretKey && completedConvo.publicKey) {
-                console.log(encryptedSecretKey);
-                secretKey = await handleNewEncryptedConversation(completedConvo.id, encryptedSecretKey, completedConvo.publicKey);
+            if (keyMap && user.id in keyMap &&  completedConvo.publicKey) {
+                secretKey = await handleNewEncryptedConversation(completedConvo.id, keyMap[user.id], completedConvo.publicKey);
                 console.log('newConvo secret key added');
                 console.log(completedConvo);
             }
@@ -59,6 +58,10 @@ export default function UserConversationsController({
             }));
             socket.emit('joinRoom', userConversations.map(c => c.cid));
         });
+
+        return () => {
+            socket.off('newConversation');
+        }
     }, [userConversations, socket, user]);
 
     useEffect(() => {
@@ -86,6 +89,10 @@ export default function UserConversationsController({
                 secretKey
             }));
         });
+
+        return () => {
+            socket.off('newMessage');
+        }
     }, [currentConvo, socket, user]);
 
     useEffect(() => {
@@ -102,7 +109,11 @@ export default function UserConversationsController({
             } catch (err) {
                 console.log(err);
             }
-        })
+        });
+
+        return () => {
+            socket.off('deleteConversation');
+        }
     }, [currentConvo, user]);
 
     useEffect(() => {
@@ -117,6 +128,10 @@ export default function UserConversationsController({
                 event
             }));
         });
+
+        return () => {
+            socket.off('newLikeEvent');
+        }
     }, [currentConvo, socket]);
 
     useEffect(() => {
@@ -127,6 +142,10 @@ export default function UserConversationsController({
             }
             dispatch(pullLatestPreviews(usersApi));
         });
+
+        return () => {
+            socket.off('updateConversationDetails');
+        }
     }, [socket, currentConvo]);
 
     useEffect(() => {
@@ -138,6 +157,13 @@ export default function UserConversationsController({
             dispatch(pullLatestPreviews(usersApi));
         });
 
+        return () => {
+            socket.off('newConversationUsers');
+        }
+    }, [socket, currentConvo]);
+
+    useEffect(() => {
+        if (!socket) return;
         socket.on('removeConversationUser', (cid: string, uid: string) => {
             if (currentConvo && currentConvo.id === cid && user) {
                 if (uid !== user.id) {
@@ -149,7 +175,11 @@ export default function UserConversationsController({
                 }
             }
             dispatch(pullLatestPreviews(usersApi));
-        })
+        });
+
+        return () => {
+            socket.off('removeConversationUser');
+        }
     }, [socket, currentConvo]);
 
     useEffect(() => {
@@ -159,6 +189,10 @@ export default function UserConversationsController({
                 dispatch(handleMessageDelivered(mid))
             }
         });
+
+        return () => {
+            socket.off('messageDelivered');
+        }
     }, [socket, currentConvo]);
 
     useEffect(() => {
@@ -172,6 +206,23 @@ export default function UserConversationsController({
             console.log(newPublicKey);
             await handleNewEncryptedConversation(cid, encryptedKey, newPublicKey);
         });
+
+        return () => {
+            socket.off('keyChange');
+        }
+    }, [socket, currentConvo]);
+
+    useEffect(() => {
+        if (!socket || !currentConvo) return;
+        socket.on('deleteMessage', (cid: string, mid: string) => {
+            if (cid === currentConvo.id) {
+                dispatch(handleMessageDelete(mid))
+            }
+        });
+
+        return () => {
+            socket.off('deleteMessage');
+        }
     }, [socket, currentConvo]);
 
     return <>

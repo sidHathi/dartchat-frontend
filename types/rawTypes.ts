@@ -53,12 +53,4 @@ export type RawPoll = {
     }[];
     expirationDate: string;
     messageId?: string;
-}
-
-export type PNType = 'message' | 'like' | 'newConvo';
-
-export type PNPacket = {
-    type: PNType;
-    stringifiedBody: string;
-    stringifiedDisplay?: string;
 };

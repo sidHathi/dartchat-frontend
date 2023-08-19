@@ -19,7 +19,8 @@ export default function MessageList({
     profiles,
     closeContentMenu,
     handleMediaSelect,
-    handleProfileSelect
+    handleProfileSelect,
+    handleMessageDelete,
 }: {
     setReplyMessage: (message: DecryptedMessage | undefined) => void;
     selectedMid: string | undefined;
@@ -28,6 +29,7 @@ export default function MessageList({
     closeContentMenu: () => void;
     handleMediaSelect: (message: DecryptedMessage, index: number) => void;
     handleProfileSelect: (profile: UserConversationProfile) => void;
+    handleMessageDelete: (mid: string) => void;
 }): JSX.Element {
     const dispatch = useAppDispatch();
     const listRef = useRef<FlatList | null>(null);
@@ -133,6 +135,7 @@ export default function MessageList({
                     }}
                     handleMediaSelect={handleMediaSelect}
                     handleProfileSelect={handleProfileSelect}
+                    handleDelete={() => handleMessageDelete(message.id)}
                 />
             </Pressable>
             </>

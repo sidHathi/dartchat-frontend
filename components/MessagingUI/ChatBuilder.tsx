@@ -4,7 +4,7 @@ import { AvatarImage, Conversation, UserConversationProfile } from "../../types/
 import ProfilesSearch from "./ProfileSearch";
 import { Ionicons } from '@expo/vector-icons';
 import { View, Box, Button, Center, Heading, Text, Input, VStack, HStack, Pressable, Flex } from 'native-base';
-import { ScrollView, Image } from "react-native";
+import { ScrollView, Image as RNImage } from "react-native";
 import uuid from 'react-native-uuid';
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { addConversation, userDataSelector } from "../../redux/slices/userDataSlice";
@@ -17,6 +17,9 @@ import { autoGenGroupAvatar } from "../../utils/messagingUtils";
 import { getNewConversationKeys } from "../../utils/encryptionUtils";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
 import { useKeyboard } from "@react-native-community/hooks";
+import { getGroupAvatarFromCropImage, selectProfileImage } from "../../utils/identityUtils";
+import { Image } from 'react-native-image-crop-picker';
+import Spinner from "react-native-spinkit";
 
 export default function ChatBuilder({exit}: {
         exit: () => void
@@ -37,6 +40,9 @@ export default function ChatBuilder({exit}: {
     const [error, setError] = useState<string | undefined>(undefined);
     const [encryptedGroup, setEncryptedGroup] = useState(false);
     const { keyboardShown, keyboardHeight } = useKeyboard();
+    const [avatarDispUri, setAvatarDispUri] = useState<string | undefined>(undefined);
+    const [affiliatedCid, setAffiliatedCid] = useState<string | undefined>();
+    const [avatarUploading, setAvatarUploading] = useState(false);
 
     const encryptionPossible = useMemo(() => {
         if (selectedProfiles.length < 1) return true;
@@ -60,13 +66,49 @@ export default function ChatBuilder({exit}: {
         return true;
     };
 
-    const getGroupName = () => {
+    const getGroupName = useCallback(() => {
         if (groupName) return groupName;
-        if (selectedProfiles.length == 1) {
+        if (!isGroup) {
             return 'Private chat'
         }
         return `${userDispName || user?.displayName || user?.handle || user?.email || 'Unnamed chat'} + ${selectedProfiles.length} others`;
-    };
+    }, [groupName, selectedProfiles, user, isGroup]);
+
+    useEffect(() => {
+        const updateAvatarDisp = async () => {
+            if (groupAvatar) {
+                setAvatarDispUri(groupAvatar.mainUri);
+            } else if (!avatarDispUri) {
+                const generatedAvatar = await autoGenGroupAvatar(isGroup, selectedProfiles, user?.id);
+                setAvatarDispUri(generatedAvatar?.mainUri);
+                setGroupAvatar(generatedAvatar);
+            }
+        };
+        updateAvatarDisp();
+    }, [groupAvatar, user, isGroup, selectedProfiles]);
+
+    const handleNewAvatarImage = useCallback(async (image: Image) => {
+        let cid = uuid.v4().toString();
+        if (!affiliatedCid) {
+            setAffiliatedCid(cid);
+        } else {
+            cid = affiliatedCid;
+        }
+
+        setAvatarUploading(true);
+        try {
+            const avatar = await getGroupAvatarFromCropImage(image, cid);
+            setGroupAvatar(avatar);
+            setAvatarUploading(false);
+        } catch (err) {
+            console.log(err);
+            setAvatarUploading(false);
+        }
+    }, [affiliatedCid]);
+
+    const selectImage = useCallback(async () => {
+        await selectProfileImage(handleNewAvatarImage);
+    }, [handleNewAvatarImage]);
 
     const handleSubmit = useCallback(async () => {
         console.log('attempting to create chat')
@@ -100,9 +142,9 @@ export default function ChatBuilder({exit}: {
             console.log(keys);
         }
 
-        const avatar = groupAvatar || await autoGenGroupAvatar(participants, user?.id);
+        const avatar = groupAvatar || await autoGenGroupAvatar(isGroup, participants, user?.id);
         const newConvo: Conversation = {
-            id: uuid.v4() as string,
+            id: affiliatedCid || uuid.v4() as string,
             settings: {},
             participants: participants,
             name: getGroupName(),
@@ -141,7 +183,7 @@ export default function ChatBuilder({exit}: {
                 await handleNewConversationKey(newConvo.id, secretKey, encodedSecretKey);
             }
         }
-    }, [user, selectedProfiles, groupAvatar, isGroup, userConversations, getConversationKeys, encryptedGroup]);
+    }, [user, selectedProfiles, groupAvatar, isGroup, userConversations, getConversationKeys, encryptedGroup, getGroupName]);
 
     useEffect(() => {
         if (!isGroup) {
@@ -164,7 +206,7 @@ export default function ChatBuilder({exit}: {
                     {
                     profile.avatar ?
                     <IconImage imageUri={fullSize ? profile.avatar.mainUri: profile.avatar.tinyUri} size={fullSize ? 30 : 20} /> :
-                    <Image source={require('../../assets/profile-01.png')} 
+                    <RNImage source={require('../../assets/profile-01.png')} 
                         style={{
                             width: fullSize ? 30 : 20,
                             height: fullSize ? 30 : 20,
@@ -222,6 +264,30 @@ export default function ChatBuilder({exit}: {
                             </Button.Group>
                         </Box>
                     } 
+                    {
+                        (isGroup && avatarDispUri) && <>
+                        <View h='0px' w='100%' overflow='visible'
+                        zIndex='1004'>
+                            <Box h='100px' w='100%' overflow='visible'>
+                                <Center w='100%' overflow='visible'>
+                                <Button colorScheme='coolGray' mt='40px' borderRadius='24px' px='12px' variant='solid' onPress={selectImage} py='6px' opacity='0.7' flexShrink='0'>
+                                    <Text fontSize='9px' color='#f5f5f5' fontWeight='medium'>
+                                        Change profile image
+                                    </Text>
+                                </Button>
+                                </Center>
+                            </Box>
+                        </View>
+
+                        <Box m='auto' mb='6px' zIndex='1001'>
+                            <IconImage imageUri={avatarDispUri} size={100} shadow='9' />
+                            {
+                                avatarUploading &&
+                                <Box m='auto'><Spinner type='ThreeBounce' /></Box>
+                            }
+                        </Box>
+                        </>
+                    }
                     {
                         selectedProfiles.length > 0 &&
                         <Box>

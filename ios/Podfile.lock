@@ -512,7 +512,7 @@ PODS:
     - Firebase/Storage (= 10.11.0)
     - React-Core
     - RNFBApp
-  - RNGestureHandler (2.12.0):
+  - RNGestureHandler (2.12.1):
     - React-Core
   - RNGoogleSignin (10.0.1):
     - GoogleSignIn (~> 7.0)
@@ -531,7 +531,7 @@ PODS:
     - RNNotifee/NotifeeCore (= 7.8.0)
   - RNNotifee/NotifeeCore (7.8.0):
     - React-Core
-  - RNReanimated (3.3.0):
+  - RNReanimated (3.4.2):
     - DoubleConversion
     - FBLazyVector
     - FBReactNativeSpec
@@ -880,11 +880,11 @@ SPEC CHECKSUMS:
   RNFBAuth: 557866ac2a86d114034c0bcfd37b540a1f33d44a
   RNFBMessaging: 3aca7a5b3b1f79a9ee75026662ea57693436a338
   RNFBStorage: 693965df29a3c4b67e3bd1f817dd21f6a7cf6df6
-  RNGestureHandler: dec4645026e7401a0899f2846d864403478ff6a5
+  RNGestureHandler: c0d04458598fcb26052494ae23dda8f8f5162b13
   RNGoogleSignin: ccaa4a81582cf713eea562c5dd9dc1961a715fd0
   RNImageCropPicker: 486e2f7e2b0461ce24321f751410dce1b3b49e6d
   RNNotifee: f3c01b391dd8e98e67f539f9a35a9cbcd3bae744
-  RNReanimated: 9976fbaaeb8a188c36026154c844bf374b3b7eeb
+  RNReanimated: 49cdb63e767bb7e743ff4c12f7d85722c0d008f2
   RNScrypt: 95fdef077b482e9fdf8a761120cb69d129ef4016
   RNSVG: d7d7bc8229af3842c9cfc3a723c815a52cdd1105
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d

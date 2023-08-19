@@ -60,7 +60,7 @@ export default function NavContainer({ children }:
         </Box>
         <Center marginTop='-90px' zIndex='1002'>
             <HStack>
-            <Box w='150px' h='50px' backgroundColor='#111' borderRadius='30px' shadow='3' marginX='5px'>
+            <Box w='150px' h='50px' backgroundColor='#111' borderRadius='30px' shadow='9' marginX='5px'>
                 <Center h='50px'>
                     <HStack w='90px'>
                         <Pressable opacity={navState.screen === 'conversations' ? 1 : 0.5} onPress={() => navSwitch('conversations')}>
@@ -84,7 +84,7 @@ export default function NavContainer({ children }:
             </HStack>
         </Center>
         {
-            (!networkConnected || !apiReachable) &&
+            (!networkConnected || !apiReachable || socketDisconnected) &&
             <Box marginTop='-150px' zIndex='1003'>
                 <NetworkDisconnectionAlert type={networkConnected ? 'server' : 'network'} />
             </Box>

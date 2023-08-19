@@ -69,7 +69,8 @@ export const decryptString = (recipientPrivateKey: Uint8Array, messageWithNonce:
 };
 
 export const decryptJSON = (recipientPrivateKey: Uint8Array, messageWithNonce: string, senderPublicKey?: Uint8Array): any | undefined => {
-    console.log(recipientPrivateKey);
+    console.log(encodeKey(recipientPrivateKey));
+    senderPublicKey && console.log(encodeKey(senderPublicKey));
     console.log(`decrypted string: ${decryptString(recipientPrivateKey, messageWithNonce, senderPublicKey)}`);
     try {
         const decrypted = JSON.parse(decryptString(recipientPrivateKey, messageWithNonce, senderPublicKey));

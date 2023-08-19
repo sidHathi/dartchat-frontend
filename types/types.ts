@@ -18,7 +18,7 @@ export type UIScreen = 'messaging' |
     'social' |
     'profile';
 
-type MessageType = 'user' | 'system';
+type MessageType = 'user' | 'system' | 'deletion';
 
 type EncryptionLevel = 'none' | 'encrypted' | 'doubleRatchet';
 
@@ -191,4 +191,12 @@ export type LikeIcon = {
     partialImageUri?: string;
     activeImageUri?: string;
     iconName?: string;
+};
+
+export type PNType = 'message' | 'like' | 'newConvo' | 'secrets';
+
+export type PNPacket = {
+    type: PNType;
+    stringifiedBody: string;
+    stringifiedDisplay?: string;
 };

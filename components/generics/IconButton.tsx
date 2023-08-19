@@ -24,7 +24,8 @@ type IconLabel = 'profile' |
     'edit' |
     'download' |
     'message' |
-    'leave' ;
+    'leave' |
+    'retry';
 
 export default function IconButton({label, size, color, onPress, shadow, disabled, additionalProps}: {
         label: IconLabel,
@@ -61,7 +62,7 @@ export default function IconButton({label, size, color, onPress, shadow, disable
             case 'cancel':
                 return <MaterialIcons name="cancel" size={size} color={color || 'white'} />
             case 'delete':
-                return <FontAwesome name="trash-o" size={size} color={color || 'white'} />
+                return <MaterialIcons name="delete-outline" size={size} color={color || 'white'} />
             case 'plus':
                 return <Feather name="plus" size={size} color={color || 'white'} />
             case 'edit':
@@ -72,6 +73,8 @@ export default function IconButton({label, size, color, onPress, shadow, disable
                 return <Feather name="message-circle" size={size} color={color || 'white'} />
             case 'leave':
                 return <Ionicons name="ios-exit-outline" size={size} color={color || 'white'} />
+            case 'retry':
+                return <MaterialCommunityIcons name="reload" size={size} color={color || 'white'} />
             default:
                 return <>
                 </>

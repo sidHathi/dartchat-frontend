@@ -1,5 +1,6 @@
+import { getDownloadUrl, storeConversationAvatar } from "../firebase/cloudStore";
 import { UsersApi } from "../requests/usersApi";
-import { ConversationPreview, UserConversationProfile, UserData, UserProfile } from "../types/types";
+import { AvatarImage, ConversationPreview, UserConversationProfile, UserData, UserProfile } from "../types/types";
 import { parseUserData } from "./requestUtils";
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
 
@@ -76,4 +77,28 @@ export const buildCProfileForUserProifle = (profile: UserProfile) => {
         notifications: 'all',
         publicKey: profile.publicKey
     } as UserConversationProfile
+};
+
+export const getGroupAvatarFromCropImage = async (image: Image, cid: string, ) => {
+    try {
+        const { 
+            mainTask, 
+            tinyTask,
+            mainLoc,
+            tinyLoc,
+        } = await storeConversationAvatar(cid, image.path, image.sourceURL);
+    
+        await tinyTask;
+        await mainTask;
+        const mainUri =  await getDownloadUrl(mainLoc);
+        const tinyUri = await getDownloadUrl(tinyLoc);
+        const avatar: AvatarImage = {
+            tinyUri,
+            mainUri,
+        };
+        return avatar;
+    } catch (err) {
+        console.log(err);
+        return undefined;
+    }
 };

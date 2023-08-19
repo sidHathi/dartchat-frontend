@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { chatSelector, exitConvo, leaveChat, updateConversationDetails } from '../../redux/slices/chatSlice';
 import IconButton from '../generics/IconButton';
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
-import { selectProfileImage } from '../../utils/identityUtils';
+import { getGroupAvatarFromCropImage, selectProfileImage } from '../../utils/identityUtils';
 import { getDownloadUrl, storeConversationAvatar } from '../../firebase/cloudStore';
 import { AvatarImage } from '../../types/types';
 import useRequest from '../../requests/useRequest';
@@ -113,21 +113,7 @@ export default function ChatSettingsHome({
         if (currentConvo && newAvatar && newAvatar.path) {
             setImageUploading(true);
             try {
-                const { 
-                    mainTask, 
-                    tinyTask,
-                    mainLoc,
-                    tinyLoc,
-                } = await storeConversationAvatar(currentConvo.id, newAvatar.path, newAvatar.sourceURL);
-
-                await tinyTask;
-                await mainTask;
-                const mainUri =  await getDownloadUrl(mainLoc);
-                const tinyUri = await getDownloadUrl(tinyLoc);
-                const avatar: AvatarImage = {
-                    tinyUri,
-                    mainUri,
-                };
+                const avatar = await getGroupAvatarFromCropImage(newAvatar, currentConvo.id);
                 setImageUploading(false);
                 return avatar;
             } catch (err) {

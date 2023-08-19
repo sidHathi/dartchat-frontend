@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext, PropsWithChildren, ReactNode } from "react";
+import React, { useState, useEffect, useRef, useContext, PropsWithChildren, ReactNode, useMemo } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Text, Input, Box, Button, HStack, Spacer, Center, FormControl, VStack } from 'native-base';
 import { Image, Pressable } from 'react-native';
@@ -8,6 +8,8 @@ import useRequest from "../../requests/useRequest";
 import { UserConversationProfile, UserProfile } from "../../types/types";
 import IconImage from "../generics/IconImage";
 import { enc } from "react-native-crypto-js";
+import { useAppSelector } from "../../redux/hooks";
+import { userDataSelector } from "../../redux/slices/userDataSlice";
 
 const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => <Box w='100%' bgColor={searchSelected ? '#fefefe': 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px' style={{shadowOpacity: 0.12}}>
         {children}
@@ -29,25 +31,55 @@ export default function ProfilesSearch({
     const inputRef = useRef<any | null>(null);
     const { user } = useContext(AuthIdentityContext);
     const { profilesApi } = useRequest();
+    const { contacts: contactIds } = useAppSelector(userDataSelector);
 
     const [queryString, setQueryString] = useState<string | undefined>(undefined);
     const [matchingProfiles, setMatchingProfiles] = useState<UserProfile[]>([]);
     const [searchSelected, setSearchSelected] = useState(false);
     const [cursor, setCursor] = useState<any>(null);
+    const [pulledContacts, setPulledContacts] = useState<UserProfile[] | undefined>();
 
     useEffect(() => {
         if (inputRef.current && cursor) {
             inputRef.current.cursor = cursor;
         }
-    }, [cursor])
+    }, [cursor]);
+
+    useEffect(() => {
+        if (!contactIds) return;
+        const pullContacts = async () => {
+            try {
+                const profiles = await profilesApi.getProfiles(contactIds);
+                setPulledContacts(profiles);
+            } catch (err) {
+                console.log(err);
+                return;
+            }
+        };
+        pullContacts();
+    }, [contactIds]);
+
+    const contactMatches = useMemo(() => {
+        if (!queryString || !pulledContacts) return undefined;
+
+        return pulledContacts.filter((c) => (
+            c.displayName.toLowerCase().includes(queryString.toLowerCase()) || c.handle.toLowerCase().includes(queryString.toLowerCase()) ||
+            (c.email && c.email.toLowerCase() === queryString.toLowerCase()) ||
+            (c.phone && c.phone.toLowerCase() === queryString.toLowerCase())
+        ));
+    }, [pulledContacts, queryString])
 
     const maxSelected = () => !isGroup && selectedProfiles.length > 0;
 
     const filterMatches = (raw: UserProfile[]) => {
+        const contactIds = contactMatches ? contactMatches.map((c) => c.id) : [];
         return raw
             .filter((profile) => {
                 return (profile.id !== user?.id)
                     && (!encrypted || profile.publicKey)
+            })
+            .filter((profile) => {
+                return !contactIds.includes(profile.id)
             });
     };
 
@@ -184,7 +216,23 @@ export default function ProfilesSearch({
             <Box w='100%'>
                 <Center w='100%' my='12px'>
                 {
-                    matchingProfiles.length > 0?
+                    (contactMatches && contactMatches.length > 0) &&
+                    <Box>
+                    <Text fontSize='xs' color='gray.500'>Contacts:</Text>
+                    {
+                    contactMatches.map((profile, index) => 
+                        <Box key={index} w='100%'>
+                            { profileSuggestion({
+                                profile: profile,
+                                onSelect: () => handleAddProfile(profile)
+                            }) }
+                        </Box>
+                    )
+                    }
+                    </Box>
+                }
+                {
+                    matchingProfiles.length > 0 &&
                     matchingProfiles.map((profile, index) => 
                         <Box key={index} w='100%'>
                             { profileSuggestion({
@@ -193,8 +241,10 @@ export default function ProfilesSearch({
                             }) }
                         </Box>
                     )
-                    :
-                    <Text fontSize='xs' color='coolGray.600'>
+                }
+                {
+                    matchingProfiles.length > 0 && !contactMatches &&
+                    <Text fontSize='xs' color='gray.500'>
                         No results found
                     </Text>
                 }

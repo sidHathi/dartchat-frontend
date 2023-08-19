@@ -4,14 +4,17 @@ import {Box, VStack, HStack, Spacer, Heading, Pressable, Center} from 'native-ba
 import { View } from 'react-native';
 import MessageEntry from './MessageEntry';
 import { Dimensions } from 'react-native';
-import ReplyMessageDisplay from './ReplyMessageDisplay';
-import { useAppSelector } from '../../redux/hooks';
-import { chatSelector } from '../../redux/slices/chatSlice';
+import ReplyMessagePreview from './ReplyMessagePreview';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { chatSelector, handleMessageDelete as reduxMessageDelete } from '../../redux/slices/chatSlice';
 import FullScreenMediaFrame from './MessageMediaControllers/FullScreenMediaFrame';
 import MessageList from './MessageList';
 import ContentSelectionMenu from './ContentSelectionMenu';
 import UserDetailsModal from '../ChatSettingsUI/UserDetailsModal';
 import RemoveUserModal from '../ChatSettingsUI/RemoveUserModal';
+import useRequest from '../../requests/useRequest';
+import SocketContext from '../../contexts/SocketContext';
+import ConfirmationModal from '../generics/ConfirmationModal';
 
 export default function ChatDisplay({closeOverlays}: {
     closeOverlays: () => void
@@ -19,6 +22,8 @@ export default function ChatDisplay({closeOverlays}: {
     const screenHeight = Dimensions.get('window').height;
 
     const { currentConvo } = useAppSelector(chatSelector);
+    const dispatch = useAppDispatch();
+    const { socket } = useContext(SocketContext);
 
     const [selectedMid, setSelectedMid] = useState<string | undefined>(undefined);
     const [replyMessage, setReplyMessage] = useState<DecryptedMessage | undefined>(undefined);
@@ -32,6 +37,8 @@ export default function ChatDisplay({closeOverlays}: {
     const [selectedProfile, setSelectedProfile] = useState<UserConversationProfile | undefined>();
     const [userDetailModalOpen, setUserDetailModalOpen] = useState(false);
     const [removeUserModalOpen, setRemoveUserModalOpen] = useState(false);
+    const [confirmMessageDeleteModalOpen, setConfirmMessageDeleteModalOpen] = useState(false);
+    const [upForDeleteMid, setUpForDeleteMid] = useState<string | undefined>();
 
     useEffect(() => {
         if (!currentConvo) return;
@@ -58,6 +65,23 @@ export default function ChatDisplay({closeOverlays}: {
         setRemoveUserModalOpen(true);
         return;
     };
+
+    const confirmMessageDelete = useCallback(() => {
+        if (!currentConvo || !socket || !upForDeleteMid) return;
+        try {
+            socket.emit('deleteMessage', currentConvo.id, upForDeleteMid);
+            dispatch(reduxMessageDelete(upForDeleteMid));
+            setUpForDeleteMid(undefined);
+            setConfirmMessageDeleteModalOpen(false);
+        } catch (err) {
+            console.log(err);
+        }
+    }, [currentConvo, socket, upForDeleteMid]);
+
+    const handleMessageDelete = (mid: string) => {
+        setUpForDeleteMid(mid);
+        setConfirmMessageDeleteModalOpen(true);
+    }
 
     return <View style={{flex: 1}}>
         <VStack w='100%' h='100%'>
@@ -93,7 +117,9 @@ export default function ChatDisplay({closeOverlays}: {
                         handleProfileSelect={(profile: UserConversationProfile) => {
                             setSelectedProfile(profile);
                             setUserDetailModalOpen(true);
-                        }} />    
+                        }} 
+                        handleMessageDelete={handleMessageDelete}
+                        />    
                 </Pressable>
             </View>
             <Spacer />
@@ -109,7 +135,7 @@ export default function ChatDisplay({closeOverlays}: {
                 <VStack w='100%' mt='-6px' overflow='visible' bgColor='transparent'>
                     {
                         replyMessage &&
-                        <ReplyMessageDisplay 
+                        <ReplyMessagePreview 
                             participants={profiles}
                             message={replyMessage}
                             handleDeselect={() => setReplyMessage(undefined)}
@@ -167,6 +193,20 @@ export default function ChatDisplay({closeOverlays}: {
                 handleClose={() => setRemoveUserModalOpen(false)}
                 profile={selectedProfile}
                 onRemove={() => setSelectedProfile(undefined)} />
+        }
+        {
+            currentConvo && upForDeleteMid &&
+            <ConfirmationModal
+                isOpen={confirmMessageDeleteModalOpen}
+                onClose={() => {
+                    setConfirmMessageDeleteModalOpen(false);
+                    setUpForDeleteMid(undefined);
+                }}
+                onConfirm={confirmMessageDelete}
+                title='Confirm message deletion'
+                content='This action is irreversible'
+                size='lg'
+                />
         }
     </View>
 }

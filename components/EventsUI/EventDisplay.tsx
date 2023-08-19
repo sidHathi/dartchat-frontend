@@ -90,7 +90,11 @@ export default function EventDisplay({
                     setEvent(newEvent);
                 }
             }
-        })
+        });
+
+        return () => {
+            socket.off('eventRsvp');
+        }
     }, [socket, event, currentConvo])
 
     const handleEventGoing = useCallback(() => {
