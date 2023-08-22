@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState, useContext } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { Heading, ScrollView, View, VStack, Box, Button, Modal, Center, Text, Icon } from 'native-base';
+import { Heading, ScrollView, View, VStack, Box, Button, Modal, Center, Text, Icon, FlatList, SectionList } from 'native-base';
 import { addUsers, chatSelector, openPrivateMessage, removeUser } from '../../redux/slices/chatSlice';
 import { Conversation, UserConversationProfile } from '../../types/types';
 import MemberCard from './MemberCard';
@@ -34,8 +34,6 @@ export default function MembersList({
     const [selectedProfile, setSelectedProfile] = useState<UserConversationProfile | undefined>();
     const [selectedNewMembers, setSelectedNewMembers] = useState<UserConversationProfile[] | undefined>();
     const [confirmRemoveModalOpen, setConfirmRemoveModalOpen] = useState(false);
-
-    const participants = useMemo(() => currentConvo?.participants || [], [currentConvo]);
 
     const handleOpenButton = useCallback(() => {
         if (currentConvo && socket && socket.connected && addMenuOpen && selectedNewMembers && selectedNewMembers.length > 0) {
@@ -92,25 +90,78 @@ export default function MembersList({
         return;
     };
 
+    const userRole = useMemo(() => {
+        if (!currentConvo || !user) return undefined;
+        return currentConvo.participants.find((p: UserConversationProfile) => p.id === user.id)?.role;
+    }, [currentConvo, user]);
+
+    const renderProfile = ({item}: {item: UserConversationProfile}) => {
+        return <Box my='3px'>
+            <MemberCard 
+                key={item.id}
+                profile={item}
+                handleSelect={() => handleSelect(item)}
+                handleMessage={() => handleMessage(item)}
+                handleRemove={() => handleRemove(item)} 
+                userRole={userRole}
+                />
+        </Box>
+    };
+
+    const admins = useMemo(() => {
+        if (!currentConvo) return undefined;
+        return currentConvo.participants.filter((p) => p.role && p.role === 'admin');
+    }, [currentConvo]);
+
+    const plebians = useMemo(() => {
+        if (!currentConvo) return [];
+        if (!admins) return currentConvo.participants;
+        return currentConvo.participants.filter((p) => p.role !== 'admin');
+    }, [currentConvo, admins]);
+
+    const listSections = useMemo(() => {
+        if (admins && admins.length > 0) return [
+            {title: 'Group admins:', data: admins, renderItem: renderProfile},
+            {title: 'Non-admin users:', data: plebians, renderItem: renderProfile}
+        ];
+        return [{title: 'Non-admin users:', data: plebians, renderItem: renderProfile}];
+    }, [currentConvo, admins, plebians])
+
     return <View flex='1'>
-        <Heading px='24px' mt='24px'>
+        <Heading px='24px' mt='24px' fontSize='lg'>
             Members
         </Heading>
 
-        <ScrollView flexGrow='1' flexShrink='1' px='24px'>
-            <VStack my='12px' space={2}>
-                {
-                participants.map((p: UserConversationProfile) => (
-                    <MemberCard 
-                        key={p.id}
-                        profile={p}
-                        handleSelect={() => handleSelect(p)}
-                        handleMessage={() => handleMessage(p)}
-                        handleRemove={() => handleRemove(p)} />
-                ))
-                }
-            </VStack>
-        </ScrollView>
+        <SectionList
+            mx='12px'
+            renderSectionHeader={({ section: { title }}) => (
+                <Text fontWeight='bold' fontSize='sm' color='gray.500' mt='12px' mb='6px' mx='6px'>
+                    {title}
+                </Text>
+            )}
+            sections={listSections}
+            keyExtractor={(item, index) => item.id} 
+            />
+        {/* {
+            (admins && admins.length > 0) && <Box>
+                <Text fontWeight='bold' fontSize='sm' color='gray.500' mt='12px' mb='6px' mx='12px'>
+                    Non-admin users:
+                </Text>
+                <FlatList
+                    mx='12px'
+                    data={plebians}
+                    renderItem={renderProfile}
+                    />
+            </Box>
+        }
+        <Text fontWeight='bold' fontSize='sm' color='gray.500' mt='12px' mx='12px' mb='6px' >
+            Non-admin users:
+        </Text>
+        <FlatList
+            mx='12px'
+            data={plebians}
+            renderItem={renderProfile}
+            /> */}
         
         <View flexGrow='0' flexShrink='0'>
             <Box m='6px' shadow='9' borderRadius='24px' bgColor='white' w='100%' p='24px' style={{shadowOpacity: 0.12}} mb='-6px'>
@@ -132,6 +183,7 @@ export default function MembersList({
                 isOpen={userDetailModal}
                 handleClose={() => setUserDetailModalOpen(false)}
                 profile={selectedProfile}
+                setProfile={setSelectedProfile}
                 navToMessages={exit}
                 handleRemove={() => handleRemove(selectedProfile)}
                 />

@@ -2,13 +2,13 @@ import React, { useState, useContext, useEffect, PropsWithChildren, ReactNode, u
 import { Socket } from 'socket.io-client';
 import SocketContext from '../contexts/SocketContext';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
-import { Conversation, ConversationPreview, DecryptedMessage, SocketEvent, UserConversationProfile } from '../types/types';
+import { ChatRole, Conversation, ConversationPreview, DecryptedMessage, SocketEvent, UserConversationProfile } from '../types/types';
 import { SocketMessage } from '../types/rawTypes';
 import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered, setCCPublicKey, setSecretKey, handleMessageDelete } from '../redux/slices/chatSlice';
-import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews, setPublicKey } from '../redux/slices/userDataSlice';
+import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered, setCCPublicKey, setSecretKey, handleMessageDelete, updateUserRole } from '../redux/slices/chatSlice';
+import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews, setPublicKey, handleRoleUpdate } from '../redux/slices/userDataSlice';
 import useRequest from '../requests/useRequest';
 import { updateUserConversations } from '../utils/identityUtils';
 import { autoGenGroupAvatar, constructNewConvo } from '../utils/messagingUtils';
@@ -224,6 +224,23 @@ export default function UserConversationsController({
             socket.off('deleteMessage');
         }
     }, [socket, currentConvo]);
+
+    useEffect(() => {
+        if (!socket) return;
+        socket.on('userRoleChanged', (cid: string, uid: string, newRole: ChatRole) => {
+            console.log('user role change message received');
+            if (cid === currentConvo?.id) {
+                dispatch(updateUserRole({uid, newRole}));
+            }
+            if (uid === user?.id) {
+                dispatch(handleRoleUpdate({cid, newRole}));
+            }
+        });
+
+        return () => {
+            socket.off('userRoleChanged');
+        }
+    }, [socket, currentConvo, user]);
 
     return <>
         {children}

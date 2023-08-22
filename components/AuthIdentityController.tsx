@@ -151,7 +151,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     }, [needsSetup, user]);
 
     const getLoadingScreen = () => <Center flex='1' bgColor='#f5f5f5'>
-        <Spinner type='CircleFlip' color='black' />
+        <Spinner type='ThreeBounce' color='black' />
     </Center>
 
     return <AuthIdentityContext.Provider value={{

@@ -49,7 +49,7 @@ export default function ChatHeader({
             return <IconButton label='profile' size={30} />
         }
         return <IconImage imageUri={matchingUserConvos[0].avatar.tinyUri}  size={30} />
-    }, [userConversations, currentConvo]);
+    }, [userConversations, currentConvo, user]);
 
     const chatName = useMemo(() => {
         if (!currentConvo || !user) return ''

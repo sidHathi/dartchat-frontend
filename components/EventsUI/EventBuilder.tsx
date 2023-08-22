@@ -159,7 +159,8 @@ export default function EventBuilder({
             date: eventDate,
             reminders: reminderDates || [],
             going: [],
-            notGoing: []
+            notGoing: [],
+            messageLink: uuid.v4().toString()
         };
         setCreateRequestLoading(true);
         try {
@@ -182,7 +183,7 @@ export default function EventBuilder({
                     id: event.id,
                     type: 'event'
                 };
-                const messageId = uuid.v4().toString();
+                const messageId = event.messageLink || uuid.v4().toString();
                 const userMatches = currentConvo.participants.filter(u => u.id === user.id);
                 const message: DecryptedMessage = {
                     id: messageId,
@@ -193,7 +194,7 @@ export default function EventBuilder({
                     senderProfile: userMatches.length > 0 ? userMatches[0] : undefined,
                     objectRef: ref,
                     messageType: 'user',
-                    encryptionLevel: 'none'
+                    encryptionLevel: 'none',
                 }
                 dispatch(sendNewMessage({socket, message}));
                 socket.emit('scheduleEvent', currentConvo.id, event);

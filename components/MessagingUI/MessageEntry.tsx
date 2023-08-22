@@ -212,7 +212,7 @@ export default function MessageEntry({
             <Spacer />
             {!pollBuilderOpen && !eventBuilderOpen && (
                 mediaLoading ? 
-                <Spinner type='CircleFlip' color="#333" size={40} /> :
+                <Spinner type='ThreeBounce' color="#333" size={40} /> :
                 <IconButton label='send' size={40} onPress={handleMessageSend} color="black" shadow="2" disabled={(!networkConnected || socketDisconnected)} />)
             }
             </VStack>

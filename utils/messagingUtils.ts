@@ -1,4 +1,4 @@
-import { UserConversationProfile, AvatarImage, ConversationPreview, Message, SocketEvent, Conversation, UserData, DecryptedMessage, EncryptedMessage, DecryptedConversation } from "../types/types";
+import { UserConversationProfile, AvatarImage, ConversationPreview, Message, SocketEvent, Conversation, UserData, DecryptedMessage, EncryptedMessage, DecryptedConversation, ChatRole } from "../types/types";
 import { getDownloadUrl } from "../firebase/cloudStore";
 import { parseValue } from "react-native-controlled-mentions";
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
@@ -167,5 +167,25 @@ export const encryptMessageForConvo = (message: DecryptedMessage, convo: Convers
     } catch (err) {
         console.log(err);
         return message;
+    }
+};
+
+export const hasPermissionForAction = (
+    action: 'removeUser' | 'changeUserRole' | 'deleteForeignMessage',
+    actorRole?: ChatRole,
+    recipientRole?: ChatRole
+) => {
+    switch (action) {
+        case 'removeUser':
+            if (actorRole === 'admin') return true;
+            else if (recipientRole !== 'admin') return true;
+            return false;
+        case 'changeUserRole':
+            if (actorRole === 'admin') return true;
+            else if (recipientRole !== 'admin') return true;
+            return false;
+        case 'deleteForeignMessage':
+            if (actorRole === 'admin') return true;
+            return false;
     }
 };

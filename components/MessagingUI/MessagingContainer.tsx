@@ -12,7 +12,7 @@ export default function MessagingContainer({exit}: {exit: () => void}): JSX.Elem
     const ChatGuard = (): JSX.Element => {
         if (!currentConvo && requestLoading) {
             return <Center w='100%' h='100%' bgColor='#f5f5f5'>
-                <Spinner type='CircleFlip' color='#111' />
+                <Spinner type='ThreeBounce' color='#111' />
             </Center>
         }
         else if (!currentConvo) return <ChatBuilder exit={exit} />

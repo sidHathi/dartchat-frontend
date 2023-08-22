@@ -16,7 +16,6 @@ export type RawUserData = {
     archivedConvos?: string[];
 };
 
-
 export type SocketMessage = Omit<Message, 'timestamp'> & {
     timestamp: string;
 };

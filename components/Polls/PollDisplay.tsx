@@ -86,13 +86,16 @@ export default function PollDisplay({
         }, new Set<string>()).size;
     }, [poll]);
 
-    const winningIdx = useMemo(() => {
-        if (!poll) return -1;
-        if (poll.options.length < 1 || totalVotes < 1) return -1;
+    const winningIndices = useMemo(() => {
+        if (!poll) return [];
+        if (poll.options.length < 1 || totalVotes < 1) return [];
         const sortedOpts = poll.options.sort((opt1, opt2) => {
             return opt2.voters.length - opt1.voters.length;
         });
-        return sortedOpts[0].idx;
+        const winningVal = sortedOpts[0].voters.length;
+        return sortedOpts
+            .filter((opt) => opt.voters.length === winningVal)
+            .map((opt) => opt.idx);
     }, [poll]);
 
     const userOptIndices = useMemo(() => {
@@ -271,7 +274,7 @@ export default function PollDisplay({
         <VStack space={2} mt='12px' w='100%'>
             {
                 poll.options.map((opt) => {
-                    const winning = winningIdx === opt.idx;
+                    const winning = winningIndices.includes(opt.idx);
                     return <Pressable onPress={() => handleOptionSelect(opt.idx)} w='100%' key={opt.idx}>
                         <PollResult
                             option={opt}

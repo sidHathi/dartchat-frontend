@@ -29,6 +29,8 @@ export type UIState = {
 
 export type NotificationStatus = 'all' | 'mentions' | 'none';
 
+export type ChatRole = 'admin' | 'plebian';
+
 export type UserConversationProfile = {
     id: string;
     handle?: string;
@@ -36,6 +38,7 @@ export type UserConversationProfile = {
     avatar?: AvatarImage;
     notifications?: NotificationStatus;
     publicKey?: string;
+    role?: ChatRole;
 };
 
 type MessageBase = {
@@ -49,6 +52,7 @@ type MessageBase = {
     delivered?: boolean;
     mentions?: UserConversationProfile[];
     replyRef?: ReplyRef;
+    messageLink?: string;
 };
 
 export type EncryptionFields = {
@@ -93,6 +97,7 @@ export type Conversation = {
     encryptionLevel?: EncryptionLevel;
     publicKey?: string;
     keyInfo?: KeyInfo;
+    adminIds?: string[];
 };
 
 export type DecryptedConversation = Omit<Conversation, 'messages'> & {
@@ -111,6 +116,7 @@ export type ConversationPreview = {
     group: boolean;
     keyUpdate?: string;
     publicKey?: string;
+    userRole?: ChatRole;
 };
 
 export type UserProfile = {
@@ -169,6 +175,7 @@ export type Poll = {
     }[];
     expirationDate: Date;
     messageId?: string;
+    messageLink?: string;
 };
 
 export type CalendarEvent = {
@@ -178,6 +185,7 @@ export type CalendarEvent = {
     reminders: Date[];
     going: string[];
     notGoing: string[];
+    messageLink?: string;
 };
 
 export type ObjectRef = {

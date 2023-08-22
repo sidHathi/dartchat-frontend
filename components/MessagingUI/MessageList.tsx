@@ -61,6 +61,27 @@ export default function MessageList({
         }
     };
 
+    const goToLink = (message: Message) => {
+        setSelectedMid(undefined);
+        if (message.messageLink && listRef.current && (message.messageLink in indexMap)) {
+            listRef.current.scrollToIndex({
+                index: indexMap[message.messageLink],
+                animated: true
+            });
+            setSelectedMid(message.messageLink);
+        } else if (message.messageLink && currentConvo) {
+            conversationsApi.getMessage(currentConvo.id, message.messageLink)
+                .then((res) => {
+                    dispatch(loadMessagesToDate(res.timestamp, conversationsApi));
+                    setReplyFetch(res.id);
+                    if (listRef.current) listRef.current.scrollToEnd();
+                }).catch((err) => {
+                    console.log(err);
+                    setReplyFetch(undefined);
+                })
+        }
+    };
+
     useEffect(() => {
         if (replyFetch && (replyFetch in indexMap) && currentConvo && indexMap[replyFetch] < currentConvo.messages.length) {
             listRef.current?.scrollToIndex({
@@ -117,7 +138,9 @@ export default function MessageList({
                     participants={profiles}
                     selected={message.id === selectedMid}
                     handleSelect={() => {
-                        if (!selectedMid && message.id !== selectedMid) {
+                        if (message.messageLink) {
+                            goToLink(message);
+                        } else if (!selectedMid && message.id !== selectedMid) {
                             setSelectedMid(message.id);
                         } else {
                             setSelectedMid(undefined);

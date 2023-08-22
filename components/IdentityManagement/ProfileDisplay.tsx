@@ -38,7 +38,7 @@ export default function ProfileDisplay({
                     </HStack>
                 </TouchableOpacity>
             </HStack>
-            <Box bgColor='#f5f5f5' p='24px' borderRadius='24px' mx='auto' w='90%' shadow='9' style={{shadowOpacity: 0.07}}>
+            <Box bgColor='#f5f5f5' p='24px' borderRadius='24px' mx='auto' w='90%' shadow='9' style={{shadowOpacity: 0.07}} overflow='hidden'>
                 <HStack space={6} px='40px'>
                     {
                         user?.avatar?.mainUri ?
@@ -47,7 +47,7 @@ export default function ProfileDisplay({
                     }
                     <VStack h='100%'>
                         <Spacer />
-                        <Heading maxWidth='300px' maxH='100px'>
+                        <Heading maxWidth='200px' maxH='100px' fontSize='lg'>
                             { user && (user.displayName || user.handle || user.email) }
                         </Heading>
                         <Text fontSize='xs'>

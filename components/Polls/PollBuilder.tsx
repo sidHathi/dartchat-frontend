@@ -75,7 +75,8 @@ export default function PollBuilder({
                 value: opt,
                 voters: []
             })),
-            expirationDate: getExpiration(timeframe)
+            expirationDate: getExpiration(timeframe),
+            messageLink: uuid.v4().toString()
         }
         if (currentConvo) {
             setPollReqLoading(true);
@@ -102,7 +103,7 @@ export default function PollBuilder({
             id: poll.id,
             type: 'poll'
         };
-        const messageId = uuid.v4().toString();
+        const messageId = poll.messageLink || uuid.v4().toString();
         const message: DecryptedMessage = {
             id: messageId,
             content: `Poll: ${question}`,

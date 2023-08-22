@@ -3,8 +3,8 @@ import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { AvatarImage, Conversation, UserConversationProfile } from "../../types/types";
 import ProfilesSearch from "./ProfileSearch";
 import { Ionicons } from '@expo/vector-icons';
-import { View, Box, Button, Center, Heading, Text, Input, VStack, HStack, Pressable, Flex } from 'native-base';
-import { ScrollView, Image as RNImage } from "react-native";
+import { View, Box, Button, Center, Heading, Text, Input, VStack, HStack, Pressable, Flex, ScrollView } from 'native-base';
+import { Image as RNImage, Dimensions } from "react-native";
 import uuid from 'react-native-uuid';
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { addConversation, userDataSelector } from "../../redux/slices/userDataSlice";
@@ -24,6 +24,8 @@ import Spinner from "react-native-spinkit";
 export default function ChatBuilder({exit}: {
         exit: () => void
     }): JSX.Element {
+    const screenHeight = Dimensions.get('window').height;
+
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { handleNewConversationKey } = useContext(UserSecretsContext);
@@ -121,7 +123,8 @@ export default function ChatBuilder({exit}: {
                 handle: user.handle,
                 avatar: user.avatar,
                 notifications: 'all',
-                publicKey: user.publicKey
+                publicKey: user.publicKey,
+                role: isGroup ? 'admin' : undefined
             }
         ]
 
@@ -235,12 +238,13 @@ export default function ChatBuilder({exit}: {
         </Pressable>
     )
 
-    return <View w='100%' h='100%' backgroundColor='#fefefe'>
-        <Center h='100%' mt={keyboardShown ? '-100px' : '0px'}>
-            <Box w='90%' shadow='9' backgroundColor='gray.100' p='20px' marginTop='-20px' borderRadius='24px'>
+    return <View w='100%' flex='1' backgroundColor='#111'>
+        <Center h='100%' borderTopLeftRadius='24px' backgroundColor='#fefefe'>
+            <Box w={isGroup ? '96%': '90%'} shadow='9' backgroundColor='#f5f5f5' p='20px' marginTop={isGroup ? '-72px' : '-144px'} borderRadius='24px' maxH={`${screenHeight - 190} px`} style={{shadowOpacity: 0.18}}>
                 <Heading  marginY='12px' size='md'>
                     New {isGroup ? 'Group' : 'Chat'}
                 </Heading>
+                <ScrollView overflow='visible'>
                 <Button.Group isAttached marginBottom='20px' w='100%'>
                     <Button borderLeftRadius='30px' colorScheme={isGroup ? 'light' : 'dark'} variant={isGroup ? 'outline' : 'subtle'} onPress={() => setIsGroup(false)} marginX='0' w='50%'>
                         Private Message
@@ -250,7 +254,7 @@ export default function ChatBuilder({exit}: {
                     </Button>
                 </Button.Group>
                
-                <VStack space={1} pb='12px'>
+                <VStack space={1} pb='18px' overflow='visible'>
                     {
                         isGroup &&
                         <Box>
@@ -373,7 +377,8 @@ export default function ChatBuilder({exit}: {
                         </Text>
                     </Center>
                 }
-                <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' marginY='12px'>
+                </ScrollView>
+                <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' mb='12px'>
                     Create Chat
                 </Button>
                 <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={exit} variant='subtle'>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext, PropsWithChildren, ReactNode, useMemo } from "react";
+import React, { useState, useEffect, useRef, useContext, PropsWithChildren, ReactNode, useMemo, useCallback } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Text, Input, Box, Button, HStack, Spacer, Center, FormControl, VStack } from 'native-base';
 import { Image, Pressable } from 'react-native';
@@ -71,7 +71,7 @@ export default function ProfilesSearch({
 
     const maxSelected = () => !isGroup && selectedProfiles.length > 0;
 
-    const filterMatches = (raw: UserProfile[]) => {
+    const filterMatches = useCallback((raw: UserProfile[]) => {
         const contactIds = contactMatches ? contactMatches.map((c) => c.id) : [];
         return raw
             .filter((profile) => {
@@ -81,9 +81,9 @@ export default function ProfilesSearch({
             .filter((profile) => {
                 return !contactIds.includes(profile.id)
             });
-    };
+    }, [contactMatches]);
 
-    const pullMatchingUsers = (qString: string) => {
+    const pullMatchingUsers = useCallback((qString: string) => {
         if (!qString) return;
         return profilesApi.findProfile(qString)
             .then((matches) => {
@@ -95,7 +95,7 @@ export default function ProfilesSearch({
             }).catch((err) => {
                 setMatchingProfiles([]);
             })
-    }
+    }, [contactMatches, filterMatches]);
 
     const handleQueryInput = (input: string) => {
         setQueryString(input);
@@ -119,7 +119,8 @@ export default function ProfilesSearch({
                 avatar: profile.avatar || undefined,
                 handle: profile.handle,
                 notifications: 'all',
-                publicKey: profile.publicKey
+                publicKey: profile.publicKey,
+                role: 'plebian'
             }]);
             setQueryString(undefined);
             setSearchSelected(false);
@@ -232,8 +233,12 @@ export default function ProfilesSearch({
                     </Box>
                 }
                 {
-                    matchingProfiles.length > 0 &&
-                    matchingProfiles.map((profile, index) => 
+                contactMatches && filterMatches(matchingProfiles).length > 0 &&
+                <Text fontSize='xs' color='gray.500' mr='auto'>Non-contact results:</Text>
+                }
+                {
+                    filterMatches(matchingProfiles).length > 0 &&
+                    filterMatches(matchingProfiles).map((profile, index) => 
                         <Box key={index} w='100%'>
                             { profileSuggestion({
                                 profile: profile,

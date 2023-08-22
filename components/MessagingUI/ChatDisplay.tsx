@@ -47,6 +47,10 @@ export default function ChatDisplay({closeOverlays}: {
         ));
     }, []);
 
+    const getCurrentProfileForId = useCallback((id: string) => {
+        return currentConvo?.participants.find((p) => p.id === id);
+    }, [currentConvo])
+
     const handleMediaSelect = (message: DecryptedMessage, index: number) => {
         setSelectedMediaMessage(message);
         setSelectedMediaIndex(index);
@@ -81,7 +85,7 @@ export default function ChatDisplay({closeOverlays}: {
     const handleMessageDelete = (mid: string) => {
         setUpForDeleteMid(mid);
         setConfirmMessageDeleteModalOpen(true);
-    }
+    };
 
     return <View style={{flex: 1}}>
         <VStack w='100%' h='100%'>
@@ -115,7 +119,7 @@ export default function ChatDisplay({closeOverlays}: {
                         }}
                         handleMediaSelect={handleMediaSelect}
                         handleProfileSelect={(profile: UserConversationProfile) => {
-                            setSelectedProfile(profile);
+                            setSelectedProfile(getCurrentProfileForId(profile.id));
                             setUserDetailModalOpen(true);
                         }} 
                         handleMessageDelete={handleMessageDelete}
@@ -182,6 +186,7 @@ export default function ChatDisplay({closeOverlays}: {
                 isOpen={userDetailModalOpen}
                 handleClose={() => setUserDetailModalOpen(false)}
                 profile={selectedProfile}
+                setProfile={setSelectedProfile}
                 navToMessages={() => {return;}}
                 handleRemove={() => handleRemove(selectedProfile)}
                 />

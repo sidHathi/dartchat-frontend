@@ -17,7 +17,7 @@ export default function PollResponder({
     const [selectedOptionIndices, setSelectedOptionIndices] = useState<number[]>([]);
 
     const handleSelectOption = useCallback((optIdx: number) => {
-        if (optIdx in selectedOptionIndices && !poll.multiChoice) {
+        if ( selectedOptionIndices.includes(optIdx) && !poll.multiChoice) {
             setSelectedOptionIndices(selectedOptionIndices.filter((_,idx) => idx !== optIdx));
         } else if (poll.multiChoice) {
             setSelectedOptionIndices([...selectedOptionIndices, optIdx]);

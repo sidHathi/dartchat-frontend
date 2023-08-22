@@ -1,6 +1,6 @@
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useMemo, useState } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
-import { Pressable, VStack, Text, Box, Spinner, ScrollView } from "native-base";
+import { Pressable, VStack, Text, Box, Spinner, ScrollView, FlatList } from "native-base";
 
 import ChatPreview from "./ChatPreview";
 import { ConversationPreview } from "../../types/types";
@@ -18,6 +18,7 @@ import { parseConversation } from "../../utils/requestUtils";
 import { chatSelector, leaveChat, pullConversation, setConvo } from "../../redux/slices/chatSlice";
 import NetworkContext from "../../contexts/NetworkContext";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
+import LeaveChatScreen from "../ChatSettingsUI/LeaveChatScreen";
 
 export default function ChatSelector({
     openChat,
@@ -90,22 +91,26 @@ export default function ChatSelector({
     const deleteConfirm = () => {
         setDcModalOpen(false);
         handleDelete(upForDelete);
-    }
+    };
 
     const openDeleteConfirmModal = (chat: ConversationPreview) => {
         setUpForDelete(chat);
         setDcModalOpen(true);
-    }
+    };
 
     const openLeaveConfirmModal = (chat: ConversationPreview) => {
         setUpForLeave(chat);
         setConfirmLeaveModalOpen(true);
     };
 
+    const sortedConversations = useMemo(() => {
+        return [...userConversations].sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime())
+    }, [userConversations]);
+
     const RightButton = (chat: ConversationPreview) => 
         <Animated.View>
             <Pressable onPress={() => {
-                !chat.group ? openDeleteConfirmModal(chat) : openLeaveConfirmModal(chat);
+                !(chat.group === undefined || chat.group) ? openDeleteConfirmModal(chat) : openLeaveConfirmModal(chat);
             }}>
             <TouchableOpacity 
                 activeOpacity={0.5}
@@ -120,7 +125,7 @@ export default function ChatSelector({
                     <Box m='auto' w='50px' bgColor='#f5f5f5' borderRadius='30px' h='50px' display='flex' pt='10px' shadow='0'>
                         {
                             !((deleteLoadingId && chat.cid === deleteLoadingId) || requestLoading) ?
-                            <IconButton label={chat.group ? 'leave' : 'delete'} size={30} color='salmon' shadow='none' additionalProps={{margin: 'auto'}}/> :
+                            <IconButton label={chat.group === undefined || chat.group ? 'leave' : 'delete'} size={30} color='salmon' shadow='none' additionalProps={{margin: 'auto'}}/> :
                             <Spinner color='black' />
                         }
                     </Box>
@@ -134,25 +139,27 @@ export default function ChatSelector({
         </>;
     }
 
-    return <><ScrollView style={{flex: 1}}>
-        <VStack space={3} py='24px'>
-            {/* <Heading fontSize='xl'>Chats</Heading> */}
-            {
-                [...userConversations].sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime()).map((chat) =>
-                    <Swipeable
-                        key={chat.cid}
-                        renderRightActions={() => RightButton(chat)}>
-                        <ChatPreview 
-                            key={chat.cid} 
-                            chat={chat}
-                            onSelect={() => handleSelect(chat)}
-                        />
-                    </Swipeable>
-                )
-            }
-        </VStack>
-        
-    </ScrollView>
+    const renderListItem = ({item}: {item: ConversationPreview}) => {
+        return <Swipeable
+            key={item.cid}
+            renderRightActions={() => RightButton(item)}>
+            <ChatPreview 
+                key={item.cid} 
+                chat={item}
+                onSelect={() => handleSelect(item)}
+            />
+        </Swipeable>
+    };
+
+    return <>
+        <FlatList
+            data={sortedConversations}
+            renderItem={renderListItem}
+            ItemSeparatorComponent={(() => <Box h='12px' />)}
+            ListHeaderComponent={(() => <Box h='12px' />)}
+            ListFooterComponent={(() => <Box h='100px' />)}
+        />
+
         <ConfirmationModal
             isOpen={dcModalOpen}
             onClose={closeModal}
@@ -162,13 +169,23 @@ export default function ChatSelector({
             size='md'
         />
 
-        <ConfirmationModal
+        {/* <ConfirmationModal
             isOpen={confirmLeaveModalOpen}
             onClose={() => setConfirmLeaveModalOpen(false)}
             onConfirm={handleLeaveChat}
             title='Confirm Leave'
             content={`You will no longer be a member of "${upForLeave?.name}" if you select confirm.`}
             size='md'
-        />
+        /> */}
+        {
+            upForLeave && 
+            <LeaveChatScreen
+                cid={upForLeave.cid}
+                isOpen={confirmLeaveModalOpen}
+                onClose={() => setConfirmLeaveModalOpen(false)}
+                />
+        }
+
+
     </>
 }

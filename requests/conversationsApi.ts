@@ -1,5 +1,5 @@
 import { ApiService } from "./request";
-import { AvatarImage, CalendarEvent, Conversation, CursorContainer, KeyInfo, LikeIcon, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
+import { AvatarImage, CalendarEvent, ChatRole, Conversation, CursorContainer, KeyInfo, LikeIcon, Message, NotificationStatus, Poll, UserConversationProfile } from "../types/types";
 import { parseConversation, parseSocketMessage, addCursorToRequest, parseEvent } from "../utils/requestUtils";
 import { SocketMessage } from "../types/rawTypes";
 
@@ -50,6 +50,7 @@ export type ConversationsApi = {
         }[];
     }) => Promise<any | never>;
     deleteMessage: (cid: string, mid: string) => Promise<any | never>;
+    updateUserRole: (cid: string, uid: string, newStatus: ChatRole) => Promise<any | never>;
 }
 
 export default function conversationsApi(apiService: ApiService): ConversationsApi {
@@ -448,6 +449,22 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
+    const updateUserRole = (cid: string, uid: string, newRole: ChatRole) => {
+        return apiService.request({
+            method: 'PUT',
+            url: `conversations/${cid}/updateUserRole`,
+            data: {
+                newRole,
+                uid
+            }
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+        })
+        .catch((err) => Promise.reject(err));
+    };
+
     return {
         getConversation,
         getConversationInfo,
@@ -473,6 +490,7 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         getEncryptionData,
         changeEncryptionKey,
         pushReencryptedMessages,
-        deleteMessage
+        deleteMessage,
+        updateUserRole
     }
 }

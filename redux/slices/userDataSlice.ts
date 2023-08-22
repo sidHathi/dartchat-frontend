@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
-import { Message, ConversationPreview, Conversation, AvatarImage, UserData, DecryptedMessage } from '../../types/types';
+import { Message, ConversationPreview, Conversation, AvatarImage, UserData, DecryptedMessage, ChatRole } from '../../types/types';
 import { RootState } from '../store';
 import { Socket } from 'socket.io-client';
 import { UsersApi } from '../../requests/usersApi';
@@ -200,6 +200,23 @@ export const userDataSlice = createSlice({
                 ...state,
                 publicKey: action.payload
             }
+        },
+        handleRoleUpdate: (state, action: PayloadAction<{
+            cid: string, newRole: ChatRole
+        }>) => {
+            const { cid, newRole } = action.payload;
+            return {
+                ...state,
+                userConversations: state.userConversations.map((c) => {
+                    if (c.cid === cid) {
+                        return {
+                            ...c,
+                            userRole: newRole
+                        } as ConversationPreview;
+                    }
+                    return c;
+                })
+            }
         }
     }
 });
@@ -220,7 +237,8 @@ export const {
     handleUpdatedChat,
     handleUserConvoLeave,
     handleArchiveConvoRemoval,
-    setPublicKey
+    setPublicKey,
+    handleRoleUpdate
 } = userDataSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {

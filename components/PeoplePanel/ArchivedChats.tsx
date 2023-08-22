@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import { View, Box, HStack, Text, Spacer, VStack, Button, Center, ScrollView, Heading } from "native-base";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { joinConversation, removeArchivedConvo, userDataSelector } from "../../redux/slices/userDataSlice";
+import { handleRoleUpdate, joinConversation, removeArchivedConvo, userDataSelector } from "../../redux/slices/userDataSlice";
 import { Conversation } from "../../types/types";
 import useRequest from "../../requests/useRequest";
 import IconImage from "../generics/IconImage";
@@ -43,10 +43,18 @@ export default function ArchivedChats(): JSX.Element {
         pullConvoData();
     }, [archivedConvoIds]);
 
-    const rejoinConvo = useCallback((cid: string) => {
+    const rejoinConvo = useCallback((convo: Conversation) => {
         if (socket && user) {
-            dispatch(joinConversation(cid, conversationsApi, usersApi, () => {
-                socket.emit('newConversationUsers', cid, [buildDefaultProfileForUser(user)]);
+            dispatch(joinConversation(convo.id, conversationsApi, usersApi, () => {
+                let joiningProfile = buildDefaultProfileForUser(user);
+                if (convo.adminIds?.includes(user.id)) {
+                    joiningProfile = {
+                        ...joiningProfile,
+                        role: 'admin'
+                    }
+                    dispatch(handleRoleUpdate({cid: convo.id, newRole: 'admin'}));
+                }
+                socket.emit('newConversationUsers', convo.id, [joiningProfile]);
             }));
         }
     }, [socket, conversationsApi, usersApi, user]);
@@ -59,38 +67,41 @@ export default function ArchivedChats(): JSX.Element {
 
     const getConvoAvatarElem = (convo: Conversation) => {
         if (convo.avatar) {
-            return <IconImage imageUri={convo.avatar.mainUri} size={72} shadow='9' />;
+            return <IconImage imageUri={convo.avatar.mainUri} size={66} shadow='9' />;
         }
-        return <IconButton label='profile' size={72} shadow="9" />;
+        return <IconButton label='profile' size={66} shadow="9" />;
     }
 
     const convoCard = (convo: Conversation) => {
         return <Box w='100%' borderRadius='12px' bgColor='#f5f5f5' p='12px' my='6px'>
             <HStack px='12px' space={6} py='6px'>
                  <Spacer />
-                <VStack my='6px'>
+                <VStack my='6px' w='20%'>
                     <Spacer />
                     <Center>
                     {getConvoAvatarElem(convo)}
-                    <Heading fontSize='md' mt='12px'>
-                        {convo.name}
-                    </Heading>
-                    <Text fontSize='9px'>
-                        {`${convo.participants.length} members`}
-                    </Text>
+                    
                     </Center>
                     <Spacer />
                 </VStack>
-                <VStack>
+                <VStack w='80%' space='2'>
                     <Spacer />
-                    <Button borderRadius='24px' colorScheme='dark' variant='subtle' size='sm' my='6px' onPress={() => rejoinConvo(convo.id)}>
+                    <Box w='70%'>
+                    <Heading fontSize='md' mt='12px' mx='auto' maxW='100%'>
+                        {convo.name}
+                    </Heading>
+                    <Text fontSize='9px' mx='auto' mb='6px' maxW='100%'>
+                        {`${convo.participants.length} members`}
+                    </Text>
+                    <Button borderRadius='24px' colorScheme='dark' variant='subtle' size='sm' my='6px' onPress={() => rejoinConvo(convo)} mr='auto' w='100%'>
                         Rejoin
                     </Button>
-                    <Button borderRadius='24px' colorScheme='light' variant='subtle' size='sm' onPress={() => archiveRemove(convo.id)}>
+                    <Button borderRadius='24px' colorScheme='light' variant='subtle' size='sm' onPress={() => archiveRemove(convo.id)} mr='auto' flexShrink='0' w='100%'>
                         <Text color='error.500' fontSize='xs'>
                             Remove permanently
                         </Text>
                     </Button>
+                    </Box>
                     <Spacer />
                 </VStack>
                  <Spacer />
@@ -117,6 +128,7 @@ export default function ArchivedChats(): JSX.Element {
                 {
                     archivedConvoData.map((convo) => <Box key={convo.id}>{convoCard(convo)}</Box>)
                 }
+                <Box h='100px'></Box>
                 </VStack>
             </ScrollView> :
             <Center flex='1'>

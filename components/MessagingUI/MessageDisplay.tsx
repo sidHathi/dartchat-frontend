@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useCallback, useMemo, useState, useRef } from "react";
-import { Box, HStack, Spacer, VStack, Text, Pressable, Center } from 'native-base';
+import { Box, HStack, Spacer, VStack, Text, Pressable, Center, ScrollView } from 'native-base';
 import IconButton from "../generics/IconButton";
 import { DecryptedMessage, Message, UserConversationProfile } from "../../types/types";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
@@ -208,6 +208,7 @@ export default function MessageDisplay({
                         </Center>
                         {message.likes?.length > 0 && message.messageType !== 'deletion' &&
                         <Box>
+                            <ScrollView horizontal w='100%'>
                             <HStack space={2}>
                                 {
                                     message.likes.map((like, idx) => {
@@ -217,6 +218,7 @@ export default function MessageDisplay({
                                                 key={idx}
                                                 imageUri={participants[like]?.avatar?.tinyUri as string}
                                                 size={24}
+                                                onPress={() => handleProfileSelect && participants[like] &&handleProfileSelect(participants[like])}
                                             />
                                             );
                                         }
@@ -226,7 +228,7 @@ export default function MessageDisplay({
                                                 key={idx}
                                                 label='profile'
                                                 size={24}
-                                                onPress={() => {}}
+                                                onPress={() => handleProfileSelect && participants[like] &&handleProfileSelect(participants[like])}
                                                 shadow='none'
                                             />
                                             );
@@ -234,6 +236,7 @@ export default function MessageDisplay({
                                     })
                                 }
                             </HStack>
+                            </ScrollView>
                             <Text fontSize='xs' paddingTop='2px'>{`${message.likes.length}`} Like{message.likes.length > 1 && 's'}</Text> 
                         </Box>
                         }

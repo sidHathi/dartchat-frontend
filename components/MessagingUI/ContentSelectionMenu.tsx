@@ -3,7 +3,7 @@ import { Box, Text, VStack, HStack, Center, Menu } from 'native-base';
 import { MessageMediaBuffer } from '../../types/types';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import uuid from 'react-native-uuid';
 
 type MenuItem = 'photo' | 'camera' | 'poll' | 'event';
@@ -20,16 +20,26 @@ export default function ContentSelectionMenu({
     closeMenu: () => void;
 }): JSX.Element {
 
-    const handleImageSelect = async () => {
+    const getLibraryImage = () => launchImageLibrary({
+        mediaType: 'mixed',
+        selectionLimit: 0,
+        videoQuality: 'medium',
+        quality: 0.8,
+        formatAsMp4: true,
+        maxWidth: 500
+    });
+
+    const getCameraImage = () => launchCamera({
+        mediaType: 'mixed',
+        videoQuality: 'medium',
+        quality: 0.8,
+        formatAsMp4: true,
+        maxWidth: 500
+    });
+
+    const handleSelectedAssets = async (selectionRes: ImagePickerResponse) => {
         try {
-            const selectionRes = await launchImageLibrary({
-                mediaType: 'mixed',
-                selectionLimit: 0,
-                videoQuality: 'medium',
-                quality: 0.8,
-                formatAsMp4: true,
-                maxWidth: 500
-            });
+            const selectionRes = await getLibraryImage();
             if (!selectionRes.didCancel && selectionRes.assets && selectionRes.assets.length > 0) {
                 const mediaBuffer: MessageMediaBuffer[] = selectionRes.assets.map((asset) => ({
                     id: uuid.v4().toString(),
@@ -45,7 +55,25 @@ export default function ContentSelectionMenu({
         } catch (err) {
             console.log(err);
         }
-    }
+    };
+
+    const handleImageSelect = async () => {
+        try {
+            const selectionRes = await getLibraryImage();
+            handleSelectedAssets(selectionRes);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const handleCameraSelect = async () => {
+        try {
+            const selectionRes = await getCameraImage();
+            handleSelectedAssets(selectionRes);
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
     const getButtonText = (menuItem: MenuItem) => {
         switch (menuItem) {
@@ -108,7 +136,7 @@ export default function ContentSelectionMenu({
                 openPollBuilder()
                 closeMenu()
             }} />
-            <MenuItem menuItem='camera' onPress={() => {return;}} />
+            <MenuItem menuItem='camera' onPress={handleCameraSelect} />
             <MenuItem menuItem='photo' onPress={handleImageSelect} />
         </VStack>
     </Box>

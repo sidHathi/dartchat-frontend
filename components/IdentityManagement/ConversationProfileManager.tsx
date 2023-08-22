@@ -9,7 +9,7 @@ export default function ConversationProfileManager(): JSX.Element {
     const [editing, setEditing] = useState(false);
 
     return <View w='100%'>
-        <Box w='96%' mx='auto' my='12px' borderRadius='24px' shadow='9' style={{
+        <Box w='96%' mx='auto' my='6px' borderRadius='24px' shadow='9' style={{
             shadowOpacity: 0.1
         }} p='24px' bgColor='#fff'>
             <HStack space={2} zIndex='1000'>

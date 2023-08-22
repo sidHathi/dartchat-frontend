@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon, DecryptedMessage, DecryptedConversation, KeyInfo } from "../../types/types";
+import { Conversation, Message, UserConversationProfile, SocketEvent, CursorContainer, NotificationStatus, ConversationPreview, LikeIcon, DecryptedMessage, DecryptedConversation, KeyInfo, ChatRole } from "../../types/types";
 import { RootState } from "../store";
 import { Socket } from "socket.io-client";
 import uuid from 'react-native-uuid';
@@ -243,7 +243,7 @@ export const chatSlice = createSlice({
                                     ...m,
                                     likes: prevLikes
                                 }
-                            } else if (event.type ==='newLike' && !(userId in m.likes)) {
+                            } else if (event.type ==='newLike' && !(m.likes.includes(userId))) {
                                 return {
                                     ...m,
                                     likes: [...m.likes, userId]
@@ -472,6 +472,28 @@ export const chatSlice = createSlice({
                     })
                 }
             }
+        },
+        updateUserRole: (state, action: PayloadAction<{
+            uid: string,
+            newRole: ChatRole
+        }>) => {
+            if (!state.currentConvo) return;
+            const { uid, newRole } = action.payload;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    participants: state.currentConvo.participants.map((p) => {
+                        if (p.id === uid) {
+                                return {
+                                ...p,
+                                role: newRole
+                            } as UserConversationProfile;
+                        }
+                        return p;
+                    })
+                }
+            }
         }
     }
 });
@@ -505,7 +527,8 @@ export const {
     setKeyInfo,
     setCCPublicKey,
     removeLocalMessage,
-    handleMessageDelete
+    handleMessageDelete,
+    updateUserRole
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {

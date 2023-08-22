@@ -12,6 +12,7 @@ import UserSecretsContext from "../../../contexts/UserSecretsContext";
 import { getNewMemberKeys } from "../../../utils/encryptionUtils";
 import { buildCProfileForUserProifle, buildDefaultProfileForUser } from "../../../utils/identityUtils";
 import AuthIdentityContext from "../../../contexts/AuthIdentityContext";
+import { hasPermissionForAction } from "../../../utils/messagingUtils";
 
 export default function PrivilegedUsersList({
     currentMembers
@@ -41,6 +42,18 @@ export default function PrivilegedUsersList({
             }
         }
         fetchProfiles();
+    }, [currentConvo]);
+
+    const userProfile = useMemo(() => {
+        if (!currentConvo || !user) return undefined;
+        return currentConvo.participants.find((p) => p.id === user.id);
+    }, [currentConvo, user]);
+
+    const participantMap = useMemo(() => {
+        if (!currentConvo) return {};
+        return Object.fromEntries(
+            currentConvo.participants.map((p) => [p.id, p])
+        );
     }, [currentConvo]);
 
     const getAvatarElem = (profile: UserProfile) => {
@@ -88,7 +101,9 @@ export default function PrivilegedUsersList({
     }, [currentConvo]);
 
     const renderItem = ({item, index}: {item: UserProfile, index: number}) => {
-            return <Box w='100%' borderRadius='12px' bgColor={index % 2 === 0 ? 'transparent': '#f5f5f5'}>
+        const permissionToRemove = hasPermissionForAction('removeUser', userProfile?.role, participantMap[item.id]?.role);
+        const showButton = !currentMembers || permissionToRemove;
+        return <Box w='100%' borderRadius='12px' bgColor={index % 2 === 0 ? 'transparent': '#f5f5f5'}>
             <HStack px='6px' space={3} py='6px'>
                 {getAvatarElem(item)}
                 <VStack>
@@ -103,7 +118,7 @@ export default function PrivilegedUsersList({
                 </VStack>
             <Spacer />
             {
-                !(user?.id === item.id) &&
+                (!(user?.id === item.id) && showButton) &&
                 <Center>
                     <Button size='xs' colorScheme='dark' variant='subtle' borderRadius='full' onPress={
                         currentMembers ? 

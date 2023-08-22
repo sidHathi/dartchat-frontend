@@ -1,33 +1,52 @@
-import React, { useCallback, useContext } from "react";
-import { Modal, Text, Center, Heading, Button, Icon } from 'native-base';
-import { Conversation, UserConversationProfile } from "../../types/types";
-import { Feather } from "@expo/vector-icons";
+import React, { useCallback, useContext, useMemo } from "react";
+import { Modal, Text, Center, Heading, Button, Icon, Box } from 'native-base';
+import { ChatRole, Conversation, UserConversationProfile } from "../../types/types";
+import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import IconImage from "../generics/IconImage";
 import IconButton from "../generics/IconButton";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import uuid from 'react-native-uuid';
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { openPrivateMessage } from "../../redux/slices/chatSlice";
+import { chatSelector, openPrivateMessage, updateUserRole } from "../../redux/slices/chatSlice";
 import useRequest from "../../requests/useRequest";
 import { userDataSelector } from "../../redux/slices/userDataSlice";
+import { hasPermissionForAction } from "../../utils/messagingUtils";
+import SocketContext from "../../contexts/SocketContext";
 
 export default function UserDetailsModal({
     isOpen,
     handleClose,
     profile,
+    setProfile,
     navToMessages,
     handleRemove,
 }: {
     isOpen: boolean;
     handleClose: () => void;
     profile: UserConversationProfile;
+    setProfile: (newProfile: UserConversationProfile) => void;
     navToMessages?: () => void;
     handleRemove?: () => void;
 }): JSX.Element {
     const dispatch = useAppDispatch();
+    const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
+    const { currentConvo } = useAppSelector(chatSelector);
     const { userConversations } = useAppSelector(userDataSelector);
     const { conversationsApi } = useRequest();
+
+    const userProfile = useMemo(() => {
+        if (!currentConvo || !user) return undefined;
+        return currentConvo.participants.find((p) => p.id === user.id);
+    }, [user, currentConvo]);
+
+    const permissionToRemove = useMemo(() => {
+        return hasPermissionForAction('removeUser', userProfile?.role, profile.role);
+    }, [profile, userProfile]);
+
+    const showToggleAdminButton = useMemo(() => {
+        return userProfile?.role && userProfile?.role === 'admin';
+    }, [profile]);
 
     const getModalProfileImage = useCallback(() => {
         if (profile && profile.avatar) {
@@ -35,6 +54,23 @@ export default function UserDetailsModal({
         }
         return <IconButton label='profile' size={180} shadow="9" />
     }, [profile]);
+
+    const handleToggleAdminStatus = useCallback(async () => {
+        if (!currentConvo) return;
+        try {
+            const newRole: ChatRole = profile.role === 'admin' ? 'plebian' : 'admin';
+            await conversationsApi.updateUserRole(currentConvo.id, profile.id, newRole);
+            dispatch(updateUserRole({uid: profile.id, newRole}));
+            socket && socket.emit('userRoleChanged', currentConvo.id, profile.id, newRole);
+            setProfile({
+                ...profile,
+                role: newRole
+            });
+        } catch (err) {
+            console.log(err);
+            return;
+        }
+    }, [conversationsApi, currentConvo, profile, socket]);
 
     const handleMessage = useCallback(() => {
         if (!user) return;
@@ -62,11 +98,21 @@ export default function UserDetailsModal({
         return;
     }, [userConversations, user, conversationsApi, profile]);
 
+    const AdminBadge = () => <Box px='12px' py='3px' bgColor='#f1f1f1' borderRadius='6px' mt='12px' >
+        <Text color='black' fontSize='xs'fontWeight='bold'>
+            ADMIN
+        </Text>
+    </Box>;
+
     return <Modal isOpen={isOpen} onClose={handleClose} size='lg'>
         <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px'>
             <Modal.CloseButton />
             <Center w='100%' py='24px'>
                 {getModalProfileImage()}
+                {
+                    (profile.role && profile.role === 'admin') &&
+                    <AdminBadge />
+                }
                 <Heading mt='18px'>
                     {profile.displayName || ''}
                 </Heading>
@@ -83,7 +129,17 @@ export default function UserDetailsModal({
                 </Button>
             }
             {
-                handleRemove &&
+                showToggleAdminButton &&
+                <Button colorScheme='light' variant='subtle' w='100%' borderRadius='24px' mb='6px' leftIcon={<Icon as={FontAwesome5} name={profile.role === 'admin' ? 'user': 'user-ninja'} />} onPress={handleToggleAdminStatus}>
+                    {
+                        profile.role === 'admin' ?
+                        'Remove admin status' :
+                        'Make group admin'
+                    }
+                </Button>
+            }
+            {
+                handleRemove && permissionToRemove &&
                 <Button colorScheme='dark' variant='ghost' w='100%' borderRadius='24px' mb='12px' onPress={handleRemove}>
                     <Text color='red.500'>
                     Remove from group

@@ -162,6 +162,18 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     useEffect(() => {
         if (!socket) return;
 
+        socket.on('authFailure', async () => {
+            await resetSocket();
+        });
+
+        return () => {
+            socket.off('authFailure');
+        }
+    }, [networkConnected, socket]);
+
+    useEffect(() => {
+        if (!socket) return;
+
         socket.onAny(() => {
             setDisconnected(false);
             heartCheck.reset(heartCheck).start(heartCheck, socket);

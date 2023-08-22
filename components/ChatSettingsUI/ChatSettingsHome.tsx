@@ -17,6 +17,7 @@ import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import { ChatSettingsPanel } from './ChatSettingsController';
 import { MenuPage } from './ExpandedSettingsMenu';
 import UIContext from '../../contexts/UIContext';
+import LeaveChatScreen from './LeaveChatScreen';
 
 export default function ChatSettingsHome({
     setSettingsPanel,
@@ -156,7 +157,7 @@ export default function ChatSettingsHome({
 
     return <Box style={{
             shadowOpacity: 0.24
-        }} px='12px' py='24px' bgColor='white' shadow='9' w='96%' borderRadius='24px' mx='auto' mt='12px'>
+        }} px='12px' py='24px' bgColor='white' shadow='9' w='96%' borderRadius='24px' mx='auto' mt='6px'>
         <Center w='100%'>
             {
                 nameAvatarEditing &&
@@ -206,7 +207,7 @@ export default function ChatSettingsHome({
                 currentConvo && currentConvo.group &&
                 (
                     imageUploading ?
-                    <Spinner type='Pulse' /> :
+                    <Spinner type='ThreeBounce' /> :
                     <Button py='3px' colorScheme={nameAvatarEditing ? 'dark' : 'light'} mx='auto' px='24px' borderRadius='24px' variant='subtle' mt='6px'
                     onPress={() => {
                         nameAvatarEditing ? onSaveNameAvatar() : setNameAvatarEditing(!nameAvatarEditing)
@@ -222,6 +223,14 @@ export default function ChatSettingsHome({
 
         <ButtonGrid onButtonSelect={onButtonSelect}/>
 
+        {
+            currentConvo &&
+            <LeaveChatScreen
+                cid={currentConvo?.id}
+                isOpen={confirmLeaveModalOpen} onClose={() => setConfirmLeaveModalOpen(false)}
+                />
+        }
+{/* 
         <Modal isOpen={confirmLeaveModalOpen} onClose={() => setConfirmLeaveModalOpen(false)}>
             <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px'>
                 <Modal.CloseButton />
@@ -242,6 +251,6 @@ export default function ChatSettingsHome({
                     </Text>
                 </Button>
             </Modal.Content>
-        </Modal>
+        </Modal> */}
     </Box>
 }
