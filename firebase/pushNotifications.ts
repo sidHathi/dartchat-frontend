@@ -1,8 +1,8 @@
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { setBackgroundUpdateFlag } from '../localStore/store';
 import notifee from '@notifee/react-native';
-import { PNPacket } from '../types/rawTypes';
-import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationKey, parsePNDisplay, parsePNNewConvo } from '../utils/notificationUtils';
+import { PNPacket } from '../types/types';
+import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationInfo, handleBackgroundConversationKey, parsePNDisplay, parsePNNewConvo } from '../utils/notificationUtils';
 
 const displayNotification = async (displayFields: {
     title: string,
@@ -34,12 +34,13 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
     if (!remoteMessage.data) return;
     if (remoteMessage.data.type === 'newConvo' && remoteMessage.data.stringifiedBody) {
         const parsedConvo = parsePNNewConvo(remoteMessage.data.stringifiedBody as string);
+        parsedConvo && await handleBackgroundConversationInfo(parsedConvo.convo);
         if (parsedConvo?.keyMap) {
             handleBackgroundConversationKey(parsedConvo.keyMap, parsedConvo.convo);
         }
     } else if (remoteMessage.data.type === 'message') {
         const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
-        const displayFields = getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey) ;
+        const displayFields = await getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey);
         if (displayFields) {
             displayNotification(displayFields, remoteMessage.data.type);
         }

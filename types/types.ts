@@ -201,7 +201,7 @@ export type LikeIcon = {
     iconName?: string;
 };
 
-export type PNType = 'message' | 'like' | 'newConvo' | 'secrets';
+export type PNType = 'message' | 'like' | 'newConvo' | 'secrets' | 'deleteMessage' | 'roleChanged';
 
 export type PNPacket = {
     type: PNType;

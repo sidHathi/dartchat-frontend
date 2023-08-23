@@ -189,3 +189,29 @@ export const hasPermissionForAction = (
             return false;
     }
 };
+
+export const getUserConversationAvatar = (convo: Conversation, userId: string): AvatarImage | undefined => {
+    if (convo.participants.length > 2) {
+        return convo.avatar;
+    }
+    const otherUsers = convo.participants.filter((p) => p.id !== userId);
+    if (otherUsers.length > 0) {
+        console.log(otherUsers[0].avatar);
+        return otherUsers[0].avatar;
+    }
+    return undefined;
+};
+
+export const constructPreviewForConversation = (convo: Conversation, uid: string) => {
+    const userProfile = convo.participants.find((p) => p.id === uid);
+    if (!userProfile) return undefined;
+    return {
+        cid: convo.id,
+        unSeenMessages: 0,
+        lastMessageTime: new Date(),
+        avatar: getUserConversationAvatar(convo, userProfile.id),
+        group: convo.group,
+        publicKey: convo.publicKey,
+        userRole: userProfile.role
+    } as ConversationPreview;
+};

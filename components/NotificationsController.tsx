@@ -2,15 +2,15 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { AppState } from 'react-native';
 import useRequest from '../requests/useRequest';
-import { chatSelector, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey } from '../redux/slices/chatSlice';
+import { chatSelector, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConvo, updateUserRole } from '../redux/slices/chatSlice';
 import { getUserData } from '../utils/identityUtils';
-import { addConversation, handleNewMessage, pullLatestPreviews, setConversations, userDataSelector } from '../redux/slices/userDataSlice';
-import { getBackgroundUpdateFlag, setBackgroundUpdateFlag } from '../localStore/store';
+import { addConversation, handleNewMessage, handleRoleUpdate, pullLatestPreviews, setConversations, userDataSelector } from '../redux/slices/userDataSlice';
+import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } from '../localStore/store';
 import messaging from '@react-native-firebase/messaging';
 import SocketContext from '../contexts/SocketContext';
 import { PNPacket } from '../types/types';
 import { constructNewConvo } from '../utils/messagingUtils';
-import { parsePNLikeEvent, parsePNMessage, parsePNNewConvo, parsePNSecrets } from '../utils/notificationUtils';
+import { extractMentionNotification, parsePNLikeEvent, parsePNMessage, parsePNNewConvo, parsePNRC, parsePNSecrets, parsedPNDelete } from '../utils/notificationUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import UIContext from '../contexts/UIContext';
 import { ConversationPreview, DecryptedMessage } from '../types/types';
@@ -114,6 +114,26 @@ export default function NotificationsController(): JSX.Element {
                                 await handleNewEncryptedConversation(parsedPNS.cid, newSecretKey, parsedPNS.newPublicKey);
                             }
                             break;
+                        case 'deleteMessage':
+                            const parsedDelete = parsedPNDelete(messageData.stringifiedBody);
+                            if (parsedDelete && user) {
+                                const { cid, mid } = parsedDelete;
+                                if (currentConvo?.id === cid) {
+                                    dispatch(handleMessageDelete(mid));
+                                }
+                            }
+                            break;
+                        case 'roleChanged':
+                            const parsedPNRC = parsePNRC(messageData.stringifiedBody);
+                            if (parsedPNRC && user) {
+                                const { cid, newRole } = parsedPNRC;
+                                if (currentConvo?.id === cid) {
+                                    const uid = user.id;
+                                    uid && dispatch(updateUserRole({uid, newRole}));
+                                }
+                                dispatch(handleRoleUpdate({cid, newRole}))
+                            }
+                            break;
                     }
                 }
             }
@@ -123,7 +143,7 @@ export default function NotificationsController(): JSX.Element {
     }, [currentConvo, socket, socketDisconnected, user, userConversations]);
 
     const handleNotificationSelect = (pnData: PNPacket) => {
-        if (pnData.type && (pnData.type === 'message' || pnData.type === 'like')) {
+        if (pnData.type && (pnData.type === 'message' || pnData.type === 'like' || pnData.type === 'newConvo')) {
             let parsed: {
                 cid: string;
             } | undefined;
@@ -134,14 +154,24 @@ export default function NotificationsController(): JSX.Element {
                 case 'like':
                     parsed = parsePNLikeEvent(pnData.stringifiedBody);
                     break;
+                case 'newConvo':
+                    const parsedNC = parsePNNewConvo(pnData.stringifiedBody);
+                    if (!parsedNC?.convo) {
+                        parsed = undefined;
+                    } else {
+                        parsed = {
+                            cid: parsedNC.convo.id
+                        };
+                    }
+                    break;
             }
             console.log(pnData);
             console.log(`OPENEDPN: ${parsed}`);
             if (parsed) {
                 const secretKey = (secrets && parsed.cid in secrets) ? secrets[parsed.cid] : undefined;
-                dispatch(pullConversation(parsed.cid, conversationsApi, secretKey, () => {
-                    navSwitch('messaging');
-                }))
+                dispatch(setConvo({ convo: undefined }));
+                navSwitch('messaging');
+                dispatch(pullConversation(parsed.cid, conversationsApi, secretKey))
             }
         } else {
             dispatch(pullLatestPreviews(usersApi, () => {
