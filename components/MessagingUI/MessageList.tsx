@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { useState, useRef, useEffect, useContext, useCallback } from "react";
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { Box, Center, Pressable, View, Text } from 'native-base';
 
@@ -58,7 +58,8 @@ export default function MessageList({
         if (message.replyRef && listRef.current && (message.replyRef.id in indexMap)) {
             listRef.current.scrollToIndex({
                 index: indexMap[message.replyRef.id],
-                animated: true
+                animated: true,
+                viewPosition: 0.5
             });
             setSelectedMid(message.replyRef.id);
         } else if (message.replyRef && currentConvo) {
@@ -73,12 +74,13 @@ export default function MessageList({
         }
     };
 
-    const goToLink = (message: Message) => {
+    const goToLink = useCallback((message: Message) => {
         setSelectedMid(undefined);
         if (message.messageLink && listRef.current && (message.messageLink in indexMap)) {
             listRef.current.scrollToIndex({
                 index: indexMap[message.messageLink],
-                animated: true
+                animated: true,
+                viewPosition: 0.5
             });
             setSelectedMid(message.messageLink);
         } else if (message.messageLink && currentConvo) {
@@ -92,7 +94,7 @@ export default function MessageList({
                     setReplyFetch(undefined);
                 })
         }
-    };
+    }, [indexMap, listRef]);
 
     useEffect(() => {
         if (replyFetch && (replyFetch in indexMap) && currentConvo && indexMap[replyFetch] < currentConvo.messages.length) {
@@ -118,15 +120,15 @@ export default function MessageList({
     //     scroll();
     // }, [currentConvo, scrollToPageStart]);
 
-    // useEffect(() => {
-    //     if (!currentConvo || pageLoading) return;
-    //     const newIndexVals: {[id: string]: number} = Object.fromEntries(
-    //         currentConvo?.messages.map((message: Message, index: number) => {
-    //             return [message.id, index];
-    //         })
-    //     );
-    //     setIndexMap(newIndexVals);
-    // }, [currentConvo, pageLoading]);
+    useEffect(() => {
+        if (!currentConvo || pageLoading) return;
+        const newIndexVals: {[id: string]: number} = Object.fromEntries(
+            currentConvo?.messages.map((message: Message, index: number) => {
+                return [message.id, index];
+            })
+        );
+        setIndexMap(newIndexVals);
+    }, [currentConvo, pageLoading]);
 
     const renderMessage = ({item, index}: {
         item?: DecryptedMessage,

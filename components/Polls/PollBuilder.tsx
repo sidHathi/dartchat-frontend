@@ -12,6 +12,8 @@ import { handleNewMessage } from "../../redux/slices/userDataSlice";
 import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
 import { useKeyboard } from "@react-native-community/hooks";
+import { encryptMessageForConvo } from "../../utils/messagingUtils";
+import UserSecretsContext from "../../contexts/UserSecretsContext";
 
 type Timeframe = 'hr' | 'day' | 'week';
 
@@ -28,6 +30,7 @@ export default function PollBuilder({
     const { currentConvo } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
     const { keyboardShown, keyboardHeight } = useKeyboard();
+    const { secrets } = useContext(UserSecretsContext);
 
     const [question, setQuestion] = useState<string | undefined>();
     const [options, setOptions] = useState<string[]>([
@@ -115,14 +118,17 @@ export default function PollBuilder({
             messageType: 'user',
             encryptionLevel: 'none'
         };
+
+        const userSecretKey = secrets ? secrets.userSecretKey : undefined;
+        const encryptedMessage = encryptMessageForConvo(message, currentConvo, userSecretKey);
         if (socket && currentConvo) {
             console.log('sending message')
-            dispatch(sendNewMessage({socket, message}));
+            dispatch(sendNewMessage({socket, message: encryptedMessage}));
             socket.emit('schedulePoll', currentConvo.id, poll);
             // dispatch(handleNewMessage({cid: currentConvo.id, message: message, messageForCurrent: true}));
             close();
         }
-    }, [user, currentConvo, socket, question, timeframe, multiSelect, options]);
+    }, [user, currentConvo, socket, question, timeframe, multiSelect, options, secrets, constructPoll, close]);
 
     const editField = ({value, setValue, prompt}: {
         value: string | undefined;

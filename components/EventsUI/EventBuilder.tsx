@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect, useContext } from "react";
 import { View, Box, Input, Text, Heading, VStack, Button, Icon, CheckIcon, Select, ScrollView } from "native-base";
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { getDateTimeString } from "../../utils/messagingUtils";
+import { encryptMessageForConvo, getDateTimeString } from "../../utils/messagingUtils";
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Dimensions } from "react-native";
 import uuid from 'react-native-uuid';
@@ -12,6 +12,7 @@ import useRequest from "../../requests/useRequest";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import SocketContext from "../../contexts/SocketContext";
 import { useKeyboard } from "@react-native-community/hooks";
+import UserSecretsContext from "../../contexts/UserSecretsContext";
 
 type ReminderTime = '@' | '10min' | '30min' | '1hr' | '1day' | 'none';
 
@@ -28,6 +29,7 @@ export default function EventBuilder({
     const { currentConvo } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
     const { keyboardShown, keyboardHeight } = useKeyboard();
+    const { secrets } = useContext(UserSecretsContext);
 
     const [eventName, setEventName] = useState<string | undefined>();
     const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -90,7 +92,7 @@ export default function EventBuilder({
                 raw = date.getTime() - 24*60*60*1000;
                 return new Date(raw);
             default:
-                return new Date()
+                return new Date();
         }
     };
 
@@ -172,7 +174,7 @@ export default function EventBuilder({
             setCreateRequestLoading(false);
             return undefined;
         }
-    }, [eventName, eventDate, reminderDates]);
+    }, [eventName, eventDate, reminderDates, currentConvo]);
 
     const handleSubmit = useCallback(async () => {
         if (!currentConvo || !user || !socket) return;
@@ -196,15 +198,20 @@ export default function EventBuilder({
                     messageType: 'user',
                     encryptionLevel: 'none',
                 }
-                dispatch(sendNewMessage({socket, message}));
-                socket.emit('scheduleEvent', currentConvo.id, event);
-                close();
+
+                const userSecretKey = secrets ? secrets.userSecretKey : undefined;
+                const encryptedMessage = encryptMessageForConvo(message, currentConvo, userSecretKey);
+                if (socket && currentConvo) {
+                    dispatch(sendNewMessage({socket, message: encryptedMessage}));
+                    socket.emit('scheduleEvent', currentConvo.id, event);
+                    close();
+                }
             }
         } catch (err) {
             console.log(err);
             setError('Network request failed');
         }
-    }, [buildEvent])
+    }, [buildEvent, secrets, currentConvo, user, socket, close])
 
     return <View w='100%'  h={keyboardShown ? `${keyboardHeight + 2*screenHeight/3}px`: `${2*screenHeight/3}px`} maxH={`${3*screenHeight/4}px`}>
         <Box w='96%' minH='100%' flexShrink='0'>
