@@ -21,7 +21,7 @@ export default function ReencryptionModal({
     const { currentConvo } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
     const { secrets, handleNewConversationKey } = useContext(UserSecretsContext);
-    const { socket } = useContext(SocketContext);
+    const { socket, resetSocket } = useContext(SocketContext);
 
     const [stateReencryptor, setStateReencryptor] = useState<Reencryptor | undefined>();
     const [timeGap, setTimeGap] = useState(1000*60*60*24*30);
@@ -36,12 +36,17 @@ export default function ReencryptionModal({
     const [canceled, setCanceled] = useState(false);
     const [reencryptionComplete, setReencryptionComplete] = useState(false);
 
+    useEffect(() => {
+        if (!socket || !socket.connected) {
+            resetSocket();
+        }
+    }, [isOpen]);
+
     const startReencryption = useCallback(async () => {
         if (!stateReencryptor && (currentConvo)) {
             setStateReencryptor(reencryptor.init(currentConvo, conversationsApi));
             setCanceled(false);
         }
-
     }, [reencryptor, currentConvo]);
 
     const cancelReencryption = useCallback(async () => {
@@ -57,7 +62,7 @@ export default function ReencryptionModal({
             onModalClose();
         };
         setCanceled(true);
-    }, [stateReencryptor]);
+    }, [stateReencryptor, currentConvo, secrets]);
 
     useEffect(() => {
         if (canceled || !currentConvo || !stateReencryptor || dataPulled) {
@@ -70,7 +75,7 @@ export default function ReencryptionModal({
         };
 
         pullData();
-    }, [stateReencryptor, currentConvo, dataPulled]);
+    }, [stateReencryptor, currentConvo, dataPulled, canceled]);
 
     useEffect(() => {
         if (canceled || dataReencrypted || !dataPulled || !currentConvo) {
@@ -92,7 +97,7 @@ export default function ReencryptionModal({
         };
 
         reencrypt();
-    }, [stateReencryptor, dataPulled, currentConvo, dataReencrypted, secrets]);
+    }, [stateReencryptor, dataPulled, currentConvo, dataReencrypted, secrets, canceled]);
 
     useEffect(() => {
         if (canceled || !stateReencryptor || !dataPulled || !dataReencrypted || reencryptionComplete || !newKeys) return;
@@ -218,7 +223,8 @@ export default function ReencryptionModal({
 
                 {
                     !stateReencryptor &&
-                    <Button colorScheme='dark' variant='subtle' borderRadius='full' onPress={startReencryption}>
+                    <Button colorScheme='dark' variant='subtle' borderRadius='full' onPress={startReencryption}
+                    opacity={socket?.connected ? 1 : 0} disabled={!socket?.connected}>
                         Start encryption key reset
                     </Button>
                 }

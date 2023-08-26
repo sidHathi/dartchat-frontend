@@ -26,7 +26,7 @@ export default function UserPinController(): JSX.Element {
     - provide initialization UI when appropriate
     */
     const dispatch = useAppDispatch();
-    const { user } = useContext(AuthIdentityContext);
+    const { user, initUserKeyInfo } = useContext(AuthIdentityContext);
     const { secrets, secretsLoading, initUserSecret, handleNewDBSecrets, initPinKey } = useContext(UserSecretsContext);
     const { usersApi } = useRequest();
 
@@ -55,11 +55,12 @@ export default function UserPinController(): JSX.Element {
             const encodedPublicKey = encodeKey(keys.userKeyPair.publicKey);
             await secureStore.setUserPINEncryptionKey(user.id, userKey);
             await secureStore.addSecureKey(user.id, 'userSecretKey', encodedPrivateKey);
+            initPinKey(userKey);
             await usersApi.setUserSecrets(keys.encryptedKeySet);
             await usersApi.updatePublicKey(encodedPublicKey);
-            initUserSecret(keys.userKeyPair.secretKey);
+            await initUserSecret(keys.userKeyPair.secretKey);
             dispatch(setPublicKey(encodedPublicKey));
-            initPinKey(userKey);
+            initUserKeyInfo(keys.userKeyPair.publicKey, salt);
         } catch (err) {
             console.log(err);
             return;

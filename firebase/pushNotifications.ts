@@ -15,7 +15,7 @@ const displayNotification = async (displayFields: {
         android: {
             channelId: type,
         },
-        });
+    });
 }
 
 export const requestUserPermission = async () => {
@@ -32,17 +32,25 @@ export const requestUserPermission = async () => {
 export const setBackgroundNotifications = () => messaging().setBackgroundMessageHandler(async remoteMessage => {
     await setBackgroundUpdateFlag(true);
     if (!remoteMessage.data) return;
+    console.log(remoteMessage.data);
     if (remoteMessage.data.type === 'newConvo' && remoteMessage.data.stringifiedBody) {
         const parsedConvo = parsePNNewConvo(remoteMessage.data.stringifiedBody as string);
         parsedConvo && await handleBackgroundConversationInfo(parsedConvo.convo);
         if (parsedConvo?.keyMap) {
             handleBackgroundConversationKey(parsedConvo.keyMap, parsedConvo.convo);
         }
-    } else if (remoteMessage.data.type === 'message') {
+    } 
+    if (remoteMessage.data.type === 'message') {
+        console.log(remoteMessage.data);
         const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
         const displayFields = await getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey);
         if (displayFields) {
             displayNotification(displayFields, remoteMessage.data.type);
+        } else {
+            displayNotification({
+                title: 'Decryption error',
+                body: 'no body'
+            }, remoteMessage.data.type);
         }
     } else {
         displayNotification(getUnencryptedDisplayFields(remoteMessage.data as PNPacket), remoteMessage.data.type);

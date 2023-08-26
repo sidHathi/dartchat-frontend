@@ -149,12 +149,21 @@ export default function UserConversationsController({
     }, [socket, currentConvo]);
 
     useEffect(() => {
-        if (!socket) return;
-        socket.on('newConversationUsers', (cid: string, profiles: UserConversationProfile[]) => {
-            if (currentConvo && currentConvo.id === cid) {
-                dispatch(handleAddUsers(profiles));
+        if (!socket || !user) return;
+        socket.on('newConversationUsers', async (cid: string, profiles: UserConversationProfile[], keyMap?: { [id: string]: string }) => {
+            try {
+                if (currentConvo && currentConvo.id === cid) {
+                    dispatch(handleAddUsers(profiles));
+                }
+                const convo = await conversationsApi.getConversationInfo(cid);
+                // let secretKey: Uint8Array | undefined;
+                if (keyMap && user.id in keyMap &&  convo.publicKey) {
+                    await handleNewEncryptedConversation(convo.id, keyMap[user.id], convo.publicKey);
+                }
+                dispatch(pullLatestPreviews(usersApi));
+            } catch (err) {
+                console.log(err);
             }
-            dispatch(pullLatestPreviews(usersApi));
         });
 
         return () => {
@@ -196,21 +205,28 @@ export default function UserConversationsController({
     }, [socket, currentConvo]);
 
     useEffect(() => {
-        if (!socket || !currentConvo) return;
-        socket.on('keyChange', async (cid: string, newPublicKey: string, encryptedKey: string) => {
-            console.log('key change received');
-            if (cid === currentConvo.id) {
-                if (newPublicKey === currentConvo.publicKey) return;
-                dispatch(setCCPublicKey(newPublicKey));
+        if (!socket || !user) return;
+        socket.on('keyChange', async (cid: string, newPublicKey: string, userKeyMap: { [id: string]: string }) => {
+            try {
+                console.log('key change received');
+                console.log(newPublicKey);
+                if (cid === currentConvo?.id) {
+                    if (newPublicKey === currentConvo.publicKey) return;
+                    dispatch(setCCPublicKey(newPublicKey));
+                }
+                const updatedConvo = await conversationsApi.getConversationInfo(cid);
+                if (userKeyMap && user.id in userKeyMap && updatedConvo.publicKey) {
+                    await handleNewEncryptedConversation(updatedConvo.id, userKeyMap[user.id], updatedConvo.publicKey);
+                }
+            } catch (err) {
+                console.log(err);
             }
-            console.log(newPublicKey);
-            await handleNewEncryptedConversation(cid, encryptedKey, newPublicKey);
         });
 
         return () => {
             socket.off('keyChange');
         }
-    }, [socket, currentConvo]);
+    }, [socket, currentConvo, user, handleNewEncryptedConversation]);
 
     useEffect(() => {
         if (!socket || !currentConvo) return;

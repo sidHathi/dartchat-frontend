@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useState } from "react";
+import React, { useCallback, useContext, useMemo, useState, useEffect } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Pressable, VStack, Text, Box, Spinner, ScrollView, FlatList } from "native-base";
 
@@ -27,7 +27,7 @@ export default function ChatSelector({
     openChat: () => void;
     closeChat: () => void;
 }): JSX.Element {
-    const { socket } = useContext(SocketContext);
+    const { socket, resetSocket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { networkConnected } = useContext(NetworkContext);
     const { secrets } = useContext(UserSecretsContext);
@@ -42,9 +42,17 @@ export default function ChatSelector({
     const [upForLeave, setUpForLeave] = useState<ConversationPreview | undefined>();
     const [confirmLeaveModalOpen, setConfirmLeaveModalOpen] = useState(false);
 
+    useEffect(() => {
+        if (!socket || socket.connected) {
+            resetSocket();
+        }
+    }, [userConversations])
 
     const handleSelect = useCallback((chat: ConversationPreview) => {
         if (!networkConnected) return;
+        if (!socket || !socket.connected) {
+            resetSocket();
+        }
         
         const secretKey = (secrets && chat.cid in secrets) ? secrets[chat.cid] : undefined;
         dispatch(pullConversation(chat.cid, conversationsApi, secretKey, undefined, () => {
@@ -55,7 +63,7 @@ export default function ChatSelector({
             socket.emit("messagesRead", chat.cid);
         }
         openChat();
-    }, [secrets]);
+    }, [secrets, socket, resetSocket]);
 
     const handleDelete = async (chat: ConversationPreview | undefined) => {
         if (!chat || !user || !user.conversations) return;
@@ -166,7 +174,7 @@ export default function ChatSelector({
             onConfirm={deleteConfirm}
             title='Confirm Deletion'
             content='This action cannot be reversed'
-            size='md'
+            size='lg'
         />
 
         {/* <ConfirmationModal

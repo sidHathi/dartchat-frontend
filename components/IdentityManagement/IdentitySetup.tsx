@@ -12,6 +12,7 @@ import IconImage from '../generics/IconImage';
 import { getDownloadUrl, storeProfileImage } from '../../firebase/cloudStore';
 import { AvatarImage } from '../../types/types';
 import Spinner from 'react-native-spinkit';
+import { useKeyboard } from "@react-native-community/hooks";
 
 export default function IdentitySetup(): JSX.Element {
     const { isAuthenticated, user, createUser } = useContext(AuthIdentityContext);
@@ -22,6 +23,7 @@ export default function IdentitySetup(): JSX.Element {
     const [error, setError] = useState<string | undefined>(undefined);
     const [imageUploading, setImageUploading] = useState<boolean>(false);
     const [selectedAvatarImage, setSelectedAvatarImage] = useState<Image | undefined>();
+    const { keyboardShown } = useKeyboard();
 
     const getUserAvatarFromImage = async () => {
         if (!selectedAvatarImage || !user) return undefined;
@@ -87,7 +89,7 @@ export default function IdentitySetup(): JSX.Element {
 
     return <View w='100%' h='100%' backgroundColor='#fefefe'>
         <Center w='100%' h='100%'>
-            <Box w='90%' p='20px' bgColor='gray.100' shadow='9' borderRadius='24px'>
+            <Box w='90%' p='20px' bgColor='gray.100' shadow='9' borderRadius='24px' mt={keyboardShown ? '-200px': '0px'}>
                 <Center w='100%'>
                     <SvgXml xml={DartChatLogoDarkXML} height='20' width='120'/>
                 </Center>

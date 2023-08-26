@@ -8,9 +8,11 @@ import DartChatLogoXML from "../../assets/DartChatLogoXML";
 import { GoogleSignin, statusCodes, GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useKeyboard } from "@react-native-community/hooks";
 
 export default function AuthUIController(): JSX.Element {
     const [signUp, setSignUp] = useState(false);
+    const { keyboardShown } = useKeyboard();
 
     const toggleSignup = () => {
         setSignUp(!signUp);
@@ -31,7 +33,7 @@ export default function AuthUIController(): JSX.Element {
     };
 
     return <Flex flex={1} bgColor='#fafafa' w='100%' h='100%'>
-        <View bgColor='#333' borderRadius={20} width='90%' m='auto' p='10' shadow='9'>
+        <View bgColor='#222' borderRadius={20} width='90%' m='auto' p='10' shadow='9' mt={keyboardShown ? '90px' : 'auto'}>
             <VStack>
                 <Center>
                     <SvgXml xml={DartChatLogoXML} height='20' width='100'/>

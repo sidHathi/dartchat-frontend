@@ -14,7 +14,7 @@ export const parsePNMessage = (stringifiedBody: string): {
     if (!('cid' in parsedBody) || !('message' in parsedBody)) return undefined;
     return {
         cid: parsedBody['cid'],
-        message: parseSocketMessage(parsedBody)
+        message: parseSocketMessage(parsedBody.message)
     };
 };
 
@@ -55,8 +55,8 @@ export const parsePNSecrets = (stringifiedBody: string)  => {
         if (!('cid' in parsedBody) || !('newPublicKey' in parsedBody) || !('newKeyMap' in parsedBody)) return;
 
         return {
-            cid: parsedBody.cid,
-            newPublicKey: parsedBody.newPublicKey,
+            cid: parsedBody.cid as string,
+            newPublicKey: parsedBody.newPublicKey as string,
             newKeyMap: parsedBody.newKeyMap
         };
     } catch (err) {
@@ -179,15 +179,27 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
         switch (notif.type) {
             case 'message':
                 const messageData = parsePNMessage(notif.stringifiedBody);
-                if (!messageData) return;
+                if (!messageData) return {
+                    title: 'no notification data',
+                    body: 'error',
+                };
                 const encryptedMessage = messageData.message || undefined;
-                if (!encryptedMessage) return undefined;
+                if (!encryptedMessage) return {
+                    title: 'no message field in message data',
+                    body: 'error',
+                };
                 const decrypted = handlePossiblyEncryptedMessage(encryptedMessage, secretKey);
                 if (decrypted?.messageType === 'system') return;
-                if (!decrypted) return undefined;
+                if (!decrypted) return {
+                    title: 'decryption failure',
+                    body: 'error',
+                };
                 const storedUserData = await getStoredUserData();
                 const storedPreview = storedUserData?.conversations?.find((c) => c.cid === messageData.cid);
-                if (!storedUserData || !storedPreview) return undefined;
+                if (!storedUserData || !storedPreview) return {
+                    title: 'no preview found in user data for notif',
+                    body: 'error',
+                };
                 const mentionFields = extractMentionNotification(decrypted, storedUserData.id, storedPreview);
                 if (mentionFields) {
                     return mentionFields;
@@ -199,6 +211,11 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                         body: decryptedContents,
                         imageUri: storedPreview.avatar?.tinyUri
                     }
+                } else {
+                    return {
+                        title: 'unable to find message contents',
+                        body: `${JSON.stringify(decrypted)}`,
+                    };
                 }
             default:
                 const parsedDisplay = parsePNDisplay(notif.stringifiedDisplay);

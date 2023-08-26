@@ -16,7 +16,6 @@ import IconImage from "../generics/IconImage";
 import { autoGenGroupAvatar } from "../../utils/messagingUtils";
 import { getNewConversationKeys } from "../../utils/encryptionUtils";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
-import { useKeyboard } from "@react-native-community/hooks";
 import { getGroupAvatarFromCropImage, selectProfileImage } from "../../utils/identityUtils";
 import { Image } from 'react-native-image-crop-picker';
 import Spinner from "react-native-spinkit";
@@ -41,7 +40,7 @@ export default function ChatBuilder({exit}: {
     const [selectedProfiles, setSelectedProfiles] = useState<UserConversationProfile[]>([]);
     const [error, setError] = useState<string | undefined>(undefined);
     const [encryptedGroup, setEncryptedGroup] = useState(false);
-    const { keyboardShown, keyboardHeight } = useKeyboard();
+    // const { keyboardShown, keyboardHeight } = useKeyboard();
     const [avatarDispUri, setAvatarDispUri] = useState<string | undefined>(undefined);
     const [affiliatedCid, setAffiliatedCid] = useState<string | undefined>();
     const [avatarUploading, setAvatarUploading] = useState(false);

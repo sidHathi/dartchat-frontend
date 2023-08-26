@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext, PropsWithChildren, ReactNode, useMemo, useCallback } from "react";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { Text, Input, Box, Button, HStack, Spacer, Center, FormControl, VStack } from 'native-base';
-import { Image, Pressable } from 'react-native';
+import { Image, Keyboard, Pressable } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
 
 import useRequest from "../../requests/useRequest";
@@ -141,7 +141,6 @@ export default function ProfilesSearch({
                 </Text>
                 <Input
                     ref={inputRef}
-                    key='profileSearchInput'
                     // autoFocus={true}
                     placeholder='Email, phone number, or username'
                     value={!maxSelected() ? queryString: ''}
@@ -154,7 +153,6 @@ export default function ProfilesSearch({
                     mt='4px'
                     autoCapitalize='none'
                     backgroundColor='#f1f1f1'
-                    isFocused={searchSelected}
                     onPressOut={() => {
                         if (queryString && queryString.length > 0){
                             setSearchSelected(true)

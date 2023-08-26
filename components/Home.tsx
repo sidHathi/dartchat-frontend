@@ -20,7 +20,7 @@ export default function Home(): JSX.Element {
     const { uiState, navSwitch } = useContext(UIContext);
     const { forgetConversationKeys } = useContext(UserSecretsContext);
     const { disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
-    const { silent, currentConvo, requestLoading } = useAppSelector(chatSelector);
+    const { silent, currentConvo, conversationLoading, conversationSet } = useAppSelector(chatSelector);
 
     const [idle, setIdle] = useState(false);
     const [timeForInactivityInSecond] = useState(300);
@@ -81,15 +81,15 @@ export default function Home(): JSX.Element {
         </NavContainer>
     )
 
-    const Messaging = (): JSX.Element => {
-        if (currentConvo || requestLoading) {
+    const Messaging = useCallback((): JSX.Element => {
+        if (conversationSet || conversationLoading) {
             return <MessagingContainer exit={handleConversationExit}/>
         } else {
             return <NavContainer>
-                <MessagingContainer exit={handleConversationExit}/>
+                <MessagingContainer exit={handleConversationExit} />
             </NavContainer>
         }
-    }
+    }, [conversationSet, conversationLoading]);
 
     const getScreen = () => {
         switch (uiState.screen) {

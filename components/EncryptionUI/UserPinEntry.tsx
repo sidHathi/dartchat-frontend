@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Box, Input, Heading, Text, VStack, Button, Center } from 'native-base';
 import Spinner from 'react-native-spinkit';
+import { useKeyboard } from '@react-native-community/hooks';
 
 type PinEntryVariant = 'initialization' | 'confirmation';
 
@@ -13,6 +14,8 @@ export default function UserPinEntry({
     onSubmit: (pin: string) => void;
     validationLoading: boolean;
 }): JSX.Element {
+    const { keyboardShown } = useKeyboard();
+
     const [enteredPin, setEnteredPin] = useState<string | undefined>();
     const [confirmPin, setConfirmPin] = useState<string | undefined>();
     const [error, setError] = useState<string | undefined>();
@@ -56,7 +59,7 @@ export default function UserPinEntry({
     }, [enteredPin, confirmPin]);
 
     return <View flex='1' bgColor='#fefefe'>
-        <Box w='90%' m='auto' p='24px' bgColor='#f5f5f5' shadow='9' borderRadius='24px'>
+        <Box w='90%' m='auto' p='24px' bgColor='#f5f5f5' shadow='9' borderRadius='24px' mt={keyboardShown ? '90px' : 'auto'}>
             <VStack space='2'>
             <Heading mt='12px'>
                 {headingText}

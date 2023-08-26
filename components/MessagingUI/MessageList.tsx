@@ -3,7 +3,7 @@ import { FlatList, NativeScrollEvent, NativeSyntheticEvent } from "react-native"
 import { Box, Center, Pressable, View, Text } from 'native-base';
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { chatSelector, loadAdditionalMessages, loadMessagesToDate, sendNewLike } from "../../redux/slices/chatSlice";
+import { chatSelector, loadAdditionalMessages, loadMessagesToDate, sendNewLike, setPageStartIndex, setScroll } from "../../redux/slices/chatSlice";
 import { DecryptedMessage, Message, UserConversationProfile } from "../../types/types";
 import MessageDisplay from "./MessageDisplay";
 import SocketContext from "../../contexts/SocketContext";
@@ -33,13 +33,25 @@ export default function MessageList({
 }): JSX.Element {
     const dispatch = useAppDispatch();
     const listRef = useRef<FlatList | null>(null);
-    const { currentConvo, requestLoading, messageCursor } = useAppSelector(chatSelector);
+    const { currentConvo, pageLoading, messageCursor, pageStartIndex, scrollToPageStart } = useAppSelector(chatSelector);
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { conversationsApi } = useRequest();
 
     const [indexMap, setIndexMap] = useState<{[id: string]: number}>({});
     const [replyFetch, setReplyFetch] = useState<string | undefined>();
+    const [initialized, setInitialized] = useState(false);
+
+    // useEffect(() => {
+    //     if (!currentConvo || initialized) return;
+    //     if (currentConvo.messages.length > pageStartIndex) {
+    //         listRef.current?.scrollToIndex({
+    //             index: pageStartIndex - 1,
+    //             animated: false
+    //         });
+    //         setInitialized(true);
+    //     }
+    // }, [currentConvo, initialized, pageStartIndex]);
 
     const goToReply = (message: Message) => {
         setSelectedMid(undefined);
@@ -91,17 +103,30 @@ export default function MessageList({
             setSelectedMid(replyFetch);
             setReplyFetch(undefined);
         }
-    }, [indexMap, replyFetch, currentConvo, requestLoading]);
+    }, [indexMap, replyFetch, currentConvo, pageLoading]);
 
-    useEffect(() => {
-        if (!currentConvo) return;
-        const newIndexVals: {[id: string]: number} = Object.fromEntries(
-            currentConvo?.messages.map((message: Message, index: number) => {
-                return [message.id, index];
-            })
-        );
-        setIndexMap(newIndexVals);
-    }, [currentConvo, requestLoading]);
+    // useEffect(() => {
+    //     if (!currentConvo || !scrollToPageStart || (currentConvo.messages.length <= pageStartIndex)) return;
+    //     const scroll = async () => {
+    //         console.log(`scrolling to ${pageStartIndex}`)
+    //         listRef.current?.scrollToIndex({
+    //             index: pageStartIndex - 1,
+    //             animated: false
+    //         });
+    //         dispatch(setScroll(false));
+    //     }
+    //     scroll();
+    // }, [currentConvo, scrollToPageStart]);
+
+    // useEffect(() => {
+    //     if (!currentConvo || pageLoading) return;
+    //     const newIndexVals: {[id: string]: number} = Object.fromEntries(
+    //         currentConvo?.messages.map((message: Message, index: number) => {
+    //             return [message.id, index];
+    //         })
+    //     );
+    //     setIndexMap(newIndexVals);
+    // }, [currentConvo, pageLoading]);
 
     const renderMessage = ({item, index}: {
         item?: DecryptedMessage,
@@ -167,13 +192,13 @@ export default function MessageList({
 
     return <FlatList
         ref={listRef}
-        data={currentConvo?.messages || []}
+        data={currentConvo?.messages.flat() || []}
         renderItem={renderMessage}
         keyExtractor={(item: DecryptedMessage) => item.id}
         onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
             const {contentOffset, contentSize} = event.nativeEvent;
             if (contentOffset.y > contentSize.height - 800 && messageCursor) {
-                // console.log('fetching messages');
+                console.log('fetching messages');
                 dispatch(loadAdditionalMessages(conversationsApi));
             }
         }}
@@ -184,7 +209,7 @@ export default function MessageList({
             });
         }}
         inverted
-        ListFooterComponent={(messageCursor || requestLoading) ?
+        ListFooterComponent={(messageCursor || pageLoading) ?
             <View>
                 <Center w='100%' mt='40px'>
                     <Spinner type='ChasingDots' color='#111' size={24} />

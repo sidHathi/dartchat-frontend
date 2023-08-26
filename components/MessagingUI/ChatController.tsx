@@ -1,7 +1,7 @@
 import React, { useState, useContext, useCallback } from 'react';
 import { View, Box, Pressable } from 'native-base';
 import ChatHeader from './ChatHeader';
-import { useAppSelector } from '../../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { chatSelector } from '../../redux/slices/chatSlice';
 import ConversationProfileManager from '../IdentityManagement/ConversationProfileManager';
 import { Dimensions } from 'react-native';
@@ -12,12 +12,16 @@ import ChatDisplay from './ChatDisplay';
 import ChatSettingsController from '../ChatSettingsUI/ChatSettingsController';
 import ExpandedSettingsMenu, { MenuPage } from '../ChatSettingsUI/ExpandedSettingsMenu';
 import { setEnabled } from 'react-native/Libraries/Performance/Systrace';
+import { pullLatestPreviews } from '../../redux/slices/userDataSlice';
+import useRequest from '../../requests/useRequest';
 
 export default function ChatController({
     exit
 }: {
     exit: () => void;
 }): JSX.Element {
+    const dispatch = useAppDispatch();
+    const { usersApi } = useRequest();
     const screenHeight = Dimensions.get('window').height;
     const { currentConvo } = useAppSelector(chatSelector);
     const { disconnected: socketDisconnected } = useContext(SocketContext);
@@ -63,7 +67,8 @@ export default function ChatController({
                 onConvoExit={() => {
                     settingsMenuOpen ? 
                         expandedSettingsOpen ? setExpandedSettingsOpen(false) :  setSettingsMenuOpen(false) 
-                    : exit()
+                    : exit();
+                    dispatch(pullLatestPreviews(usersApi));
                 }} 
             />
         </Box>

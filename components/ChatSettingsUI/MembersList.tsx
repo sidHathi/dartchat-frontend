@@ -38,7 +38,7 @@ export default function MembersList({
     const handleOpenButton = useCallback(() => {
         if (currentConvo && socket && socket.connected && addMenuOpen && selectedNewMembers && selectedNewMembers.length > 0) {
             let keyMap: { [id: string]: string } | undefined = undefined;
-            if (currentConvo?.encryptionLevel && currentConvo.encryptionLevel !== 'none' && currentConvo.publicKey && secrets && secrets[currentConvo.id]) {
+            if (currentConvo.publicKey && secrets && secrets[currentConvo.id]) {
                 const secretKey = secrets[currentConvo.id];
                 keyMap = getNewMemberKeys(selectedNewMembers, secretKey);
             }
@@ -49,7 +49,7 @@ export default function MembersList({
             }));
         }
         setAddMenuOpen(!addMenuOpen);
-    }, [addMenuOpen, currentConvo, selectedNewMembers]);
+    }, [addMenuOpen, currentConvo, selectedNewMembers, secrets]);
 
     const handleSelect = (profile: UserConversationProfile) => {
         if (user && profile.id === user.id) return;
@@ -142,26 +142,6 @@ export default function MembersList({
             sections={listSections}
             keyExtractor={(item, index) => item.id} 
             />
-        {/* {
-            (admins && admins.length > 0) && <Box>
-                <Text fontWeight='bold' fontSize='sm' color='gray.500' mt='12px' mb='6px' mx='12px'>
-                    Non-admin users:
-                </Text>
-                <FlatList
-                    mx='12px'
-                    data={plebians}
-                    renderItem={renderProfile}
-                    />
-            </Box>
-        }
-        <Text fontWeight='bold' fontSize='sm' color='gray.500' mt='12px' mx='12px' mb='6px' >
-            Non-admin users:
-        </Text>
-        <FlatList
-            mx='12px'
-            data={plebians}
-            renderItem={renderProfile}
-            /> */}
         
         <View flexGrow='0' flexShrink='0'>
             <Box m='6px' shadow='9' borderRadius='24px' bgColor='white' w='100%' p='24px' style={{shadowOpacity: 0.12}} mb='-6px'>

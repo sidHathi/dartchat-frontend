@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import ChatBuilder from './ChatBuilder';
 import { useAppSelector } from '../../redux/hooks';
 import { chatSelector } from '../../redux/slices/chatSlice';
@@ -7,17 +7,17 @@ import Spinner from 'react-native-spinkit';
 import ChatController from './ChatController';
 
 export default function MessagingContainer({exit}: {exit: () => void}): JSX.Element {
-    const { currentConvo, requestLoading } = useAppSelector(chatSelector);
+    const { conversationSet, conversationLoading } = useAppSelector(chatSelector);
 
-    const ChatGuard = (): JSX.Element => {
-        if (!currentConvo && requestLoading) {
+    const ChatGuard = useMemo((): JSX.Element => {
+        if (conversationLoading) {
             return <Center w='100%' h='100%' bgColor='#f5f5f5'>
                 <Spinner type='ThreeBounce' color='#111' />
             </Center>
         }
-        else if (!currentConvo) return <ChatBuilder exit={exit} />
+        else if (!conversationSet) return <ChatBuilder exit={exit} />
         return <ChatController exit={exit} />
-    }
+    }, [conversationSet, conversationLoading]);
 
-    return ChatGuard();
+    return conversationSet ? <ChatController exit={exit} /> : ChatGuard;
 }

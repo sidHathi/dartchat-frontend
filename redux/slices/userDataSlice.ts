@@ -217,6 +217,15 @@ export const userDataSlice = createSlice({
                     return c;
                 })
             }
+        },
+        logOutUser: (state) => {
+            return {
+                id: '',
+                userConversations: [],
+                lastReceivedMessageId: '',
+                needsServerSync: false,
+                requestLoading: false,
+            }
         }
     }
 });
@@ -238,7 +247,8 @@ export const {
     handleUserConvoLeave,
     handleArchiveConvoRemoval,
     setPublicKey,
-    handleRoleUpdate
+    handleRoleUpdate,
+    logOutUser
 } = userDataSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {

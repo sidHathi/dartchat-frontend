@@ -101,7 +101,14 @@ export default function UserSecretsController({
                 const decodedSecrets = (Object.fromEntries(
                     Object.entries(storedSecrets).map(([key, val]) => [key, decodeKey(val as string)])
                 ));
-                setSecrets(decodedSecrets);
+                if (secrets) {
+                    setSecrets({
+                        ...secrets,
+                        ...decodedSecrets
+                    });
+                } else {
+                    setSecrets(decodedSecrets);
+                }
                 return decodedSecrets;
             } else if (user && user.secrets && user.keySalt && userPinKey) {
                 // if this is a new device but the user has entered their pin
@@ -114,7 +121,14 @@ export default function UserSecretsController({
                 if (decodedSecrets && 'userSecretKey' in decodedSecrets) {
                     console.log('initializing secure store')
                     await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
-                    setSecrets(decodedSecrets);
+                    if (secrets) {
+                        setSecrets({
+                            ...secrets,
+                            ...decodedSecrets
+                        });
+                    } else {
+                        setSecrets(decodedSecrets);
+                    }
                     return decodedSecrets;
                 }
             }
@@ -122,57 +136,20 @@ export default function UserSecretsController({
             console.log(err);
             return;
         }
-    }, [user, userPinKey]);
-
-    useEffect(() => {
-        if (userPinKey || !user) return;
-        const getuserPinKey = async () => {
-            console.log('pulling user key');
-            try {
-                setSecretsLoading(true);
-                const key = await secureStore.getUserPINEncryptionKey(user.id);
-                console.log(`key: ${key}`);
-                if (key) {
-                    setUserPinKey(key);
-                } else {
-                    setSecretsLoading(false);
-                }
-            } catch (err) {
-                console.log('keyfetch failed');
-                setSecretsLoading(false);
-            }
-        }
-        getuserPinKey();
-    }, [userPinKey, user])
-
-    useEffect(() => {
-        console.log('user secrets:')
-        console.log(secrets);
-        if (secrets || !userPinKey) return;
-        console.log('pulling user secrets');
-        setSecretsLoading(true);
-        getSecrets()
-            .then(async (retrievedSecrets) => {
-                if (retrievedSecrets) {
-                    await checkForUpdates(retrievedSecrets);
-                }
-                setSecretsLoading(false);
-            })
-            .catch((err) => {
-                console.log(err);
-                setSecretsLoading(false);
-            });
-    }, [secrets, userPinKey, user]);
+    }, [user, userPinKey, secrets]);
 
     const initPinKey = (newPinKey: string) => {
         setUserPinKey(newPinKey);
     };
 
-    const initUserSecret = (userSecretKey: Uint8Array) => {
-        setSecrets({
+    const initUserSecret = useCallback(async (userSecretKey: Uint8Array) => {
+        const initialSecrets = {
             userSecretKey
-        })
-    };
+        };
+        if (await updateDBSecrets(initialSecrets)) {
+            setSecrets(initialSecrets);
+        }
+    }, [setSecrets, updateDBSecrets]);
 
     const handleNewDBSecrets = useCallback((decryptedSecrets: {[key: string]: string}) => {
         const newSecrets = Object.fromEntries(
@@ -198,7 +175,7 @@ export default function UserSecretsController({
         console.log(decryptedKeyMap);
         if (!decryptedKeyMap.secretKey) return undefined;
         const decryptedKey = decryptedKeyMap.secretKey;
-        if (cid in secrets && secrets[cid] === decryptedKey) {
+        if (secrets && cid in secrets && secrets[cid] === decryptedKey) {
             return secrets[cid];
         }
         const newSecrets = {
@@ -222,7 +199,7 @@ export default function UserSecretsController({
         try {
             console.log('handling new conversation keys');
             const newSecrets = {
-                ...secrets,
+                ...(secrets || {}),
                 [cid]: key
             };
             if (await updateDBSecrets(newSecrets)) {
@@ -260,6 +237,46 @@ export default function UserSecretsController({
             return false;
         }
     }, [secrets]);
+
+    useEffect(() => {
+        if (userPinKey || !user) return;
+        const getUserPinKey = async () => {
+            console.log('pulling user key');
+            try {
+                setSecretsLoading(true);
+                const key = await secureStore.getUserPINEncryptionKey(user.id);
+                console.log(`key: ${key}`);
+                if (key) {
+                    setUserPinKey(key);
+                } else {
+                    setSecretsLoading(false);
+                }
+            } catch (err) {
+                console.log('keyfetch failed');
+                setSecretsLoading(false);
+            }
+        }
+        getUserPinKey();
+    }, [userPinKey, user])
+
+    useEffect(() => {
+        console.log('user secrets:')
+        console.log(secrets);
+        if (secrets || !userPinKey) return;
+        console.log('pulling user secrets');
+        setSecretsLoading(true);
+        getSecrets()
+            .then(async (retrievedSecrets) => {
+                if (retrievedSecrets) {
+                    await checkForUpdates(retrievedSecrets);
+                }
+                setSecretsLoading(false);
+            })
+            .catch((err) => {
+                console.log(err);
+                setSecretsLoading(false);
+            });
+    }, [secrets, userPinKey, user]);
 
     return <UserSecretsContext.Provider value={{
         secrets,

@@ -7,23 +7,32 @@ import { ConversationsApi } from "../../requests/conversationsApi";
 import { AvatarImage } from "../../types/types";
 import { filterEncryptedMessages, findPrivateMessageIdForUser, handlePossiblyEncryptedConversation, handlePossiblyEncryptedMessage } from "../../utils/messagingUtils";
 import secureStore from "../../localStore/secureStore";
-import { State } from "react-native-gesture-handler";
 
 const initialState: {
+    conversationSet: boolean
     currentConvo?: DecryptedConversation;
     galleryMessages?: DecryptedMessage[];
     needsScroll: boolean;
     requestLoading: boolean;
+    conversationLoading: boolean
+    pageLoading: boolean;
     silent: boolean;
+    pageStartIndex: number;
+    scrollToPageStart: boolean;
     messageCursor?: string;
     galleryCursor?: string;
     silentKeyMap?: { [key: string]: string };
     onSilentCreate?: () => void;
     secretKey?: Uint8Array;
 } = {
+    conversationSet: false,
     needsScroll: false,
     requestLoading: false,
+    conversationLoading: false,
+    pageLoading: false,
     silent: false,
+    pageStartIndex: 1,
+    scrollToPageStart: false
 };
 
 export const chatSlice = createSlice({
@@ -35,6 +44,7 @@ export const chatSlice = createSlice({
             secretKey?: Uint8Array
         }>) => ({
             ...state, 
+            conversationSet: true,
             silent: false, 
             currentConvo: action.payload.convo ?handlePossiblyEncryptedConversation(action.payload.convo, action.payload.secretKey) : undefined,
             secretKey: action.payload.secretKey,
@@ -48,6 +58,7 @@ export const chatSlice = createSlice({
             onSilentCreate?: () => void;
         }>) => ({
             ...state, 
+            conversationSet: true,
             currentConvo: handlePossiblyEncryptedConversation(action.payload.convo, action.payload.secretKey),
             secretKey: action.payload.secretKey,
             silent: true,
@@ -59,12 +70,15 @@ export const chatSlice = createSlice({
         }),
         exitConvo: (state) => ({
              ...state, 
+             conversationSet: false,
              currentConvo: undefined, 
              requestLoading: false, 
              messageCursor: undefined,
              galleryMessages: undefined,
              galleryCursor: undefined,
              secretKey: undefined,
+             scrollToPageStart: false,
+             pageStartIndex: 1
         }),
         addMessageHistory: (state, action: PayloadAction<Message[]>) => {
             if (!state.currentConvo) return state;
@@ -275,6 +289,18 @@ export const chatSlice = createSlice({
             return ({
                ...state,
                 requestLoading: action.payload
+            });
+        },
+        setPageLoading: (state, action: PayloadAction<boolean>) => {
+            return ({
+               ...state,
+                pageLoading: action.payload
+            });
+        },
+        setConversationLoading: (state, action: PayloadAction<boolean>) => {
+            return ({
+               ...state,
+                conversationLoading: action.payload
             });
         },
         setMessageCursor: (state, action: PayloadAction<string | undefined>) => {
@@ -494,7 +520,19 @@ export const chatSlice = createSlice({
                     })
                 }
             }
-        }
+        },
+        setScroll: (state, action: PayloadAction<boolean>) => {
+            return {
+                ...state,
+                scrollToPageStart: action.payload
+            }
+        },
+        setPageStartIndex: (state, action: PayloadAction<number>) => {
+            return {
+                ...state,
+                pageStartIndex: action.payload
+            }
+        },
     }
 });
 
@@ -528,13 +566,17 @@ export const {
     setCCPublicKey,
     removeLocalMessage,
     handleMessageDelete,
-    updateUserRole
+    updateUserRole,
+    setScroll,
+    setPageStartIndex,
+    setConversationLoading,
+    setPageLoading
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
     try {
         const { secretKey: currSecretKey } = getState().chatReducer;
-        dispatch(setRequestLoading(true));
+        dispatch(setConversationLoading(true));
 
         const cursorContainer: CursorContainer = { cursor: null };
         const apiConvo = await api.getConversation(cid, cursorContainer);
@@ -544,10 +586,10 @@ export const pullConversation = (cid: string, api: ConversationsApi, secretKey?:
             dispatch(setMessageCursor(undefined));
         }
         dispatch(setConvo({
-            convo: apiConvo,
+            convo: handlePossiblyEncryptedConversation(apiConvo, secretKey || currSecretKey),
             secretKey: secretKey || currSecretKey
         }));
-        dispatch(setRequestLoading(false));
+        dispatch(setConversationLoading(false));
         onComplete && onComplete();
     } catch (err) {
         console.log(err);
@@ -562,7 +604,8 @@ export const loadAdditionalMessages = (api: ConversationsApi): ThunkAction<void,
     if (!currentConvo) return;
 
     try {
-        dispatch(setRequestLoading(true))
+        dispatch(setPageLoading(true));
+        dispatch(setPageStartIndex(currentConvo.messages.length));
         const cursorContainer: CursorContainer = { cursor: messageCursor || null };
         const additionalMessages: Message[] = await api.getConversationMessages(currentConvo.id, cursorContainer);
         if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
@@ -571,7 +614,8 @@ export const loadAdditionalMessages = (api: ConversationsApi): ThunkAction<void,
             dispatch(setMessageCursor(undefined));
         }
         dispatch(addMessageHistory(additionalMessages));
-        dispatch(setRequestLoading(false));
+        dispatch(setScroll(true));
+        dispatch(setPageLoading(false));
     } catch (err) {
         console.log(err);
         dispatch(setRequestLoading(false));
@@ -741,7 +785,7 @@ export const openPrivateMessage = (seedConvo: Conversation, uid: string, userCon
         }));
     } else {
         dispatch(setConvo({}));
-        const storedSecretKey = await secureStore.getSecretKeyForKey(uid, seedConvo.id)
+        const storedSecretKey = await secureStore.getSecretKeyForKey(uid, existingCid)
         dispatch(pullConversation(existingCid, api, storedSecretKey));
     }
 };

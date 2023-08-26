@@ -8,12 +8,13 @@ import { getUserData } from '../utils/identityUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import SocketContext from '../contexts/SocketContext';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { initReduxUser, setConversations } from '../redux/slices/userDataSlice';
+import { initReduxUser, logOutUser, setConversations } from '../redux/slices/userDataSlice';
 import { storeUserData, getStoredUserData, deleteStoredUserData } from '../localStore/store';
 import Spinner from 'react-native-spinkit';
 import { Center } from 'native-base';
 import NetworkContext from '../contexts/NetworkContext';
 import secureStore from '../localStore/secureStore';
+import { encodeKey } from '../utils/encryptionUtils';
 
 export default function AuthIdentityController(props: PropsWithChildren<{children: ReactNode}>): JSX.Element {
     const { children } = props;
@@ -32,6 +33,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
         await deleteStoredUserData();
         await auth().signOut();
         setUser(undefined);
+        dispatch(logOutUser())
         setIsAuthenticated(false);
     };
 
@@ -83,6 +85,17 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
             }
         }
     }, [socket]);
+
+    const initUserKeyInfo = useCallback((newKey: Uint8Array, keySalt: string) => {
+        if (user) {
+            setUser({
+                ...user,
+                publicKey: encodeKey(newKey),
+                keySalt,
+                secrets: undefined
+            });
+        }
+    }, [user]);
 
     useEffect(() => {
         const unsubscribe = auth().onAuthStateChanged(async (authUser) => {
@@ -158,6 +171,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
         user, 
         isAuthenticated, 
         logOut, 
+        initUserKeyInfo,
         createUser,
         modifyUser}}>
         {isAuthenticated ? 

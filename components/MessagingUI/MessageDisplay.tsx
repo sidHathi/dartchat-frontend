@@ -208,29 +208,31 @@ export default function MessageDisplay({
                         </Center>
                         {message.likes?.length > 0 && message.messageType !== 'deletion' &&
                         <Box>
-                            <ScrollView horizontal w='100%'>
+                            <ScrollView horizontal={true} w='100%'>
                             <HStack space={2}>
                                 {
                                     message.likes.map((like, idx) => {
                                         if (like in participants && participants[like].avatar) {
                                             return (
-                                            <IconImage
-                                                key={idx}
-                                                imageUri={participants[like]?.avatar?.tinyUri as string}
-                                                size={24}
-                                                onPress={() => handleProfileSelect && participants[like] &&handleProfileSelect(participants[like])}
-                                            />
+                                            <Pressable key={idx}>
+                                                <IconImage
+                                                    imageUri={participants[like]?.avatar?.tinyUri as string}
+                                                    size={24}
+                                                    onPress={() => handleProfileSelect && participants[like] &&handleProfileSelect(participants[like])}
+                                                />
+                                            </Pressable>
                                             );
                                         }
                                         else {
                                             return (
-                                            <IconButton
-                                                key={idx}
-                                                label='profile'
-                                                size={24}
-                                                onPress={() => handleProfileSelect && participants[like] &&handleProfileSelect(participants[like])}
-                                                shadow='none'
-                                            />
+                                            <Pressable key={idx}>
+                                                <IconButton
+                                                    label='profile'
+                                                    size={24}
+                                                    onPress={() => handleProfileSelect && participants[like] &&handleProfileSelect(participants[like])}
+                                                    shadow='none'
+                                                />
+                                            </Pressable>
                                             );
                                         }
                                     })
@@ -244,7 +246,7 @@ export default function MessageDisplay({
                 }
             </VStack>
             <Spacer />
-            <VStack paddingTop={isSystemMessage ? '6px': '12px'} space={3} mb={isSystemMessage ? '12px': '0px'}>
+            <VStack paddingTop={isSystemMessage ? '6px': '12px'} space={3} mb={isSystemMessage ? '6px': '0px'}>
                 {
                     (message.delivered === undefined || message.delivered) ?
                     <LikeButton message={message} onPress={handleLike} /> :

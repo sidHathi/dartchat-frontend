@@ -60,24 +60,24 @@ export default function NavContainer({ children }:
         </Box>
         <Center marginTop='-90px' zIndex='1002'>
             <HStack>
-            <Box w='150px' h='50px' backgroundColor='#111' borderRadius='30px' shadow='9' marginX='5px'>
-                <Center h='50px'>
+            <Box w='160px' h='60px' backgroundColor='#111' borderRadius='30px' shadow='9' marginX='5px'>
+                <Center h='60px'>
                     <HStack w='90px'>
                         <Pressable opacity={navState.screen === 'conversations' ? 1 : 0.5} onPress={() => navSwitch('conversations')}>
-                            <Entypo name="home" size={25} color="white" />
+                            <Entypo name="home" size={28} color="white" />
                         </Pressable>
                         <Spacer />
                         <Pressable opacity={navState.screen === 'social' ? 1 : 0.5}
                             onPress={() => navSwitch('social')}>
-                            <Ionicons name="people" size={25} color="white" />
+                            <Ionicons name="people" size={28} color="white" />
                         </Pressable>
                     </HStack>
                 </Center>
             </Box>
-            <Box w='50px' h='50px' backgroundColor='#111' borderRadius='30px' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
-                <Center h='50px'>
+            <Box w='60px' h='60px' backgroundColor='#111' borderRadius='30px' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
+                <Center h='60px'>
                     <Pressable onPress={handleNewMessage}>
-                        <MaterialCommunityIcons name="message-draw" size={25} color="white" />
+                        <MaterialCommunityIcons name="message-draw" size={28} color="white" />
                     </Pressable>
                 </Center>
             </Box>

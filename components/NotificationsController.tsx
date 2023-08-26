@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { AppState } from 'react-native';
 import useRequest from '../requests/useRequest';
-import { chatSelector, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConvo, updateUserRole } from '../redux/slices/chatSlice';
+import { chatSelector, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConvo, setSecretKey, updateUserRole } from '../redux/slices/chatSlice';
 import { getUserData } from '../utils/identityUtils';
 import { addConversation, handleNewMessage, handleRoleUpdate, pullLatestPreviews, setConversations, userDataSelector } from '../redux/slices/userDataSlice';
 import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } from '../localStore/store';
@@ -104,14 +104,24 @@ export default function NotificationsController(): JSX.Element {
                         case 'secrets':
                             const parsedPNS = parsePNSecrets(messageData.stringifiedBody);
                             if (parsedPNS && user) {
-                                if (!userConversations.find((c) => c.cid === parsedPNS.cid)) return;
-                                if (!(user.id in parsedPNS.newKeyMap)) return;
-                                if (parsedPNS.cid === currentConvo?.id) {
-                                    if (parsedPNS.newPublicKey === currentConvo?.publicKey) return;
-                                    dispatch(setCCPublicKey(parsedPNS.newPublicKey));
+                                try {
+                                    if (!userConversations.find((c) => c.cid === parsedPNS.cid)) return;
+                                    if (parsedPNS.cid === currentConvo?.id) {
+                                        if (parsedPNS.newPublicKey === currentConvo?.publicKey) return;
+                                        dispatch(setCCPublicKey(parsedPNS.newPublicKey));
+                                    }
+                                    if (!(user.id in parsedPNS.newKeyMap)) return;
+                                    const newSecretKey = parsedPNS.newKeyMap[user.id];
+                                    const updatedConvo = await conversationsApi.getConversationInfo(parsedPNS.cid);
+                                    if (updatedConvo.publicKey && newSecretKey) {
+                                        const secretKey = await handleNewEncryptedConversation(parsedPNS.cid, newSecretKey, updatedConvo.publicKey);
+                                        if (parsedPNS.cid === currentConvo?.id && secretKey) {
+                                            dispatch(setSecretKey(secretKey))
+                                        }   
+                                    }     
+                                } catch (err) {
+                                    console.log(err);
                                 }
-                                const newSecretKey = parsedPNS.newKeyMap[user.id]
-                                await handleNewEncryptedConversation(parsedPNS.cid, newSecretKey, parsedPNS.newPublicKey);
                             }
                             break;
                         case 'deleteMessage':
@@ -134,13 +144,26 @@ export default function NotificationsController(): JSX.Element {
                                 dispatch(handleRoleUpdate({cid, newRole}))
                             }
                             break;
+                        case 'addedToConvo':
+                            const parsedPNAC = parsePNNewConvo(messageData.stringifiedBody);
+                            if (parsedPNAC && user) {
+                                if (userConversations.map(c => c.cid).includes(parsedPNAC.convo.id)) return; 
+                                const completedConvo = await constructNewConvo(parsedPNAC.convo, user);
+                                let secretKey: Uint8Array | undefined = undefined;
+                                if (completedConvo.publicKey && parsedPNAC.keyMap && parsedPNAC.keyMap[user.id]) {
+                                    secretKey = await handleNewEncryptedConversation(completedConvo.id, parsedPNAC.keyMap[user.id], completedConvo.publicKey);
+                                }
+                                dispatch(pullLatestPreviews(usersApi));
+                                socket?.emit('joinRoom', userConversations.map((c: ConversationPreview) => c.cid));
+                            }
+                            break;
                     }
                 }
             }
         });
 
         return unsubscribe();
-    }, [currentConvo, socket, socketDisconnected, user, userConversations]);
+    }, [currentConvo, socket, socketDisconnected, user, userConversations, secrets, handleNewEncryptedConversation]);
 
     const handleNotificationSelect = (pnData: PNPacket) => {
         if (pnData.type && (pnData.type === 'message' || pnData.type === 'like' || pnData.type === 'newConvo')) {
