@@ -116,7 +116,8 @@ export default function PollBuilder({
             senderProfile: userMatches.length > 0 ? userMatches[0] : undefined,
             objectRef: ref,
             messageType: 'user',
-            encryptionLevel: 'none'
+            encryptionLevel: 'none',
+            inGallery: false
         };
 
         const userSecretKey = secrets ? secrets.userSecretKey : undefined;

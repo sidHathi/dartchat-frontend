@@ -1,8 +1,9 @@
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { setBackgroundUpdateFlag } from '../localStore/store';
-import notifee from '@notifee/react-native';
+import notifee, { EventType } from '@notifee/react-native';
 import { PNPacket } from '../types/types';
 import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationInfo, handleBackgroundConversationKey, parsePNDisplay, parsePNNewConvo } from '../utils/notificationUtils';
+import notificationStore from '../localStore/notificationStore';
 
 const displayNotification = async (displayFields: {
     title: string,
@@ -16,7 +17,17 @@ const displayNotification = async (displayFields: {
             channelId: type,
         },
     });
-}
+};
+
+export const setBackgroundHandler = () => notifee.onBackgroundEvent(async ({ type, detail }) => {
+    if (type === EventType.PRESS) {
+        await setBackgroundUpdateFlag(true);
+        if (detail?.notification?.data) {
+            console.log(detail?.notification?.data);
+            await notificationStore.setNotificationAction(JSON.stringify(detail.notification.data));
+        }
+    }
+});
 
 export const requestUserPermission = async () => {
     const authStatus = await messaging().requestPermission();
@@ -27,12 +38,11 @@ export const requestUserPermission = async () => {
     if (enabled) {
         console.log('Authorization status:', authStatus);
     }
-}
+};
 
 export const setBackgroundNotifications = () => messaging().setBackgroundMessageHandler(async remoteMessage => {
     await setBackgroundUpdateFlag(true);
     if (!remoteMessage.data) return;
-    console.log(remoteMessage.data);
     if (remoteMessage.data.type === 'newConvo' && remoteMessage.data.stringifiedBody) {
         const parsedConvo = parsePNNewConvo(remoteMessage.data.stringifiedBody as string);
         parsedConvo && await handleBackgroundConversationInfo(parsedConvo.convo);
@@ -52,7 +62,12 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
                 body: 'no body'
             }, remoteMessage.data.type);
         }
-    } else {
+    } else if (remoteMessage.data.type === 'like') {
         displayNotification(getUnencryptedDisplayFields(remoteMessage.data as PNPacket), remoteMessage.data.type);
+    } else {
+        displayNotification({
+            title: 'Unrecognized type',
+            body: JSON.stringify(remoteMessage.data)
+        }, remoteMessage.data.type);
     }
 });

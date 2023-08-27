@@ -201,16 +201,18 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                     body: 'error',
                 };
                 const mentionFields = extractMentionNotification(decrypted, storedUserData.id, storedPreview);
-                if (mentionFields) {
+                if (mentionFields !== undefined) {
                     return mentionFields;
                 }
                 const decryptedContents = getPossiblyDecryptedMessageContents(decrypted);
                 if (decryptedContents) {
+                    const showPrefix = (storedPreview.group && decrypted.senderProfile)
+                    const bodyPrefix = showPrefix ? `${decrypted.senderProfile?.displayName}: `: '';
                     return {
-                        title: storedPreview.name,
-                        body: decryptedContents,
+                        title: ((!showPrefix && decrypted.senderProfile) ? decrypted.senderProfile?.displayName : storedPreview.name),
+                        body: `${bodyPrefix}${decryptedContents}`,
                         imageUri: storedPreview.avatar?.tinyUri
-                    }
+                    };
                 } else {
                     return {
                         title: 'unable to find message contents',
@@ -255,23 +257,14 @@ export const getUnencryptedDisplayFields = (notif: PNPacket) => {
 export const extractMentionNotification = (message: DecryptedMessage, storedUid: string, storedPreview?: ConversationPreview) => {
     if (!message.mentions || !storedPreview) return undefined;
     try {
-        let constructedNotifBody: string | undefined = undefined;
         const sender = message.senderProfile;
-        message.mentions.forEach((m) => {
-            if (m.id === storedUid) {
-                if (storedPreview && sender) {
-                    constructedNotifBody = `${sender.displayName} mentioned you in ${storedPreview.name}`;
-                }
-            }
-        });
-        if (constructedNotifBody) {
-            return {
-                title: storedPreview.name,
-                body: constructedNotifBody,
-                imageUri: storedPreview.avatar?.tinyUri
-            }
+        const mention = message.mentions.find((m) => m.id === storedUid);
+        if (!mention) return undefined;
+        const constructedNotifBody = `${sender?.displayName || 'Someone'} mentioned you in ${storedPreview?.name || 'the chat'}`;
+        return {
+            title: storedPreview.name,
+            body: constructedNotifBody
         }
-        return undefined;
     } catch (err) {
         console.log(err);
         return undefined

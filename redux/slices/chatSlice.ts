@@ -16,6 +16,7 @@ const initialState: {
     requestLoading: boolean;
     conversationLoading: boolean
     pageLoading: boolean;
+    notificationLoading: boolean;
     silent: boolean;
     pageStartIndex: number;
     scrollToPageStart: boolean;
@@ -29,6 +30,7 @@ const initialState: {
     needsScroll: false,
     requestLoading: false,
     conversationLoading: false,
+    notificationLoading: false,
     pageLoading: false,
     silent: false,
     pageStartIndex: 1,
@@ -533,6 +535,12 @@ export const chatSlice = createSlice({
                 pageStartIndex: action.payload
             }
         },
+        setNotificationLoading: (state, action: PayloadAction<boolean>) => {
+            return {
+                ...state,
+                notificationLoading: action.payload
+            }
+        }
     }
 });
 
@@ -570,7 +578,8 @@ export const {
     setScroll,
     setPageStartIndex,
     setConversationLoading,
-    setPageLoading
+    setPageLoading,
+    setNotificationLoading
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {

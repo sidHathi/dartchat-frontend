@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { AppState } from 'react-native';
 import useRequest from '../requests/useRequest';
-import { chatSelector, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConvo, setSecretKey, updateUserRole } from '../redux/slices/chatSlice';
+import { chatSelector, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConvo, setNotificationLoading, setSecretKey, updateUserRole } from '../redux/slices/chatSlice';
 import { getUserData } from '../utils/identityUtils';
 import { addConversation, handleNewMessage, handleRoleUpdate, pullLatestPreviews, setConversations, userDataSelector } from '../redux/slices/userDataSlice';
 import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } from '../localStore/store';
@@ -15,6 +15,7 @@ import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import UIContext from '../contexts/UIContext';
 import { ConversationPreview, DecryptedMessage } from '../types/types';
 import UserSecretsContext from '../contexts/UserSecretsContext';
+import notifee, { EventType } from '@notifee/react-native';
 
 export default function NotificationsController(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -166,6 +167,7 @@ export default function NotificationsController(): JSX.Element {
     }, [currentConvo, socket, socketDisconnected, user, userConversations, secrets, handleNewEncryptedConversation]);
 
     const handleNotificationSelect = (pnData: PNPacket) => {
+        console.log(pnData);
         if (pnData.type && (pnData.type === 'message' || pnData.type === 'like' || pnData.type === 'newConvo')) {
             let parsed: {
                 cid: string;
@@ -201,27 +203,75 @@ export default function NotificationsController(): JSX.Element {
                 navSwitch('conversations');
             }));
         }
-    }
+    };
+
+    const handleNotifeeOpenEvent = async () => {
+        console.log('DEPRECATED NOTIFEE HANDLER TRIGGERED');
+        dispatch(setNotificationLoading(true));
+        const initialNotification = await notifee.getInitialNotification();
+        console.log(initialNotification);
+
+        if (!initialNotification?.notification.data) {
+            dispatch(setNotificationLoading(false));
+            return;
+        }
+        await handleNotificationSelect(initialNotification.notification.data as PNPacket);
+    };
+
+    // useEffect(() => {
+    //     const unsubscribe = messaging().onNotificationOpenedApp(async (notification) => {
+    //         if (notification.data) {
+    //             const pnData: PNPacket = notification.data as PNPacket;
+    //             handleNotificationSelect(pnData);
+    //         }
+    //     });
+    //     return unsubscribe();
+    // }, []);
+
+    // useEffect(() => {
+    //     messaging()
+    //         .getInitialNotification()
+    //         .then(notification => {
+    //             if (notification?.data) {
+    //                 const pnData: PNPacket = notification.data as PNPacket;
+    //                 handleNotificationSelect(pnData);
+    //             }
+    //         });
+    // }, []);
+
+    // useEffect(() => {
+    //     handleNotifeeOpenEvent()
+    //         .then(() => {
+    //             dispatch(setNotificationLoading(false));
+    //         })
+    //         .catch((err) => {
+    //             console.log(err);
+    //             dispatch(setNotificationLoading(false));
+    //         })
+    // }, []);
 
     useEffect(() => {
-        const unsubscribe = messaging().onNotificationOpenedApp(async (notification) => {
-            if (notification.data) {
-                const pnData: PNPacket = notification.data as PNPacket;
-                handleNotificationSelect(pnData);
+        return notifee.onForegroundEvent(({ type, detail }) => {
+            console.log('NOTIFEE HANDLER TRIGGERED');
+            console.log(detail.notification);
+            switch (type) {
+                case EventType.DISMISSED:
+                    console.log('User dismissed notification', detail.notification);
+                    break;
+                case EventType.PRESS:
+                    console.log('User pressed notification', detail.notification?.data);
+                    if (detail?.notification?.data) {
+                        dispatch(setNotificationLoading(true));
+                        handleNotificationSelect(detail.notification.data as PNPacket)
+                        dispatch(setNotificationLoading(false));
+                    }
+                    break;
             }
-        });
-        return unsubscribe();
+        })();
     }, []);
 
     useEffect(() => {
-        messaging()
-            .getInitialNotification()
-            .then(notification => {
-                if (notification?.data) {
-                    const pnData: PNPacket = notification.data as PNPacket;
-                    handleNotificationSelect(pnData);
-                }
-            });
+        
     }, []);
 
     useEffect(() => {

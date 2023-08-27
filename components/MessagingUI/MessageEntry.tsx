@@ -134,6 +134,7 @@ export default function MessageEntry({
             senderId: user.id,
             likes: [],
             replyRef,
+            inGallery: messageMedia !== undefined,
             media: messageMedia,
             senderProfile: userProfile,
             mentions: mentions,

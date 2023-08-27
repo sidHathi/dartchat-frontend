@@ -33,25 +33,13 @@ export default function MessageList({
 }): JSX.Element {
     const dispatch = useAppDispatch();
     const listRef = useRef<FlatList | null>(null);
-    const { currentConvo, pageLoading, messageCursor, pageStartIndex, scrollToPageStart } = useAppSelector(chatSelector);
+    const { currentConvo, pageLoading, messageCursor } = useAppSelector(chatSelector);
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { conversationsApi } = useRequest();
 
     const [indexMap, setIndexMap] = useState<{[id: string]: number}>({});
     const [replyFetch, setReplyFetch] = useState<string | undefined>();
-    const [initialized, setInitialized] = useState(false);
-
-    // useEffect(() => {
-    //     if (!currentConvo || initialized) return;
-    //     if (currentConvo.messages.length > pageStartIndex) {
-    //         listRef.current?.scrollToIndex({
-    //             index: pageStartIndex - 1,
-    //             animated: false
-    //         });
-    //         setInitialized(true);
-    //     }
-    // }, [currentConvo, initialized, pageStartIndex]);
 
     const goToReply = (message: Message) => {
         setSelectedMid(undefined);
@@ -106,19 +94,6 @@ export default function MessageList({
             setReplyFetch(undefined);
         }
     }, [indexMap, replyFetch, currentConvo, pageLoading]);
-
-    // useEffect(() => {
-    //     if (!currentConvo || !scrollToPageStart || (currentConvo.messages.length <= pageStartIndex)) return;
-    //     const scroll = async () => {
-    //         console.log(`scrolling to ${pageStartIndex}`)
-    //         listRef.current?.scrollToIndex({
-    //             index: pageStartIndex - 1,
-    //             animated: false
-    //         });
-    //         dispatch(setScroll(false));
-    //     }
-    //     scroll();
-    // }, [currentConvo, scrollToPageStart]);
 
     useEffect(() => {
         if (!currentConvo || pageLoading) return;

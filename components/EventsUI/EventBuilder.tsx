@@ -197,6 +197,7 @@ export default function EventBuilder({
                     objectRef: ref,
                     messageType: 'user',
                     encryptionLevel: 'none',
+                    inGallery: false,
                 }
 
                 const userSecretKey = secrets ? secrets.userSecretKey : undefined;
