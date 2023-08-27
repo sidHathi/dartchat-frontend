@@ -63,7 +63,6 @@ export default function NotificationsController(): JSX.Element {
                         case 'message':
                             const parsedPNM = parsePNMessage(messageData.stringifiedBody);
                             if (parsedPNM && parsedPNM.cid === currentConvo?.id) {
-                                socket?.emit('messagesRead', currentConvo?.id);
                                 dispatch(receiveNewMessage({message: parsedPNM.message, cid: parsedPNM.cid}));
                             }
                             if (parsedPNM) {

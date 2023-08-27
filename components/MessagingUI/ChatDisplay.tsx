@@ -23,7 +23,7 @@ export default function ChatDisplay({closeOverlays}: {
 
     const { currentConvo } = useAppSelector(chatSelector);
     const dispatch = useAppDispatch();
-    const { socket, resetSocket } = useContext(SocketContext);
+    const { socket, resetSocket, disconnected: socketDisconnected } = useContext(SocketContext);
 
     const [selectedMid, setSelectedMid] = useState<string | undefined>(undefined);
     const [replyMessage, setReplyMessage] = useState<DecryptedMessage | undefined>(undefined);
@@ -48,10 +48,14 @@ export default function ChatDisplay({closeOverlays}: {
     }, []);
 
     useEffect(() => {
-        if (!socket || !socket.connected) {
+        if (!socket || socketDisconnected) {
             resetSocket();
         }
     }, []);
+
+    useEffect(() => {
+        currentConvo && socket?.emit('messagesRead', currentConvo.id);
+    }, [socket, currentConvo])
 
     const getCurrentProfileForId = useCallback((id: string) => {
         return currentConvo?.participants.find((p) => p.id === id);

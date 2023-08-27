@@ -39,6 +39,10 @@ export const parseConversation = (data: any) : Conversation => {
     try {
         const casted = data as RawConversation;
         if (!casted.messages || casted.messages.length < 1) return data;
+        if (casted.keyInfo) {
+            console.log('key info date:');
+            console.log(casted.keyInfo.createdAt);
+        }
         return {
             ...casted,
             messages: casted.messages.map((m) => parseSocketMessage(m)),

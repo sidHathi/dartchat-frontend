@@ -19,6 +19,7 @@ import { chatSelector, leaveChat, pullConversation, setConvo } from "../../redux
 import NetworkContext from "../../contexts/NetworkContext";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
 import LeaveChatScreen from "../ChatSettingsUI/LeaveChatScreen";
+import notifee from '@notifee/react-native';
 
 export default function ChatSelector({
     openChat,
@@ -27,7 +28,7 @@ export default function ChatSelector({
     openChat: () => void;
     closeChat: () => void;
 }): JSX.Element {
-    const { socket, resetSocket } = useContext(SocketContext);
+    const { socket, resetSocket, disconnected: socketDisconnected } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { networkConnected } = useContext(NetworkContext);
     const { secrets } = useContext(UserSecretsContext);
@@ -43,14 +44,21 @@ export default function ChatSelector({
     const [confirmLeaveModalOpen, setConfirmLeaveModalOpen] = useState(false);
 
     useEffect(() => {
-        if (!socket || socket.connected) {
+        if (!socket || socketDisconnected) {
             resetSocket();
         }
+    }, []);
+
+    useEffect(() => {
+        const unreads = userConversations.reduce((acc, preview) => {
+            return acc + preview.unSeenMessages;
+        }, 0);
+        notifee.setBadgeCount(unreads);
     }, [userConversations])
 
     const handleSelect = useCallback((chat: ConversationPreview) => {
         if (!networkConnected) return;
-        if (!socket || !socket.connected) {
+        if (!socket || socketDisconnected) {
             resetSocket();
         }
         
@@ -60,10 +68,10 @@ export default function ChatSelector({
         }));
         dispatch(readConversationMessages(chat.cid));
         if (socket) {
-            socket.emit("messagesRead", chat.cid);
+            socket.emit('messagesRead', chat.cid);
         }
         openChat();
-    }, [secrets, socket, resetSocket]);
+    }, [secrets, socket, resetSocket, socketDisconnected]);
 
     const handleDelete = async (chat: ConversationPreview | undefined) => {
         if (!chat || !user || !user.conversations) return;
@@ -80,19 +88,6 @@ export default function ChatSelector({
             console.log(err);
         }
     };
-
-    const handleLeaveChat = useCallback(async () => {
-        if (!upForLeave || !user || !socket) return;
-
-        try {
-            await conversationsApi.leaveChat(upForLeave.cid);
-            dispatch(handleUserConvoLeave(upForLeave.cid));
-            socket && socket.emit('removeConversationUser', upForLeave.cid, buildDefaultProfileForUser(user));
-            setConfirmLeaveModalOpen(false);
-        } catch (err) {
-            console.log(err);
-        }
-    }, [upForLeave, user, socket]);
 
     const closeModal = () => setDcModalOpen(false);
 

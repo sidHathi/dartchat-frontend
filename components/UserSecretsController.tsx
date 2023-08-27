@@ -77,8 +77,6 @@ export default function UserSecretsController({
                 ...currSecrets,
                 ...updates,
             };
-            console.log('new user secrets:')
-            console.log(newSecrets);
             if (await updateDBSecrets(newSecrets)) {
                 await usersApi.readConversationKeyUpdates(Object.keys(updates));
                 setSecrets(newSecrets);

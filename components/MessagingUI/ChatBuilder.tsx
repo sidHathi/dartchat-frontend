@@ -154,7 +154,12 @@ export default function ChatBuilder({exit}: {
             group: isGroup,
             avatar,
             encryptionLevel: encrypted ? 'encrypted' : 'none',
-            publicKey
+            publicKey,
+            keyInfo: publicKey ? {
+                createdAt: new Date(),
+                privilegedUsers: participants.map(p => p.id),
+                numberOfMessages: 0
+            } : undefined
         };
 
         console.log('creating chat');

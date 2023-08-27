@@ -12,6 +12,9 @@ const displayNotification = async (displayFields: {
     id?: string,
     data?: any,
 }, type: string) => {
+    if (type === 'message') {
+        await notifee.incrementBadgeCount();
+    }
     notifee.displayNotification({
         title: displayFields.title,
         body: displayFields.body,
@@ -30,8 +33,11 @@ export const setBackgroundHandler = () => notifee.onBackgroundEvent(async ({ typ
         await setBackgroundUpdateFlag(true);
         if (detail?.notification?.data) {
             console.log(detail?.notification?.data);
+            await notifee.decrementBadgeCount();
             await notificationStore.setNotificationAction(JSON.stringify(detail.notification.data));
         }
+    } else if (type === EventType.DISMISSED) {
+        await notifee.decrementBadgeCount();
     } else {
         await setBackgroundUpdateFlag(true);
         console.log('notification received');

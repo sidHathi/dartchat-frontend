@@ -46,13 +46,28 @@ export const getMentionsFromMessage = (mText: string, profiles: UserConversation
 };
 
 export const getDateTimeString = (date: Date): string => {
-    const stringRep = date.toLocaleString([], {year: 'numeric', month: 'long', day: '2-digit', hour: '2-digit', minute:'2-digit'});
-    return stringRep;
+    try {
+        const stringRep = date.toLocaleString([], {year: 'numeric', month: 'long', day: '2-digit', hour: '2-digit', minute:'2-digit'});
+        if (stringRep === 'Invalid Date') {
+            console.log(date);
+        }
+        return stringRep;
+    } catch (err) {
+        console.log('date error:');
+        console.log(date);
+        return 'Invalid date';
+    }
 };
 
 export const getTimeString = (date: Date): string => {
-    const stringRep = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    return stringRep;
+    try {
+        const stringRep = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        return stringRep;
+    } catch (err) {
+        console.log('date error:');
+        console.log(date);
+        return 'Invalid date';
+    }
 };
 
 export const selectIconImage = async (
