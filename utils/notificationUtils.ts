@@ -174,6 +174,8 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
     title: string;
     body: string;
     imageUri?: string;
+    id?: string;
+    data?: any;
 } | undefined> => {
     try {
         switch (notif.type) {
@@ -202,15 +204,20 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                 };
                 const mentionFields = extractMentionNotification(decrypted, storedUserData.id, storedPreview);
                 if (mentionFields !== undefined) {
-                    return mentionFields;
+                    return {
+                        ...mentionFields,
+                        data: notif
+                    };
                 }
                 const decryptedContents = getPossiblyDecryptedMessageContents(decrypted);
                 if (decryptedContents) {
                     const showPrefix = (storedPreview.group && decrypted.senderProfile)
                     const bodyPrefix = showPrefix ? `${decrypted.senderProfile?.displayName}: `: '';
                     return {
+                        id: decrypted.id,
                         title: ((!showPrefix && decrypted.senderProfile) ? decrypted.senderProfile?.displayName : storedPreview.name),
                         body: `${bodyPrefix}${decryptedContents}`,
+                        data: notif,
                         imageUri: storedPreview.avatar?.tinyUri
                     };
                 } else {
@@ -247,7 +254,10 @@ export const getUnencryptedDisplayFields = (notif: PNPacket) => {
     if (!notif.stringifiedDisplay) return undefined;
     try {
         const parsedDisplay = JSON.parse(notif.stringifiedDisplay);
-        if ('title' in parsedDisplay) return parsedDisplay;
+        if ('title' in parsedDisplay) return {
+            ...parsedDisplay,
+            data: notif as any
+        };
     } catch (err) {
         console.log(err);
         return undefined;
@@ -262,6 +272,7 @@ export const extractMentionNotification = (message: DecryptedMessage, storedUid:
         if (!mention) return undefined;
         const constructedNotifBody = `${sender?.displayName || 'Someone'} mentioned you in ${storedPreview?.name || 'the chat'}`;
         return {
+            id: message.id,
             title: storedPreview.name,
             body: constructedNotifBody
         }

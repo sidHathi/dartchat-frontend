@@ -9,10 +9,13 @@ const displayNotification = async (displayFields: {
     title: string,
     body: string,
     imageUri?: string,
+    id?: string,
+    data?: any,
 }, type: string) => {
     notifee.displayNotification({
         title: displayFields.title,
         body: displayFields.body,
+        data: displayFields.data || {},
         android: {
             channelId: type,
         },
@@ -20,12 +23,18 @@ const displayNotification = async (displayFields: {
 };
 
 export const setBackgroundHandler = () => notifee.onBackgroundEvent(async ({ type, detail }) => {
+    console.log('NOTIF EVENT');
+    console.log(type);
+    console.log(detail);
     if (type === EventType.PRESS) {
         await setBackgroundUpdateFlag(true);
         if (detail?.notification?.data) {
             console.log(detail?.notification?.data);
             await notificationStore.setNotificationAction(JSON.stringify(detail.notification.data));
         }
+    } else {
+        await setBackgroundUpdateFlag(true);
+        console.log('notification received');
     }
 });
 

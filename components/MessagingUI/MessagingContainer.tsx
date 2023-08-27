@@ -7,17 +7,17 @@ import Spinner from 'react-native-spinkit';
 import ChatController from './ChatController';
 
 export default function MessagingContainer({exit}: {exit: () => void}): JSX.Element {
-    const { conversationSet, conversationLoading } = useAppSelector(chatSelector);
+    const { conversationSet, conversationLoading, notificationLoading } = useAppSelector(chatSelector);
 
     const ChatGuard = useMemo((): JSX.Element => {
-        if (conversationLoading) {
+        if (conversationLoading || notificationLoading) {
             return <Center w='100%' h='100%' bgColor='#f5f5f5'>
                 <Spinner type='ThreeBounce' color='#111' />
             </Center>
         }
         else if (!conversationSet) return <ChatBuilder exit={exit} />
         return <ChatController exit={exit} />
-    }, [conversationSet, conversationLoading]);
+    }, [conversationSet, conversationLoading, notificationLoading]);
 
-    return conversationSet ? <ChatController exit={exit} /> : ChatGuard;
+    return (conversationSet) ? <ChatController exit={exit} /> : ChatGuard;
 }

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PNPacket } from '../types/types';
 
 const setNotificationAction = async (notifBody: string) => {
     try {
@@ -7,6 +8,18 @@ const setNotificationAction = async (notifBody: string) => {
     } catch (err) {
         console.log(err);
         return false;
+    }
+};
+
+const getNotificationAction = async () => {
+    try {
+        const action = await AsyncStorage.getItem('notification-action');
+        if (!action) return undefined;
+        const parsedAction = JSON.parse(action) as PNPacket;
+        return parsedAction;
+    } catch (err) {
+        console.log(err);
+        return undefined;
     }
 };
 
@@ -22,7 +35,8 @@ const clearNotificationAction = async () => {
 
 const notificationStore = {
     setNotificationAction,
-    clearNotificationAction
+    clearNotificationAction,
+    getNotificationAction
 };
 
 export default notificationStore;

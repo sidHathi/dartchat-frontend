@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { AppState } from 'react-native';
 import useRequest from '../requests/useRequest';
-import { chatSelector, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConvo, setNotificationLoading, setSecretKey, updateUserRole } from '../redux/slices/chatSlice';
+import { chatSelector, exitConvo, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConversationLoading, setConvo, setNotificationLoading, setNotificationSelection, setSecretKey, updateUserRole } from '../redux/slices/chatSlice';
 import { getUserData } from '../utils/identityUtils';
 import { addConversation, handleNewMessage, handleRoleUpdate, pullLatestPreviews, setConversations, userDataSelector } from '../redux/slices/userDataSlice';
 import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } from '../localStore/store';
@@ -16,6 +16,7 @@ import UIContext from '../contexts/UIContext';
 import { ConversationPreview, DecryptedMessage } from '../types/types';
 import UserSecretsContext from '../contexts/UserSecretsContext';
 import notifee, { EventType } from '@notifee/react-native';
+import notificationStore from '../localStore/notificationStore';
 
 export default function NotificationsController(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -167,14 +168,20 @@ export default function NotificationsController(): JSX.Element {
     }, [currentConvo, socket, socketDisconnected, user, userConversations, secrets, handleNewEncryptedConversation]);
 
     const handleNotificationSelect = (pnData: PNPacket) => {
-        console.log(pnData);
         if (pnData.type && (pnData.type === 'message' || pnData.type === 'like' || pnData.type === 'newConvo')) {
             let parsed: {
                 cid: string;
+                mid?: string;
             } | undefined;
             switch (pnData.type) {
                 case 'message':
-                    parsed = parsePNMessage(pnData.stringifiedBody);
+                    const parsedPNM = parsePNMessage(pnData.stringifiedBody);
+                    if (parsedPNM) {
+                        parsed = {
+                            cid: parsedPNM.cid,
+                            mid: parsedPNM.message.id
+                        }
+                    }
                     break;
                 case 'like':
                     parsed = parsePNLikeEvent(pnData.stringifiedBody);
@@ -190,13 +197,13 @@ export default function NotificationsController(): JSX.Element {
                     }
                     break;
             }
-            console.log(pnData);
-            console.log(`OPENEDPN: ${parsed}`);
+
             if (parsed) {
                 const secretKey = (secrets && parsed.cid in secrets) ? secrets[parsed.cid] : undefined;
-                dispatch(setConvo({ convo: undefined }));
+                dispatch(exitConvo());
                 navSwitch('messaging');
-                dispatch(pullConversation(parsed.cid, conversationsApi, secretKey))
+                dispatch(pullConversation(parsed.cid, conversationsApi, secretKey));
+                dispatch(setNotificationSelection(parsed.mid));
             }
         } else {
             dispatch(pullLatestPreviews(usersApi, () => {
@@ -206,7 +213,6 @@ export default function NotificationsController(): JSX.Element {
     };
 
     const handleNotifeeOpenEvent = async () => {
-        console.log('DEPRECATED NOTIFEE HANDLER TRIGGERED');
         dispatch(setNotificationLoading(true));
         const initialNotification = await notifee.getInitialNotification();
         console.log(initialNotification);
@@ -218,42 +224,30 @@ export default function NotificationsController(): JSX.Element {
         await handleNotificationSelect(initialNotification.notification.data as PNPacket);
     };
 
-    // useEffect(() => {
-    //     const unsubscribe = messaging().onNotificationOpenedApp(async (notification) => {
-    //         if (notification.data) {
-    //             const pnData: PNPacket = notification.data as PNPacket;
-    //             handleNotificationSelect(pnData);
-    //         }
-    //     });
-    //     return unsubscribe();
-    // }, []);
+    useEffect(() => {
+        const unsubscribe = messaging().onNotificationOpenedApp(async (notification) => {
+            console.log("FCM handler triggered");
+            if (notification.data) {
+                const pnData: PNPacket = notification.data as PNPacket;
+                handleNotificationSelect(pnData);
+            }
+        });
+        return unsubscribe();
+    }, []);
 
-    // useEffect(() => {
-    //     messaging()
-    //         .getInitialNotification()
-    //         .then(notification => {
-    //             if (notification?.data) {
-    //                 const pnData: PNPacket = notification.data as PNPacket;
-    //                 handleNotificationSelect(pnData);
-    //             }
-    //         });
-    // }, []);
-
-    // useEffect(() => {
-    //     handleNotifeeOpenEvent()
-    //         .then(() => {
-    //             dispatch(setNotificationLoading(false));
-    //         })
-    //         .catch((err) => {
-    //             console.log(err);
-    //             dispatch(setNotificationLoading(false));
-    //         })
-    // }, []);
+    useEffect(() => {
+        handleNotifeeOpenEvent()
+            .then(() => {
+                dispatch(setNotificationLoading(false));
+            })
+            .catch((err) => {
+                console.log(err);
+                dispatch(setNotificationLoading(false));
+            })
+    }, []);
 
     useEffect(() => {
         return notifee.onForegroundEvent(({ type, detail }) => {
-            console.log('NOTIFEE HANDLER TRIGGERED');
-            console.log(detail.notification);
             switch (type) {
                 case EventType.DISMISSED:
                     console.log('User dismissed notification', detail.notification);
@@ -266,12 +260,11 @@ export default function NotificationsController(): JSX.Element {
                         dispatch(setNotificationLoading(false));
                     }
                     break;
+                default:
+                    console.log('foreground notification received');
+                    break;
             }
-        })();
-    }, []);
-
-    useEffect(() => {
-        
+        });
     }, []);
 
     useEffect(() => {

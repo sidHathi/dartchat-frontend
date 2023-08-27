@@ -25,6 +25,7 @@ const initialState: {
     silentKeyMap?: { [key: string]: string };
     onSilentCreate?: () => void;
     secretKey?: Uint8Array;
+    notificationSelection?: string;
 } = {
     conversationSet: false,
     needsScroll: false,
@@ -540,6 +541,12 @@ export const chatSlice = createSlice({
                 ...state,
                 notificationLoading: action.payload
             }
+        },
+        setNotificationSelection: (state, action: PayloadAction<string | undefined>) => {
+            return {
+                ...state,
+                notificationSelection: action.payload
+            }
         }
     }
 });
@@ -579,7 +586,8 @@ export const {
     setPageStartIndex,
     setConversationLoading,
     setPageLoading,
-    setNotificationLoading
+    setNotificationLoading,
+    setNotificationSelection
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
@@ -602,7 +610,7 @@ export const pullConversation = (cid: string, api: ConversationsApi, secretKey?:
         onComplete && onComplete();
     } catch (err) {
         console.log(err);
-        dispatch(setRequestLoading(false));
+        dispatch(setConversationLoading(false));
         onFailure && onFailure();
         return;
     }

@@ -45,9 +45,9 @@ export default function MentionSelector({
                     </VStack>
                     <VStack>
                         <Spacer />
-                        <Text fontSize='xs'>{profile.displayName}</Text>
+                        <Text fontSize='sm' m='0px' fontWeight='bold' p='0px'>{profile.displayName}</Text>
                         {profile.handle && 
-                        <Text fontSize='9px'>{profile.handle}</Text>
+                        <Text fontSize='xs' mt='-2px' p='0px' color='gray.500'>{profile.handle}</Text>
                         }
                         <Spacer />
                     </VStack>

@@ -3,7 +3,7 @@ import { FlatList, NativeScrollEvent, NativeSyntheticEvent } from "react-native"
 import { Box, Center, Pressable, View, Text } from 'native-base';
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { chatSelector, loadAdditionalMessages, loadMessagesToDate, sendNewLike, setPageStartIndex, setScroll } from "../../redux/slices/chatSlice";
+import { chatSelector, loadAdditionalMessages, loadMessagesToDate, sendNewLike, setNotificationSelection, setPageStartIndex, setScroll } from "../../redux/slices/chatSlice";
 import { DecryptedMessage, Message, UserConversationProfile } from "../../types/types";
 import MessageDisplay from "./MessageDisplay";
 import SocketContext from "../../contexts/SocketContext";
@@ -33,7 +33,7 @@ export default function MessageList({
 }): JSX.Element {
     const dispatch = useAppDispatch();
     const listRef = useRef<FlatList | null>(null);
-    const { currentConvo, pageLoading, messageCursor } = useAppSelector(chatSelector);
+    const { currentConvo, pageLoading, messageCursor, notificationSelection } = useAppSelector(chatSelector);
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { conversationsApi } = useRequest();
@@ -41,17 +41,18 @@ export default function MessageList({
     const [indexMap, setIndexMap] = useState<{[id: string]: number}>({});
     const [replyFetch, setReplyFetch] = useState<string | undefined>();
 
-    const goToReply = (message: Message) => {
-        setSelectedMid(undefined);
-        if (message.replyRef && listRef.current && (message.replyRef.id in indexMap)) {
+    const goToId = useCallback((id: string) => {
+        if (!listRef.current) return;
+        if (id in indexMap) {
             listRef.current.scrollToIndex({
-                index: indexMap[message.replyRef.id],
+                index: indexMap[id],
                 animated: true,
                 viewPosition: 0.5
             });
-            setSelectedMid(message.replyRef.id);
-        } else if (message.replyRef && currentConvo) {
-            conversationsApi.getMessage(currentConvo.id, message.replyRef.id).  then((res) => {
+            setSelectedMid(id);
+        } else if (currentConvo) {
+            conversationsApi.getMessage(currentConvo.id, id)
+            .then((res) => {
                 dispatch(loadMessagesToDate(res.timestamp, conversationsApi));
                 setReplyFetch(res.id);
                 if (listRef.current) listRef.current.scrollToEnd();
@@ -60,35 +61,32 @@ export default function MessageList({
                 setReplyFetch(undefined);
             })
         }
-    };
+    }, [indexMap, listRef]);
+
+    const goToReply = useCallback((message: Message) => {
+        setSelectedMid(undefined);
+        message.replyRef && goToId(message.replyRef.id);
+    }, [goToId]);
 
     const goToLink = useCallback((message: Message) => {
         setSelectedMid(undefined);
-        if (message.messageLink && listRef.current && (message.messageLink in indexMap)) {
-            listRef.current.scrollToIndex({
-                index: indexMap[message.messageLink],
-                animated: true,
-                viewPosition: 0.5
-            });
-            setSelectedMid(message.messageLink);
-        } else if (message.messageLink && currentConvo) {
-            conversationsApi.getMessage(currentConvo.id, message.messageLink)
-                .then((res) => {
-                    dispatch(loadMessagesToDate(res.timestamp, conversationsApi));
-                    setReplyFetch(res.id);
-                    if (listRef.current) listRef.current.scrollToEnd();
-                }).catch((err) => {
-                    console.log(err);
-                    setReplyFetch(undefined);
-                })
+        message.messageLink && goToId(message.messageLink);
+    }, [goToId]);
+
+    useEffect(() => {
+        if (currentConvo && notificationSelection !== undefined && notificationSelection in indexMap) {
+            console.log('going to notification');
+            goToId(notificationSelection);
+            dispatch(setNotificationSelection(undefined));
         }
-    }, [indexMap, listRef]);
+    }, [notificationSelection, goToId, currentConvo, indexMap]);
 
     useEffect(() => {
         if (replyFetch && (replyFetch in indexMap) && currentConvo && indexMap[replyFetch] < currentConvo.messages.length) {
             listRef.current?.scrollToIndex({
                 index: indexMap[replyFetch],
-                animated: true
+                animated: true,
+                viewPosition: 0.5
             });
             setSelectedMid(replyFetch);
             setReplyFetch(undefined);
