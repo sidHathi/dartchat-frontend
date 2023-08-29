@@ -4,7 +4,7 @@ import { apiService } from "./request";
 import profilesApi, { ProfilesApi } from "./profilesApi";
 import usersApi, { UsersApi } from "./usersApi";
 import conversationsApi, { ConversationsApi } from "./conversationsApi";
-import { REACT_APP_API_URL } from '@env';
+import Config from "react-native-config";
 
 export type APISuite = {
     profilesApi: ProfilesApi;
@@ -13,7 +13,7 @@ export type APISuite = {
 };
 
 export default function useRequest(): APISuite {
-    const baseUrl: string = REACT_APP_API_URL || '';
+    const baseUrl: string = Config.REACT_APP_API_URL || '';
 
     useEffect(() => apiService.init(baseUrl));
 

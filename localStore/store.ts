@@ -29,3 +29,19 @@ export const deleteStoredUserData = async () => {
         console.error(err);
     }
 };
+
+export const setBackgroundUpdateFlag = async (needsUpdate: boolean) => {
+    try {
+        await AsyncStorage.setItem('backgroundUpdateFlag', needsUpdate.toString());
+    } catch (err) {
+        console.error(err);
+    }
+};
+
+export const getBackgroundUpdateFlag = async () => {
+    try {
+        return await AsyncStorage.getItem('backgroundUpdateFlag') === 'true';
+    } catch (err) {
+        console.error(err);
+    }
+};

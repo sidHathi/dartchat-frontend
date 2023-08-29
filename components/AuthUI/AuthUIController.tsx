@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 
-import { Center, Flex, Heading, VStack, Pressable, Text, View,  } from "native-base";
+import { Center, Flex, Heading, VStack, Pressable, Text, View, Box } from "native-base";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import { SvgXml } from "react-native-svg";
@@ -8,9 +8,11 @@ import DartChatLogoXML from "../../assets/DartChatLogoXML";
 import { GoogleSignin, statusCodes, GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useKeyboard } from "@react-native-community/hooks";
 
 export default function AuthUIController(): JSX.Element {
     const [signUp, setSignUp] = useState(false);
+    const { keyboardShown } = useKeyboard();
 
     const toggleSignup = () => {
         setSignUp(!signUp);
@@ -31,7 +33,7 @@ export default function AuthUIController(): JSX.Element {
     };
 
     return <Flex flex={1} bgColor='#fafafa' w='100%' h='100%'>
-        <View bgColor='#333' borderRadius={20} width='90%' m='auto' p='10' shadow='9'>
+        <View bgColor='#222' borderRadius={20} width='90%' m='auto' p='10' shadow='9' mt={keyboardShown ? '90px' : 'auto'}>
             <VStack>
                 <Center>
                     <SvgXml xml={DartChatLogoXML} height='20' width='100'/>
@@ -46,6 +48,7 @@ export default function AuthUIController(): JSX.Element {
                 <Center marginBottom='8px'>
                     <Text color='white' fontSize='xs'>or</Text>
                 </Center>
+                <Box mb='16px' borderRadius='30px'>
                 <FontAwesome.Button 
                     name="google" 
                     onPress={googleSignIn}
@@ -53,12 +56,12 @@ export default function AuthUIController(): JSX.Element {
                         backgroundColor:'#555',
                         borderRadius: 30,
                         color: 'f5f5f5',
-                        marginBottom: 16
                     }}
                     backgroundColor='transparent'
                 >
                      <Text color='#f5f5f5'>Sign in with Google</Text>
                 </FontAwesome.Button>
+                </Box>
                 {/* <GoogleSigninButton
                   size={GoogleSigninButton.Size.Wide}
                   color={GoogleSigninButton.Color.Light}

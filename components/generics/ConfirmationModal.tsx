@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Button, Text } from 'native-base';
+import { Modal, Button, Text, VStack, Heading } from 'native-base';
 
 export default function ConfirmationModal({
     isOpen,
@@ -22,25 +22,23 @@ export default function ConfirmationModal({
             onClose={ onClose }
             size={size}
         >
-            <Modal.Content>
+            <Modal.Content borderRadius='24px' shadow='9' p='24px'>
                 <Modal.CloseButton />
-                <Modal.Header>
-                    {title}
-                </Modal.Header>
-                <Modal.Body>
+                <VStack space={3}>
+                    <Heading>
+                        {title}
+                    </Heading>
                     <Text>{ content }</Text>
-                </Modal.Body>
-                <Modal.Footer>
 
-                <Button.Group space={2}>
-                <Button variant="ghost" colorScheme="blueGray" onPress={onClose}px='24px' borderRadius='24px'>
-                    Cancel
-                </Button>
-                <Button onPress={onConfirm} px='24px' borderRadius='24px' bgColor='coolGray.700'>
-                    Confirm
-                </Button>
-                </Button.Group>
-                </Modal.Footer>
+                    <Button.Group space={2}>
+                    <Button variant="subtle" colorScheme="light" onPress={onClose}px='24px' borderRadius='24px' w='50%'>
+                        Cancel
+                    </Button>
+                    <Button onPress={onConfirm} px='24px' borderRadius='24px' colorScheme='dark' variant='subtle' w='50%'>
+                        Confirm
+                    </Button>
+                    </Button.Group>
+                </VStack>
             </Modal.Content>
         </Modal>
     );

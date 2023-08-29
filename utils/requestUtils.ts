@@ -1,5 +1,5 @@
-import { UserData, Message, Conversation, CursorContainer } from "../types/types"
-import { RawUserData, SocketMessage, RawConversation } from "../types/rawTypes";
+import { UserData, Message, Conversation, CursorContainer, CalendarEvent, SocketEvent } from "../types/types"
+import { RawUserData, SocketMessage, RawConversation, RawCalendarEvent } from "../types/rawTypes";
 import { AxiosRequestConfig } from "axios";
 
 export const parseUserData = (data : any): UserData => {
@@ -28,7 +28,7 @@ export const parseSocketMessage = (data: any): Message => {
         return {
             ...casted,
             timestamp: new Date(Date.parse(casted.timestamp))
-        }
+        } as Message;
     } catch (err) {
         console.error(err);
         return data;
@@ -41,7 +41,11 @@ export const parseConversation = (data: any) : Conversation => {
         if (!casted.messages || casted.messages.length < 1) return data;
         return {
             ...casted,
-            messages: casted.messages.map((m) => parseSocketMessage(m))
+            messages: casted.messages.map((m) => parseSocketMessage(m)),
+            keyInfo: casted.keyInfo ? {
+                ...casted.keyInfo,
+                createdAt: new Date(Date.parse(casted.keyInfo.createdAt))
+            } : undefined
         }
     } catch (err) {
         console.error(err);
@@ -59,4 +63,30 @@ export const addCursorToRequest = (requestConfig: AxiosRequestConfig<any>, curso
         };
     }
     return requestConfig;
+};
+
+export const parseEvent = (raw: any): CalendarEvent => {
+    try {
+        const casted = raw as RawCalendarEvent;
+        return {
+            ...casted,
+            date: new Date(Date.parse(casted.date))
+        } as CalendarEvent;
+    } catch (err) {
+        console.error(err);
+        return raw;
+    }
+};
+
+export const parseSocketEvent = (raw: any): SocketEvent => {
+    try {
+        const casted = raw as any;
+        return {
+            ...casted,
+            timestamp: new Date(Date.parse(casted.timestamp))
+        } as SocketEvent;
+    } catch (err) {
+        console.error(err);
+        return raw;
+    }
 };

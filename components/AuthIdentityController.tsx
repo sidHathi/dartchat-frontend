@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, PropsWithChildren, ReactNode } from 'react';
+import React, { useState, useEffect, useContext, PropsWithChildren, ReactNode, useCallback } from 'react';
 import { UserData } from '../types/types';
 import AuthUIController from './AuthUI/AuthUIController';
 import auth from '@react-native-firebase/auth';
@@ -8,26 +8,32 @@ import { getUserData } from '../utils/identityUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import SocketContext from '../contexts/SocketContext';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { setConversations } from '../redux/slices/userConversationsSlice';
+import { initReduxUser, logOutUser, setConversations } from '../redux/slices/userDataSlice';
 import { storeUserData, getStoredUserData, deleteStoredUserData } from '../localStore/store';
 import Spinner from 'react-native-spinkit';
 import { Center } from 'native-base';
 import NetworkContext from '../contexts/NetworkContext';
+import secureStore from '../localStore/secureStore';
+import { encodeKey } from '../utils/encryptionUtils';
 
 export default function AuthIdentityController(props: PropsWithChildren<{children: ReactNode}>): JSX.Element {
     const { children } = props;
     const { usersApi } = useRequest();
     const { socket, disconnected: socketDisconnected } = useContext(SocketContext);
-    const { networkConnected } = useContext(NetworkContext);
+    const { apiReachable } = useContext(NetworkContext);
 
     const [user, setUser] = useState<UserData | undefined>(undefined);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [needsSetup, setNeedsSetup] = useState(true);
+    const [needsSetup, setNeedsSetup] = useState(false);
     const [loading, setLoading] = useState(false);
     const dispatch = useAppDispatch();
 
-    const logOut = () => {
+    const logOut = async () => {
+        user && (await secureStore.dumpSecrets(user.id));
+        await deleteStoredUserData();
+        await auth().signOut();
         setUser(undefined);
+        dispatch(logOutUser())
         setIsAuthenticated(false);
     };
 
@@ -65,43 +71,66 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
             });
     };
 
-    const initAppUser = (user: UserData) => {
-        setUser(user);
+    const initAppUser = useCallback((newUser: UserData) => {
+        setUser(newUser);
         setNeedsSetup(false);
-        dispatch(setConversations(user.conversations || []));
+        dispatch(initReduxUser(newUser));
         if (socket) {
             try {
-                socket?.emit('joinRoom', user.conversations?.map(c => c.cid) || []);
+                socket?.emit('joinRoom', newUser.conversations?.map(c => c.cid) || []);
             } catch (err) {
                 console.error(err);
             }
         }
-    };
+    }, [socket]);
+
+    const initUserKeyInfo = useCallback((newKey: Uint8Array, keySalt: string) => {
+        if (user) {
+            setUser({
+                ...user,
+                publicKey: encodeKey(newKey),
+                keySalt,
+                secrets: undefined
+            });
+        }
+    }, [user]);
 
     useEffect(() => {
-        console.log('reauthenticating');
-        auth().onAuthStateChanged(async (user) => {
-            if (user && user.email) {
-                setUser({email: user.email, id: user.uid});
+        const unsubscribe = auth().onAuthStateChanged(async (authUser) => {
+            if (authUser && authUser.email) {
+                setUser({email: authUser.email, id: authUser.uid});
                 setIsAuthenticated(true);
                 setLoading(true);
                 try {
-                    const localUser = await getStoredUserData();
-                    if (localUser && localUser.handle && localUser.id === user.uid) {
-                        initAppUser(localUser)
-                    }
-                    if (networkConnected) {
-                        const serverUser = await getUserData(usersApi);
-                        if (serverUser && ('handle' in serverUser)) {
-                            initAppUser(serverUser);
-                            storeUserData(serverUser);
-                        } else {
-                            setNeedsSetup(true);
+                    if (apiReachable) {
+                        // console.log('fetching user data')
+                        try {
+                            // console.log(authUser);
+                            const serverUser = await getUserData(usersApi);
+                            // console.log(serverUser);
+                            if (serverUser && ('handle' in serverUser)) {
+                                initAppUser(serverUser);
+                                await storeUserData(serverUser);
+                                return;
+                            } else if (serverUser) {
+                                // console.log('not initialized')
+                                setNeedsSetup(true);
+                                setLoading(false);
+                                return;
+                            }
+                        } catch (err) {
+                            console.log(err);
                         }
+                    }
+                    const localUser = await getStoredUserData();
+                    if (localUser && localUser.handle && localUser.id === authUser.uid) {
+                        initAppUser(localUser);
                     }
                     setLoading(false);
                 } catch (error) {
-                    console.log(error);
+                    // console.log(error);
+                    setLoading(false);
+                } finally {
                     setLoading(false);
                 }
             } else {
@@ -109,38 +138,43 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                 setIsAuthenticated(false);
                 setNeedsSetup(true);
                 if (socket) {
-                    console.log('socket disconnecting');
+                    // console.log('socket disconnecting');
                     socket.emit('forceDisconnect');
                     socket.disconnect();
                 }
                 setLoading(false);
             }
         });
-    }, [networkConnected, socketDisconnected]);
 
-    const isSetup = () => {
-        if (!needsSetup && user && user.handle && user.secureKey) {
+        return unsubscribe();
+    }, [apiReachable, socket]);
+
+
+
+    const isSetup = useCallback(() => {
+        if (!needsSetup && user && user.handle) {
             return true;
         }
         return false;
-    }
+    }, [needsSetup, user]);
 
     const getLoadingScreen = () => <Center flex='1' bgColor='#f5f5f5'>
-        <Spinner type='CircleFlip' color='black' />
+        <Spinner type='ThreeBounce' color='black' />
     </Center>
 
     return <AuthIdentityContext.Provider value={{
         user, 
         isAuthenticated, 
         logOut, 
+        initUserKeyInfo,
         createUser,
         modifyUser}}>
         {isAuthenticated ? 
-            loading || ((!networkConnected || socketDisconnected) && !isSetup()) ?
+            (loading || (!apiReachable && !isSetup())) ?
                 getLoadingScreen() :
-            isSetup() ? 
-                children :
-            <IdentitySetup />
+                isSetup() ? 
+                    children :
+                    <IdentitySetup />
         : <AuthUIController />}
     </AuthIdentityContext.Provider>
 }

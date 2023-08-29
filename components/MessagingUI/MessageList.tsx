@@ -1,30 +1,39 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { useState, useRef, useEffect, useContext, useCallback } from "react";
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
-import { Box, Center, Pressable, View } from 'native-base';
+import { Box, Center, Pressable, View, Text } from 'native-base';
 
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { chatSelector, loadAdditionalMessages, loadMessagesToDate, sendNewLike } from "../../redux/slices/chatSlice";
-import { Message, UserConversationProfile } from "../../types/types";
+import { chatSelector, loadAdditionalMessages, loadMessagesToDate, sendNewLike, setNotificationSelection, setPageStartIndex, setScroll } from "../../redux/slices/chatSlice";
+import { DecryptedMessage, Message, UserConversationProfile } from "../../types/types";
 import MessageDisplay from "./MessageDisplay";
 import SocketContext from "../../contexts/SocketContext";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
+import { getDateTimeString } from "../../utils/messagingUtils";
 
 export default function MessageList({
     setReplyMessage,
     selectedMid,
     setSelectedMid,
-    profiles
+    profiles,
+    closeContentMenu,
+    handleMediaSelect,
+    handleProfileSelect,
+    handleMessageDelete,
 }: {
-    setReplyMessage: (message: Message | undefined) => void;
+    setReplyMessage: (message: DecryptedMessage | undefined) => void;
     selectedMid: string | undefined;
     setSelectedMid: (id: string | undefined) => void;
     profiles: {[id: string]: UserConversationProfile};
+    closeContentMenu: () => void;
+    handleMediaSelect: (message: DecryptedMessage, index: number) => void;
+    handleProfileSelect: (profile: UserConversationProfile) => void;
+    handleMessageDelete: (mid: string) => void;
 }): JSX.Element {
     const dispatch = useAppDispatch();
     const listRef = useRef<FlatList | null>(null);
-    const { currentConvo, requestLoading, requestCursor } = useAppSelector(chatSelector);
+    const { currentConvo, pageLoading, messageCursor, notificationSelection } = useAppSelector(chatSelector);
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { conversationsApi } = useRequest();
@@ -32,17 +41,18 @@ export default function MessageList({
     const [indexMap, setIndexMap] = useState<{[id: string]: number}>({});
     const [replyFetch, setReplyFetch] = useState<string | undefined>();
 
-    const goToReply = (message: Message) => {
-        setSelectedMid(undefined);
-        console.log(indexMap);
-        if (message.replyRef && listRef.current && (message.replyRef.id in indexMap)) {
+    const goToId = useCallback((id: string) => {
+        if (!listRef.current) return;
+        if (id in indexMap) {
             listRef.current.scrollToIndex({
-                index: indexMap[message.replyRef.id],
-                animated: true
+                index: indexMap[id],
+                animated: true,
+                viewPosition: 0.5
             });
-            setSelectedMid(message.replyRef.id);
-        } else if (message.replyRef && currentConvo) {
-            conversationsApi.getMessage(currentConvo.id, message.replyRef.id).  then((res) => {
+            setSelectedMid(id);
+        } else if (currentConvo) {
+            conversationsApi.getMessage(currentConvo.id, id)
+            .then((res) => {
                 dispatch(loadMessagesToDate(res.timestamp, conversationsApi));
                 setReplyFetch(res.id);
                 if (listRef.current) listRef.current.scrollToEnd();
@@ -51,56 +61,90 @@ export default function MessageList({
                 setReplyFetch(undefined);
             })
         }
-    };
+    }, [indexMap, listRef]);
+
+    const goToReply = useCallback((message: Message) => {
+        setSelectedMid(undefined);
+        message.replyRef && goToId(message.replyRef.id);
+    }, [goToId]);
+
+    const goToLink = useCallback((message: Message) => {
+        setSelectedMid(undefined);
+        message.messageLink && goToId(message.messageLink);
+    }, [goToId]);
+
+    useEffect(() => {
+        if (currentConvo && notificationSelection !== undefined && notificationSelection in indexMap) {
+            goToId(notificationSelection);
+            dispatch(setNotificationSelection(undefined));
+        }
+    }, [notificationSelection, goToId, currentConvo, indexMap]);
 
     useEffect(() => {
         if (replyFetch && (replyFetch in indexMap) && currentConvo && indexMap[replyFetch] < currentConvo.messages.length) {
-            console.log('scrolling to index ' + indexMap[replyFetch].toString());
             listRef.current?.scrollToIndex({
                 index: indexMap[replyFetch],
-                animated: true
+                animated: true,
+                viewPosition: 0.5
             });
             setSelectedMid(replyFetch);
             setReplyFetch(undefined);
         }
-    }, [indexMap, replyFetch, currentConvo, requestLoading]);
+    }, [indexMap, replyFetch, currentConvo, pageLoading]);
 
     useEffect(() => {
-        if (!currentConvo) return;
+        if (!currentConvo || pageLoading || Object.keys(indexMap).length >= (currentConvo.messages.length)) return;
         const newIndexVals: {[id: string]: number} = Object.fromEntries(
             currentConvo?.messages.map((message: Message, index: number) => {
                 return [message.id, index];
             })
         );
         setIndexMap(newIndexVals);
-    }, [currentConvo, requestLoading]);
+    }, [currentConvo, pageLoading]);
 
     const renderMessage = ({item, index}: {
-        item?: Message,
+        item?: DecryptedMessage,
         index: number
     }) => {
         const message = item;
         if (!message) return null;
 
+        let timeDif = 0;
+        if (currentConvo && index > 0) {
+            timeDif = (message.timestamp.getTime() - currentConvo.messages[index - 1].timestamp.getTime()) / 60000; // timeDif in minutes
+        }
+
         return (
+            <>
+            {timeDif < -10 &&
+            <Center mt='12px' mb='6px'>
+                <Text fontSize='xs' color='gray.500' textAlign='center'>
+                    { getDateTimeString(message.timestamp) }
+                </Text>
+            </Center>
+            }
             <Pressable 
             pt={currentConvo && index === currentConvo.messages.length - 1 ? '40px' : '0px'}
             onPress={() => {
                 if (selectedMid !== undefined && selectedMid !== message.id) {
                     setSelectedMid(undefined);
                 }
+                closeContentMenu();
             }}>
                 <MessageDisplay
                     key={message.id}
-                    message={message}
+                    message={message as DecryptedMessage}
                     participants={profiles}
                     selected={message.id === selectedMid}
                     handleSelect={() => {
-                        if (!selectedMid && message.id !== selectedMid) {
+                        if (message.messageLink) {
+                            goToLink(message);
+                        } else if (!selectedMid && message.id !== selectedMid) {
                             setSelectedMid(message.id);
                         } else {
                             setSelectedMid(undefined);
                         }
+                        closeContentMenu();
                     }}
                     handleLike={() => user && socket && dispatch(sendNewLike({
                         socket,
@@ -111,19 +155,23 @@ export default function MessageList({
                     handleReplySelect={() => {
                         goToReply(message)
                     }}
+                    handleMediaSelect={handleMediaSelect}
+                    handleProfileSelect={handleProfileSelect}
+                    handleDelete={() => handleMessageDelete(message.id)}
                 />
             </Pressable>
+            </>
         );
     };
 
     return <FlatList
         ref={listRef}
-        data={currentConvo?.messages}
+        data={currentConvo?.messages.flat() || []}
         renderItem={renderMessage}
-        keyExtractor={(item: Message) => item.id}
+        keyExtractor={(item: DecryptedMessage) => item.id}
         onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
-            const {contentOffset} = event.nativeEvent;
-            if (contentOffset.y < 20 && requestCursor) {
+            const {contentOffset, contentSize} = event.nativeEvent;
+            if (contentOffset.y > contentSize.height - 800 && messageCursor) {
                 dispatch(loadAdditionalMessages(conversationsApi));
             }
         }}
@@ -134,11 +182,13 @@ export default function MessageList({
             });
         }}
         inverted
-        ListFooterComponent={(requestCursor || requestLoading) ?
+        ListFooterComponent={(messageCursor || pageLoading) ?
             <View>
-                <Center w='100%' mt='40px'>
-                    <Spinner type='ChasingDots' color='#111' size={24} />
+                <Center w='100%' mt='40px' mb='12px'>
+                    <Spinner type='ThreeBounce' color='#111' size={24} />
                 </Center>
             </View> : null}
+        ListHeaderComponent={<Box w='100%' h='84px'></Box>}
+        horizontal={false}
      />
 }

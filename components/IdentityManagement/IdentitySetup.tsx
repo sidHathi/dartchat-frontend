@@ -5,33 +5,62 @@ import DartChatLogoDarkXML from '../../assets/DartChatLogoDarkXML';
 import { SvgXml } from "react-native-svg";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { AxiosError } from 'axios';
+import { Image } from 'react-native-image-crop-picker';
+import { selectProfileImage } from '../../utils/identityUtils';
+import IconButton from '../generics/IconButton';
+import IconImage from '../generics/IconImage';
+import { getDownloadUrl, storeProfileImage } from '../../firebase/cloudStore';
+import { AvatarImage } from '../../types/types';
+import Spinner from 'react-native-spinkit';
+import { useKeyboard } from "@react-native-community/hooks";
 
 export default function IdentitySetup(): JSX.Element {
     const { isAuthenticated, user, createUser } = useContext(AuthIdentityContext);
 
     const [handle, setHandle] = useState<string | undefined>(undefined);
-    const [secureKey, setSecureKey] = useState<string | undefined>(undefined);
-    const [confirmKey, setConfirmKey] = useState<string | undefined>(undefined);
     const [displayName, setDisplayName] = useState<string | undefined>(undefined);
     const [phone, setPhone] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | undefined>(undefined);
+    const [imageUploading, setImageUploading] = useState<boolean>(false);
+    const [selectedAvatarImage, setSelectedAvatarImage] = useState<Image | undefined>();
+    const { keyboardShown } = useKeyboard();
 
-    const handleSubmit = () => {
+    const getUserAvatarFromImage = async () => {
+        if (!selectedAvatarImage || !user) return undefined;
+        setImageUploading(true);
+        try {
+            const {
+                mainTask,
+                tinyTask,
+                mainLoc,
+                tinyLoc
+            } = await storeProfileImage(user, selectedAvatarImage.path, selectedAvatarImage.sourceURL);
+            await mainTask;
+            await tinyTask;
+            const mainUri = await getDownloadUrl(mainLoc);
+            const tinyUri = await getDownloadUrl(tinyLoc);
+            const avatar: AvatarImage = {
+                mainUri,
+                tinyUri
+            };
+            setImageUploading(false);
+            return avatar;
+        } catch (err) {
+            console.log(err);
+            setImageUploading(false);
+            setError('Image upload failed');
+        }
+    }
+
+    const handleSubmit = async () => {
         // console.log('submitting');
         if (!isAuthenticated || !user) return;
-        if (!secureKey || secureKey.length < 6) {
-            setError('Secure key must be 6 digits long');
-            return;
-        } else if (secureKey !== confirmKey) {
-            setError('Encryption keys do not match');
-            return;
-        }
         createUser({
             ...user,
             handle,
-            secureKey,
             displayName,
             phone,
+            avatar: await getUserAvatarFromImage()
         })
         .catch((err: AxiosError) => {
             if (err.isAxiosError && err.response?.status === 409) {
@@ -40,11 +69,27 @@ export default function IdentitySetup(): JSX.Element {
                 setError(err.message);
             }
         });
-    }
+    };
+
+    const ProfileSelector = () => (
+        <Center w='100%' mb='30px' h='90px' mt='-30px'>
+                {
+                    (selectedAvatarImage && selectedAvatarImage.sourceURL) ?
+                    <IconImage imageUri={selectedAvatarImage?.sourceURL || ''} size={100} shadow='9' /> :
+                    <IconButton label='profile' size={100} />
+                }
+                <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'
+                onPress={() => selectProfileImage(setSelectedAvatarImage)} py='6px' opacity='0.7' mt='-60px'>
+                    <Text fontSize='9px' color='#f5f5f5' fontWeight='medium'>
+                        Select profile image
+                    </Text>
+                </Button>
+        </Center>
+    );
 
     return <View w='100%' h='100%' backgroundColor='#fefefe'>
         <Center w='100%' h='100%'>
-            <Box w='90%' p='20px' bgColor='gray.100' shadow='9' borderRadius='24px'>
+            <Box w='90%' p='20px' bgColor='gray.100' shadow='9' borderRadius='24px' mt={keyboardShown ? '-200px': '0px'}>
                 <Center w='100%'>
                     <SvgXml xml={DartChatLogoDarkXML} height='20' width='120'/>
                 </Center>
@@ -52,6 +97,8 @@ export default function IdentitySetup(): JSX.Element {
                 <Heading size='md' my='12px'>
                     Setup
                 </Heading>
+
+                <ProfileSelector />
 
                 <FormControl>
                 <VStack space={1}>
@@ -73,52 +120,6 @@ export default function IdentitySetup(): JSX.Element {
                         isRequired
                         variant="underlined"
                         autoCapitalize='none'
-                    />
-                    </Box>
-
-                    <Box>
-                    <Text fontSize='xs' color='coolGray.600'>
-                        Choose a 6-digit encryption key
-                        <Text fontWeight='bold'> *</Text>
-                    </Text>
-                    <Input
-                        placeholder='123456'
-                        value={secureKey}
-                        onChangeText={setSecureKey}
-                        w='100%'
-                        h='40px'
-                        // borderRadius='20px'
-                        paddingX='20px'
-                        marginRight='8px'
-                        // backgroundColor='#f1f1f1'
-                        isRequired
-                        variant="underlined"
-                        keyboardType='numeric'
-                        maxLength={6}
-                        type='password'
-                    />
-                    </Box>
-
-                    <Box>
-                    <Text fontSize='xs' color='coolGray.600'>
-                        Confirm encryption key
-                        <Text fontWeight='bold'> *</Text>
-                    </Text>
-                    <Input
-                        placeholder='123456'
-                        value={confirmKey}
-                        onChangeText={setConfirmKey}
-                        w='100%'
-                        h='40px'
-                        // borderRadius='20px'
-                        paddingX='20px'
-                        marginRight='8px'
-                        // backgroundColor='#f1f1f1'
-                        isRequired
-                        variant="underlined"
-                        keyboardType='numeric'
-                        maxLength={6}
-                        type='password'
                     />
                     </Box>
 
@@ -158,9 +159,14 @@ export default function IdentitySetup(): JSX.Element {
                     />
                     </Box>
                 </VStack>
+                {imageUploading &&
+                <Center w='100%'>
+                    <Spinner type='ThreeBounce' color='black' />
+                </Center>
+                }
                 </FormControl>
-                <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={handleSubmit} variant='solid' color='white' marginY='12px' disabled={!handle || !secureKey}
-                opacity={(!handle || !secureKey) ? 0.5 : 1}>
+                <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' marginY='12px' disabled={!handle}
+                opacity={(!handle) ? 0.5 : 1}>
                     Continue
                 </Button>
                 {error &&

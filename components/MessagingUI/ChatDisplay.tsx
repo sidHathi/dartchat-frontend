@@ -1,40 +1,44 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
-import AuthIdentityContext from "../../contexts/AuthIdentityContext";
-import { Conversation, Message, UserConversationProfile } from '../../types/types';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
+import { Conversation, DecryptedMessage, Message, MessageMedia, MessageMediaBuffer, UserConversationProfile } from '../../types/types';
 import {Box, VStack, HStack, Spacer, Heading, Pressable, Center} from 'native-base';
-import { View, ScrollView, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { View } from 'react-native';
 import MessageEntry from './MessageEntry';
-import IconButton from '../generics/IconButton';
-import { Dimensions, LayoutChangeEvent } from 'react-native';
-import { logOut } from '../../firebase/auth';
-import MessageDisplay from './MessageDisplay';
-import ReplyMessageDisplay from './ReplyMessageDisplay';
-import ConversationsContext from '../../contexts/ConversationsContext';
+import { Dimensions } from 'react-native';
+import ReplyMessagePreview from './ReplyMessagePreview';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { userConversationsSelector } from '../../redux/slices/userConversationsSlice';
-import { chatSelector, loadAdditionalMessages, sendNewLike, setNeedsScroll } from '../../redux/slices/chatSlice';
-import SocketContext from '../../contexts/SocketContext';
-import Spinner from 'react-native-spinkit';
-import useRequest from '../../requests/useRequest';
-import ChatHeader from './ChatHeader';
+import { chatSelector, handleMessageDelete as reduxMessageDelete } from '../../redux/slices/chatSlice';
+import FullScreenMediaFrame from './MessageMediaControllers/FullScreenMediaFrame';
 import MessageList from './MessageList';
-import NetworkContext from '../../contexts/NetworkContext';
-import NetworkDisconnectionAlert from '../generics/alerts/NetworkDisconnectionAlert';
+import ContentSelectionMenu from './ContentSelectionMenu';
+import UserDetailsModal from '../ChatSettingsUI/UserDetailsModal';
+import RemoveUserModal from '../ChatSettingsUI/RemoveUserModal';
+import useRequest from '../../requests/useRequest';
+import SocketContext from '../../contexts/SocketContext';
+import ConfirmationModal from '../generics/ConfirmationModal';
 
-export default function ChatDisplay({exit}: {
-    exit: () => void
+export default function ChatDisplay({closeOverlays}: {
+    closeOverlays: () => void
 }): JSX.Element {
     const screenHeight = Dimensions.get('window').height;
 
     const { currentConvo } = useAppSelector(chatSelector);
-    const { networkConnected } = useContext(NetworkContext);
-    const { disconnected: socketDisconnected } = useContext(SocketContext);
+    const dispatch = useAppDispatch();
+    const { socket, resetSocket, disconnected: socketDisconnected } = useContext(SocketContext);
 
     const [selectedMid, setSelectedMid] = useState<string | undefined>(undefined);
-    const [replyMessage, setReplyMessage] = useState<Message | undefined>(undefined);
-    const [messageEntryHeight, setMessageEntryHeight] = useState(90);
-    const [heightDif, setHeightDif] = useState(0);
+    const [replyMessage, setReplyMessage] = useState<DecryptedMessage | undefined>(undefined);
     const [profiles, setProfiles] = useState<{[id: string]: UserConversationProfile}>({});
+    const [contentMenuOpen, setContentMenuOpen] = useState(false);
+    const [selectedMediaBuffer, setSelectedMediaBuffer] = useState<MessageMediaBuffer[] | undefined>(undefined);
+    const [selectedMediaMessage, setSelectedMediaMessage] = useState<DecryptedMessage | undefined>();
+    const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+    const [pollBuilderOpen, setPollBuilderOpen] = useState(false);
+    const [eventBuilderOpen, setEventBuilderOpen] = useState(false);
+    const [selectedProfile, setSelectedProfile] = useState<UserConversationProfile | undefined>();
+    const [userDetailModalOpen, setUserDetailModalOpen] = useState(false);
+    const [removeUserModalOpen, setRemoveUserModalOpen] = useState(false);
+    const [confirmMessageDeleteModalOpen, setConfirmMessageDeleteModalOpen] = useState(false);
+    const [upForDeleteMid, setUpForDeleteMid] = useState<string | undefined>();
 
     useEffect(() => {
         if (!currentConvo) return;
@@ -43,64 +47,181 @@ export default function ChatDisplay({exit}: {
         ));
     }, []);
 
-    return <Box w='100%' h={screenHeight} backgroundColor='#222'>
-    <Box backgroundColor='#fefefe' h='90px' overflow='hidden' zIndex='1001'>
-       <ChatHeader 
-            convoName={currentConvo?.name || 'Chat'}
-            onSettingsOpen={() => {return;}}
-            onProfileOpen={logOut}
-            onConvoExit={exit} 
-        />
-    </Box>
-    <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor='#fefefe' borderTopLeftRadius='24px' shadow='9' zIndex='1000'>
-            <VStack w='100%' h='100%' space={1}>
-                <View  
-                    style={{
-                        height: screenHeight - 90 - messageEntryHeight,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        backgroundColor: 'transparent',
-                    }}>
-                    <MessageList 
-                        selectedMid={selectedMid}
-                        setSelectedMid={setSelectedMid}
-                        setReplyMessage={setReplyMessage}
-                        profiles={profiles} />
-                </View>
-                <Spacer />
-                <View onLayout={(event: LayoutChangeEvent) => {
-                        const {height} = event.nativeEvent.layout;
-                        setMessageEntryHeight(height);
-                    }}
-                    style={{display: 'flex', flexDirection: 'column'}}>
-                    <VStack w='100%' mt='auto'>
-                        {
-                            replyMessage &&
-                            <ReplyMessageDisplay 
-                                participants={profiles}
-                                message={replyMessage}
-                                handleDeselect={() => setReplyMessage(undefined)}
-                            />
-                        }
-                        <Box mt={`${heightDif} px`}>
-                        <MessageEntry 
-                            replyMessage={replyMessage} 
-                            onSend={() => {
-                                setReplyMessage(undefined);
-                                setSelectedMid(undefined);
-                            }} />
-                        </Box>
-                    </VStack>
-                </View>
-            </VStack>
-=        </Box>
-
-
-        {
-            (!networkConnected || socketDisconnected) &&
-            <Box marginTop='-180px' zIndex='1003'>
-                <NetworkDisconnectionAlert type={networkConnected ? 'server' : 'network'} />
-            </Box>
+    useEffect(() => {
+        if (!socket || socketDisconnected) {
+            resetSocket();
         }
-    </Box>
+    }, []);
+
+    useEffect(() => {
+        currentConvo && socket?.emit('messagesRead', currentConvo.id);
+    }, [socket, currentConvo])
+
+    const getCurrentProfileForId = useCallback((id: string) => {
+        return currentConvo?.participants.find((p) => p.id === id);
+    }, [currentConvo])
+
+    const handleMediaSelect = (message: DecryptedMessage, index: number) => {
+        setSelectedMediaMessage(message);
+        setSelectedMediaIndex(index);
+    };
+
+    const handleMediaReply: () => void = useCallback(() => {
+        setReplyMessage(selectedMediaMessage);
+        setSelectedMid(selectedMediaMessage?.id);
+        setSelectedMediaIndex(0);
+        setSelectedMediaMessage(undefined);
+    }, [selectedMediaMessage]);
+
+    const handleRemove = (profile: UserConversationProfile) => {
+        setSelectedProfile(profile);
+        setUserDetailModalOpen(false);
+        setRemoveUserModalOpen(true);
+        return;
+    };
+
+    const confirmMessageDelete = useCallback(() => {
+        if (!currentConvo || !socket || !upForDeleteMid) return;
+        try {
+            socket.emit('deleteMessage', currentConvo.id, upForDeleteMid);
+            dispatch(reduxMessageDelete(upForDeleteMid));
+            setUpForDeleteMid(undefined);
+            setConfirmMessageDeleteModalOpen(false);
+        } catch (err) {
+            console.log(err);
+        }
+    }, [currentConvo, socket, upForDeleteMid]);
+
+    const handleMessageDelete = (mid: string) => {
+        setUpForDeleteMid(mid);
+        setConfirmMessageDeleteModalOpen(true);
+    };
+
+    return <View style={{flex: 1}}>
+        <VStack w='100%' h='100%'>
+            <View  
+                style={{
+                    height: screenHeight - 120,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    backgroundColor: 'transparent',
+                    flexGrow: 1,
+                    flexShrink: 1,
+                }}>
+                <Pressable flex='1' onPress={() => {
+                    if (contentMenuOpen) setContentMenuOpen(false);
+                    setPollBuilderOpen(false);
+                    setEventBuilderOpen(false);
+                    closeOverlays();
+                }}>
+                    <MessageList
+                        selectedMid={selectedMid}
+                        setSelectedMid={(newMid: string | undefined) => {
+                            setSelectedMid(newMid);
+                            setPollBuilderOpen(false);
+                            setEventBuilderOpen(false);
+                        }}
+                        setReplyMessage={setReplyMessage}
+                        profiles={profiles}
+                        closeContentMenu={() => {
+                            setContentMenuOpen(false)
+                            closeOverlays()
+                        }}
+                        handleMediaSelect={handleMediaSelect}
+                        handleProfileSelect={(profile: UserConversationProfile) => {
+                            setSelectedProfile(getCurrentProfileForId(profile.id));
+                            setUserDetailModalOpen(true);
+                        }} 
+                        handleMessageDelete={handleMessageDelete}
+                        />    
+                </Pressable>
+            </View>
+            <Spacer />
+            <View style={{
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    overflow: 'visible',
+                    backgroundColor: 'transparent',
+                    marginTop: -100,
+                    flexShrink: 0,
+                    flexGrow: 0,
+                }}>
+                <VStack w='100%' mt='-6px' overflow='visible' bgColor='transparent'>
+                    {
+                        replyMessage &&
+                        <ReplyMessagePreview 
+                            participants={profiles}
+                            message={replyMessage}
+                            handleDeselect={() => setReplyMessage(undefined)}
+                        />
+                    }
+                    {
+                        contentMenuOpen &&
+                        <ContentSelectionMenu 
+                            setMediaBuffer={setSelectedMediaBuffer} 
+                            closeMenu={() => setContentMenuOpen(false)}
+                            openPollBuilder={() => setPollBuilderOpen(true)}
+                            openEventBuilder={() => setEventBuilderOpen(true)}
+                            />
+                    }
+                    <MessageEntry 
+                        replyMessage={replyMessage} 
+                        onSend={() => {
+                            setReplyMessage(undefined);
+                            setSelectedMid(undefined);
+                        }} 
+                        openContentMenu={() => setContentMenuOpen(!contentMenuOpen)}
+                        selectedMediaBuffer={selectedMediaBuffer}
+                        setSelectedMediaBuffer={setSelectedMediaBuffer}
+                        pollBuilderOpen={pollBuilderOpen}
+                        setPollBuilderOpen={setPollBuilderOpen}
+                        eventBuilderOpen={eventBuilderOpen}
+                        setEventBuilderOpen={setEventBuilderOpen}
+                    />
+                </VStack>
+            </View>
+        </VStack>
+        {
+            selectedMediaMessage &&
+            <FullScreenMediaFrame
+                message={selectedMediaMessage}
+                startIndex={selectedMediaIndex}
+                setMessage={setSelectedMediaMessage}
+                handleReply={handleMediaReply}
+            />
+        }
+        {
+            currentConvo && currentConvo.group && selectedProfile &&
+            <UserDetailsModal
+                isOpen={userDetailModalOpen}
+                handleClose={() => setUserDetailModalOpen(false)}
+                profile={selectedProfile}
+                setProfile={setSelectedProfile}
+                navToMessages={() => {return;}}
+                handleRemove={() => handleRemove(selectedProfile)}
+                />
+        }
+        {
+            currentConvo && currentConvo.group && selectedProfile &&
+            <RemoveUserModal
+                isOpen={removeUserModalOpen}
+                handleClose={() => setRemoveUserModalOpen(false)}
+                profile={selectedProfile}
+                onRemove={() => setSelectedProfile(undefined)} />
+        }
+        {
+            currentConvo && upForDeleteMid &&
+            <ConfirmationModal
+                isOpen={confirmMessageDeleteModalOpen}
+                onClose={() => {
+                    setConfirmMessageDeleteModalOpen(false);
+                    setUpForDeleteMid(undefined);
+                }}
+                onConfirm={confirmMessageDelete}
+                title='Confirm message deletion'
+                content='This action is irreversible'
+                size='lg'
+                />
+        }
+    </View>
 }

@@ -8,22 +8,25 @@ import { Entypo } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons'; 
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { UIScreen } from "../types/types";
 import IconButton from "./generics/IconButton";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { exitConvo as reduxExit } from "../redux/slices/chatSlice";
 import NetworkContext from "../contexts/NetworkContext";
 import NetworkDisconnectionAlert from "./generics/alerts/NetworkDisconnectionAlert";
 import SocketContext from "../contexts/SocketContext";
+import UIContext from "../contexts/UIContext";
+import AuthIdentityContext from "../contexts/AuthIdentityContext";
+import IconImage from "./generics/IconImage";
 
-export default function NavContainer({ children, navState, navSwitch }: 
+export default function NavContainer({ children }: 
     PropsWithChildren<{
-        children: ReactNode, 
-        navState: UIScreen,
-        navSwitch: (newScreen: UIScreen) => void}>): JSX.Element {
+        children: ReactNode
+    }>): JSX.Element {
     const dispatch = useAppDispatch();
+    const { user } = useContext(AuthIdentityContext)
+    const { uiState: navState, navSwitch } = useContext(UIContext);
     const screenHeight = Dimensions.get('window').height;
-    const { networkConnected } = useContext(NetworkContext);
+    const { networkConnected, apiReachable } = useContext(NetworkContext);
     const { disconnected: socketDisconnected } = useContext(SocketContext); 
 
     const handleNewMessage = () => {
@@ -32,15 +35,23 @@ export default function NavContainer({ children, navState, navSwitch }:
         navSwitch('messaging');
     }
 
-    return <View w='100%' h={screenHeight} backgroundColor='#222'>
+    return <View w='100%' h={screenHeight} backgroundColor='#111'>
         <Box backgroundColor='#fefefe' h='100px' overflow='hidden' zIndex='1001'>
-            <Box backgroundColor='#222' borderBottomRightRadius='24px' h='100px' zIndex='999'>
+            <Box backgroundColor='#111' borderBottomRightRadius='24px' h='100px' zIndex='999'>
                 <HStack w='100%' h='100px' justifyContent='space-between' alignItems='flex-start' paddingTop='50px' paddingX='12px'>
                     <Center paddingTop='0' paddingLeft='6px'>
                         <SvgXml xml={DartChatLogoXML} height='42' width='110'/>
                     </Center>
                     <Spacer />
-                    <IconButton label='profile' size={36} additionalProps={{marginTop: '6px'}} onPress={logOut}/>
+                    {
+                    navState.screen !== 'profile' &&
+                    (
+                        user?.avatar?.tinyUri ? 
+                        <IconImage imageUri={user.avatar.tinyUri} size={36}
+                        shadow='9' onPress={() => navSwitch('profile')} nbProps={{mt: '6px'}}/> :
+                        <IconButton label='profile' size={36} additionalProps={{marginTop: '6px'}} onPress={() => navSwitch('profile')} shadow='9' />
+                     )
+                    }
                 </HStack>
             </Box>
         </Box>
@@ -49,31 +60,31 @@ export default function NavContainer({ children, navState, navSwitch }:
         </Box>
         <Center marginTop='-90px' zIndex='1002'>
             <HStack>
-            <Box w='150px' h='50px' backgroundColor='#333' borderRadius='30px' shadow='3' marginX='5px'>
-                <Center h='50px'>
+            <Box w='160px' h='60px' backgroundColor='#111' borderRadius='30px' shadow='9' marginX='5px'>
+                <Center h='60px'>
                     <HStack w='90px'>
-                        <Pressable opacity={navState === 'conversations' ? 1 : 0.5} onPress={() => navSwitch('conversations')}>
-                            <Entypo name="home" size={25} color="white" />
+                        <Pressable opacity={navState.screen === 'conversations' ? 1 : 0.5} onPress={() => navSwitch('conversations')}>
+                            <Entypo name="home" size={28} color="white" />
                         </Pressable>
                         <Spacer />
-                        <Pressable opacity={navState === 'social' ? 1 : 0.5}
+                        <Pressable opacity={navState.screen === 'social' ? 1 : 0.5}
                             onPress={() => navSwitch('social')}>
-                            <Ionicons name="people" size={25} color="white" />
+                            <Ionicons name="people" size={28} color="white" />
                         </Pressable>
                     </HStack>
                 </Center>
             </Box>
-            <Box w='50px' h='50px' backgroundColor='#333' borderRadius='30px' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
-                <Center h='50px'>
+            <Box w='60px' h='60px' backgroundColor='#111' borderRadius='30px' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
+                <Center h='60px'>
                     <Pressable onPress={handleNewMessage}>
-                        <MaterialCommunityIcons name="message-draw" size={25} color="white" />
+                        <MaterialCommunityIcons name="message-draw" size={28} color="white" />
                     </Pressable>
                 </Center>
             </Box>
             </HStack>
         </Center>
         {
-            (!networkConnected || socketDisconnected) &&
+            (!networkConnected || !apiReachable) &&
             <Box marginTop='-150px' zIndex='1003'>
                 <NetworkDisconnectionAlert type={networkConnected ? 'server' : 'network'} />
             </Box>
