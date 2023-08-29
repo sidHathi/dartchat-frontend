@@ -75,7 +75,6 @@ export default function MessageList({
 
     useEffect(() => {
         if (currentConvo && notificationSelection !== undefined && notificationSelection in indexMap) {
-            console.log('going to notification');
             goToId(notificationSelection);
             dispatch(setNotificationSelection(undefined));
         }
@@ -94,7 +93,7 @@ export default function MessageList({
     }, [indexMap, replyFetch, currentConvo, pageLoading]);
 
     useEffect(() => {
-        if (!currentConvo || pageLoading) return;
+        if (!currentConvo || pageLoading || Object.keys(indexMap).length >= (currentConvo.messages.length)) return;
         const newIndexVals: {[id: string]: number} = Object.fromEntries(
             currentConvo?.messages.map((message: Message, index: number) => {
                 return [message.id, index];
@@ -173,7 +172,6 @@ export default function MessageList({
         onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
             const {contentOffset, contentSize} = event.nativeEvent;
             if (contentOffset.y > contentSize.height - 800 && messageCursor) {
-                console.log('fetching messages');
                 dispatch(loadAdditionalMessages(conversationsApi));
             }
         }}
@@ -186,8 +184,8 @@ export default function MessageList({
         inverted
         ListFooterComponent={(messageCursor || pageLoading) ?
             <View>
-                <Center w='100%' mt='40px'>
-                    <Spinner type='ChasingDots' color='#111' size={24} />
+                <Center w='100%' mt='40px' mb='12px'>
+                    <Spinner type='ThreeBounce' color='#111' size={24} />
                 </Center>
             </View> : null}
         ListHeaderComponent={<Box w='100%' h='84px'></Box>}

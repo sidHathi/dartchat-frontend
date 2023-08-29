@@ -106,7 +106,10 @@ export default function ButtonGrid({onButtonSelect}: {
         <HStack w='100%' space={3} my='12px'>
             <Spacer />
                 {/* <GridButton label='like button' /> */}
-                <GridButton label='encryption' />
+                {
+                    currentConvo?.publicKey &&
+                    <GridButton label='encryption' />
+                }
                 <GridButton label='leave' />
             <Spacer />
         </HStack> 

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useMemo } from 'react';
 import {Asset, launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
 import { View, Center, HStack, VStack, Input, Text, Spacer, Box, Button, Progress } from 'native-base';
@@ -85,7 +85,11 @@ export default function ProfileEditor({
         } catch (err) {
             console.log(err);
         }
-    }
+    };
+
+    const constructedProfileUri = useMemo(() => {
+        return selectedProfile ? `file://${selectedProfile.path}` : undefined
+    }, [selectedProfile]);
 
     const onSubmit = async () => {
         if (user && selectedProfile !== undefined && selectedProfile.path) {
@@ -114,7 +118,7 @@ export default function ProfileEditor({
             await updateUserProfile();
         }
         handleExit();
-    }
+    };
 
     return (
         <View flex='1'>
@@ -132,7 +136,7 @@ export default function ProfileEditor({
                     <Center w='100%' mb='20px' h='90px'>
                             {
                                 ((selectedProfile && selectedProfile.sourceURL) || user?.avatar?.mainUri) ?
-                                <IconImage imageUri={selectedProfile?.sourceURL || user?.avatar?.mainUri || ''} size={100} shadow='9' /> :
+                                <IconImage imageUri={selectedProfile?.sourceURL || constructedProfileUri || user?.avatar?.mainUri || ''} size={100} shadow='9' /> :
                                 <IconButton label='profile' size={100} shadow='9' />
                             }
                             <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'

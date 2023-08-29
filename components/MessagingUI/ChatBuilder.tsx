@@ -19,6 +19,7 @@ import UserSecretsContext from "../../contexts/UserSecretsContext";
 import { getGroupAvatarFromCropImage, selectProfileImage } from "../../utils/identityUtils";
 import { Image } from 'react-native-image-crop-picker';
 import Spinner from "react-native-spinkit";
+import { useKeyboard } from "@react-native-community/hooks";
 
 export default function ChatBuilder({exit}: {
         exit: () => void
@@ -31,6 +32,7 @@ export default function ChatBuilder({exit}: {
     const dispatch = useAppDispatch();
     const { conversationsApi } = useRequest();
     const { userConversations } = useAppSelector(userDataSelector);
+    const { keyboardShown } = useKeyboard();
 
     const [isGroup, setIsGroup] = useState(false);
     const [userQuery, setUserQuery] = useState<string | undefined>(undefined);
@@ -112,7 +114,6 @@ export default function ChatBuilder({exit}: {
     }, [handleNewAvatarImage]);
 
     const handleSubmit = useCallback(async () => {
-        console.log('attempting to create chat')
         if (!user || !checkParticipantValidity()) return;
         const participants: UserConversationProfile[] = [
             ...selectedProfiles,
@@ -140,8 +141,6 @@ export default function ChatBuilder({exit}: {
                 publicKey = keys.encodedKeyPair.publicKey;
                 recipientKeyMap = keys.encryptedKeysForUsers;
             }
-            console.log('new conversation keys:')
-            console.log(keys);
         }
 
         const avatar = groupAvatar || await autoGenGroupAvatar(isGroup, participants, user?.id);
@@ -162,7 +161,6 @@ export default function ChatBuilder({exit}: {
             } : undefined
         };
 
-        console.log('creating chat');
         if (isGroup) {
             dispatch(setConvo({
                 convo: newConvo,
@@ -176,17 +174,12 @@ export default function ChatBuilder({exit}: {
                     secretKey
                 }));
                 if (secretKey && encodedSecretKey) {
-                    console.log('adding keys to store');
-                    console.log(encodedSecretKey);
                     handleNewConversationKey(newConvo.id, secretKey, encodedSecretKey);
                 }
             }
         } else if (user) {
             dispatch(openPrivateMessage(newConvo, user.id, userConversations, conversationsApi, recipientKeyMap, secretKey));
             if (secretKey && encodedSecretKey) {
-                console.log('running private message key callback');
-                console.log(secretKey);
-                console.log(encodedSecretKey);
                 await handleNewConversationKey(newConvo.id, secretKey, encodedSecretKey);
             }
         }
@@ -258,7 +251,7 @@ export default function ChatBuilder({exit}: {
                     </Button>
                 </Button.Group>
                
-                <VStack space={1} pb='18px' overflow='visible'>
+                <VStack space={1} pb={keyboardShown ? '200px': '18px'} overflow='visible'>
                     {
                         isGroup &&
                         <Box>

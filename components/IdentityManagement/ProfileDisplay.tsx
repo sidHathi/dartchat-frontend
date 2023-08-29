@@ -69,6 +69,34 @@ export default function ProfileDisplay({
                     </Center>
                 </Box>
             </TouchableOpacity>
+            <Box bgColor='#f5f5f5' p='24px' borderRadius='24px' mx='auto' w='90%' shadow='9' style={{shadowOpacity: 0.07}} overflow='hidden'
+            mt='24px'>
+                <VStack space={3} px='12px'>
+                    <Heading fontSize='md'>
+                        Contact details
+                    </Heading>
+                    {user?.email &&
+                    <Box>
+                        <Text fontWeight='bold' color='gray.500' fontSize='xs'>
+                            Email
+                        </Text>
+                        <Text fontSize='sm'>
+                            {user?.email}
+                        </Text>
+                    </Box>
+                    }
+                    {user?.phone &&
+                    <Box>
+                        <Text fontWeight='bold' color='gray.500' fontSize='xs'>
+                            Phone
+                        </Text>
+                        <Text fontSize='sm'>
+                            {user?.phone}
+                        </Text>
+                    </Box>
+                    }
+                </VStack>
+            </Box>
             <Box bgColor='#f5f5f5' p='24px' borderRadius='24px' mx='auto' w='90%' mt='24px' shadow='9' style={{shadowOpacity: 0.07}}>
                 <Center borderTopColor='#aaa' w='100%'>
                     <Button variant='subtle' colorScheme='dark' borderRadius='24px' onPress={logOut} w='100%'>

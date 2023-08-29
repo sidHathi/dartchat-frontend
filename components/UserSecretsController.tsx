@@ -29,17 +29,12 @@ export default function UserSecretsController({
     const updateDBSecrets = useCallback(async (newSecrets: {
         [key: string]: Uint8Array
     }) => {
-        console.log(userPinKey);
         if (!userPinKey || !user || !user.keySalt) return false;
-        console.log('pin variables exist');
         try {
             const encodedSecrets = Object.fromEntries(
                 Object.entries(newSecrets).map(([key, val]) => [key, encodeKey(val)])
             );
-            console.log(encodedSecrets);
             const encryptedSecrets = encryptUserSecrets(userPinKey, user.keySalt, encodedSecrets);
-            console.log('encrypted secrets:')
-            console.log(encryptedSecrets);
             await usersApi.setUserSecrets(encryptedSecrets);
             return true;
         } catch (err) {
@@ -59,13 +54,8 @@ export default function UserSecretsController({
             await Promise.all(
                 latestUser.conversations.map(async (c: ConversationPreview) => {
                     if (c.keyUpdate && c.publicKey) {
-                        console.log('implementing key update');
-                        console.log(c.keyUpdate);
-                        console.log(c.publicKey);
-                        console.log(currSecrets.userSecretKey);
                         const decodedPublicKey = decodeKey(c.publicKey);
                         const newKeyObj = decryptJSON(currSecrets.userSecretKey, c.keyUpdate, decodedPublicKey);
-                        console.log(newKeyObj);
                         if (newKeyObj && newKeyObj.secretKey) {
                             await secureStore.addSecureKey(user.id, c.cid, newKeyObj.secretKey);
                             updates[c.cid] = decodeKey(newKeyObj.secretKey);
@@ -93,7 +83,6 @@ export default function UserSecretsController({
     const getSecrets = useCallback(async () => {
         if (!user) return;
         try {
-            console.log('getting user secrets')
             const storedSecrets = await secureStore.getUserSecretKeyStore(user.id);
             if (storedSecrets && 'userSecretKey' in storedSecrets) {
                 const decodedSecrets = (Object.fromEntries(
@@ -117,7 +106,6 @@ export default function UserSecretsController({
                     })
                 );
                 if (decodedSecrets && 'userSecretKey' in decodedSecrets) {
-                    console.log('initializing secure store')
                     await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
                     if (secrets) {
                         setSecrets({
@@ -162,15 +150,10 @@ export default function UserSecretsController({
             return undefined;
         } 
         // this needs to add the secret to locally stored secrets, add the secret to secrets context, and encrypt the new secrets object for addition to the user's database secrets
-        console.log('handling new encrypted conversation keys');
         const userSecretKey = secrets.userSecretKey;
         const decodedPublicKey = decodeKey(publicKey);
-        console.log(`userSecretKey: ${userSecretKey}`);
         if (!userSecretKey) return undefined;
-        console.log(publicKey);
         const decryptedKeyMap = decryptJSON(userSecretKey, encryptedPrivateKey, decodedPublicKey) || {}; // base64
-        console.log(`decryptedKeyMap: ${decryptedKeyMap}`);
-        console.log(decryptedKeyMap);
         if (!decryptedKeyMap.secretKey) return undefined;
         const decryptedKey = decryptedKeyMap.secretKey;
         if (secrets && cid in secrets && secrets[cid] === decryptedKey) {
@@ -186,7 +169,6 @@ export default function UserSecretsController({
             if (currentConvo?.id === cid) {
                 dispatch(setSecretKey(decryptedKey));
             }
-            console.log('successfully added new encrypted keys');
             return decodeKey(decryptedKey);
         }
         return undefined;
@@ -195,7 +177,6 @@ export default function UserSecretsController({
     const handleNewConversationKey = useCallback(async (cid: string, key: Uint8Array, encodedKey: string) => {
         if (!user) return false;
         try {
-            console.log('handling new conversation keys');
             const newSecrets = {
                 ...(secrets || {}),
                 [cid]: key
@@ -206,7 +187,6 @@ export default function UserSecretsController({
                 if (currentConvo?.id === cid) {
                     dispatch(setSecretKey(key));
                 }
-                console.log('successfully created new encrypted keys');
                 return true;
             }
             return false;
@@ -239,18 +219,15 @@ export default function UserSecretsController({
     useEffect(() => {
         if (userPinKey || !user) return;
         const getUserPinKey = async () => {
-            console.log('pulling user key');
             try {
                 setSecretsLoading(true);
                 const key = await secureStore.getUserPINEncryptionKey(user.id);
-                console.log(`key: ${key}`);
                 if (key) {
                     setUserPinKey(key);
                 } else {
                     setSecretsLoading(false);
                 }
             } catch (err) {
-                console.log('keyfetch failed');
                 setSecretsLoading(false);
             }
         }
@@ -258,10 +235,7 @@ export default function UserSecretsController({
     }, [userPinKey, user])
 
     useEffect(() => {
-        console.log('user secrets:')
-        console.log(secrets);
         if (secrets || !userPinKey) return;
-        console.log('pulling user secrets');
         setSecretsLoading(true);
         getSecrets()
             .then(async (retrievedSecrets) => {

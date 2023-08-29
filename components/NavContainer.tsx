@@ -84,7 +84,7 @@ export default function NavContainer({ children }:
             </HStack>
         </Center>
         {
-            (!networkConnected || !apiReachable || socketDisconnected) &&
+            (!networkConnected || !apiReachable) &&
             <Box marginTop='-150px' zIndex='1003'>
                 <NetworkDisconnectionAlert type={networkConnected ? 'server' : 'network'} />
             </Box>

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, PropsWithChildren, ReactNode } from 'react';
 import NetInfo, { useNetInfo } from '@react-native-community/netinfo';
-import { REACT_APP_API_URL } from '@env';
+// import { REACT_APP_API_URL } from '@env';
+import Config from 'react-native-config';
 
 const NetworkContext = createContext<{
     networkConnected: boolean;
@@ -11,7 +12,7 @@ export function NetworkContextProvider({children}: PropsWithChildren<{
     children: ReactNode
 }>): JSX.Element {
     const { isConnected, isInternetReachable} = useNetInfo({
-        reachabilityUrl: `${REACT_APP_API_URL}/`,
+        reachabilityUrl: `${Config.REACT_APP_API_URL}/`,
         reachabilityTest: async (response) => response.status === 204,
         reachabilityLongTimeout: 60 * 1000, // 60s
         reachabilityShortTimeout: 5 * 1000, // 5s

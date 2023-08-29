@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAppSelector } from '../../redux/hooks';
-import { userDataSelector } from '../../redux/slices/userDataSlice';
+import React, { useMemo, useCallback } from 'react';
 import { UserProfile } from '../../types/types';
 import { Box, HStack, VStack, Spacer, Text, Center, View, FlatList, Heading } from 'native-base';
 import IconImage from '../generics/IconImage';

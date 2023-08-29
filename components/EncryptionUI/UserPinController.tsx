@@ -74,7 +74,6 @@ export default function UserPinController(): JSX.Element {
         try {
             let encryptedSecrets = user.secrets;
             let keySalt = user.keySalt;
-            console.log(encryptedSecrets);
             if (!encryptedSecrets || !keySalt) {
                 const upToDateUser = await usersApi.getCurrentUser();
                 if (!upToDateUser || !upToDateUser.secrets) return false;
@@ -82,7 +81,6 @@ export default function UserPinController(): JSX.Element {
                 keySalt = upToDateUser.keySalt;
             }
             const constructedPinKey = await buildEncryptionKeyFromPIN(pin, keySalt as string);
-            console.log(constructedPinKey);
             if (!constructedPinKey) return false;
             const decodedSecrets = decryptUserKeys(constructedPinKey, keySalt as string, encryptedSecrets as string);
             if ('userSecretKey' in decodedSecrets) {
@@ -121,7 +119,6 @@ export default function UserPinController(): JSX.Element {
     </View>
 
     const pinEntryVariant = useMemo(() => {
-        console.log(userEncryptionStatus);
         if (userEncryptionStatus === 'uninitialized') {
             return 'initialization';
         }
@@ -129,7 +126,6 @@ export default function UserPinController(): JSX.Element {
     }, [userEncryptionStatus]);
 
     const onPinConfirm = useCallback(async (pin: string) => {
-        console.log('validating pin');
         if (userEncryptionStatus === 'uninitialized') {
             setValidationLoading(true);
             await initializeSecrets(pin);

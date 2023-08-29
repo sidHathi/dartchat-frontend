@@ -20,11 +20,6 @@ export default function MessageMediaDisplay({
         const displayWidth = Math.min(displayHeight / aspect, screenWidth - 80);
         return acc + displayWidth + 10;
     }, 0);
-
-    useEffect(() => {
-        // console.log(media.length);
-        // console.log(mediaWidth);
-    }, []);
     
     return <View
     onStartShouldSetResponder={() => true}>

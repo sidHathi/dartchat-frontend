@@ -39,7 +39,6 @@ export default function ContentSelectionMenu({
 
     const handleSelectedAssets = async (selectionRes: ImagePickerResponse) => {
         try {
-            const selectionRes = await getLibraryImage();
             if (!selectionRes.didCancel && selectionRes.assets && selectionRes.assets.length > 0) {
                 const mediaBuffer: MessageMediaBuffer[] = selectionRes.assets.map((asset) => ({
                     id: uuid.v4().toString(),
@@ -48,7 +47,6 @@ export default function ContentSelectionMenu({
                     width: asset.width || 0,
                     height: asset.height || 0
                 }));
-                console.log(mediaBuffer);
                 setMediaBuffer(mediaBuffer.filter(m => m.fileUri && m.width > 0 && m.height > 0));
                 closeMenu();
             }

@@ -8,13 +8,15 @@ import { constructPreviewForConversation, handlePossiblyEncryptedMessage } from 
 
 export const parsePNMessage = (stringifiedBody: string): {
     cid: string;
-    message: Message
+    message: Message,
+    convoProfiles?: UserConversationProfile[]
 } | undefined => {
     const parsedBody = JSON.parse(stringifiedBody);
     if (!('cid' in parsedBody) || !('message' in parsedBody)) return undefined;
     return {
         cid: parsedBody['cid'],
-        message: parseSocketMessage(parsedBody.message)
+        message: parseSocketMessage(parsedBody.message),
+        convoProfiles: parsedBody['convoProfiles'] || undefined
     };
 };
 
@@ -181,33 +183,24 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
         switch (notif.type) {
             case 'message':
                 const messageData = parsePNMessage(notif.stringifiedBody);
-                if (!messageData) return {
-                    title: 'no notification data',
-                    body: 'error',
-                };
+                if (!messageData) return undefined;
                 const encryptedMessage = messageData.message || undefined;
-                if (!encryptedMessage) return {
-                    title: 'no message field in message data',
-                    body: 'error',
-                };
+                if (!encryptedMessage) return undefined;
                 const decrypted = handlePossiblyEncryptedMessage(encryptedMessage, secretKey);
                 if (decrypted?.messageType === 'system') return;
-                if (!decrypted) return {
-                    title: 'decryption failure',
-                    body: 'error',
-                };
+                if (!decrypted) return undefined;
                 const storedUserData = await getStoredUserData();
                 const storedPreview = storedUserData?.conversations?.find((c) => c.cid === messageData.cid);
-                if (!storedUserData || !storedPreview) return {
-                    title: 'no preview found in user data for notif',
-                    body: 'error',
-                };
+                if (!storedUserData || !storedPreview) return undefined;
                 const mentionFields = extractMentionNotification(decrypted, storedUserData.id, storedPreview);
                 if (mentionFields !== undefined) {
                     return {
                         ...mentionFields,
                         data: notif
                     };
+                }
+                if (messageData.convoProfiles && messageData.convoProfiles.find((p) => p.id === storedUserData.id)?.notifications === 'mentions') {
+                    return undefined;
                 }
                 const decryptedContents = getPossiblyDecryptedMessageContents(decrypted);
                 if (decryptedContents) {

@@ -143,7 +143,6 @@ export default function MessageEntry({
             encryptionLevel: 'none'
         }
         if (socket && currentConvo) {
-            console.log('sending message');
             const userSecretKey = secrets ? secrets.userSecretKey : undefined;
             const encryptedMessage = encryptMessageForConvo(message, currentConvo, userSecretKey);
             dispatch(sendNewMessage({socket, message: encryptedMessage}));

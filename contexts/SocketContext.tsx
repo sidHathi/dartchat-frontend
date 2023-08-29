@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext, PropsWithChildren, ReactNode, useContext, useCallback, useRef } from 'react';
 import { Socket, io } from 'socket.io-client';
-import { REACT_APP_API_URL } from '@env';
+// import { REACT_APP_API_URL } from '@env';
+import Config from 'react-native-config';
 import auth from '@react-native-firebase/auth';
 import NetworkContext from './NetworkContext';
 import { AppState } from 'react-native';
@@ -48,11 +49,16 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     const [socket, setSocket] = useState<Socket | undefined>();
     const [disconnected, setDisconnected] = useState(true);
 
+    const socketRef = useRef(socket);
+
+    useEffect(() => {
+        socketRef.current = socket;
+    }, [socket]);
+
     const resetSocket = useCallback(async (): Promise<void> => {
         if (!(socket?.connected) && (!socket?.active) && auth().currentUser && networkConnected) {
-            console.log('setting new socket');
             setDisconnected(true);
-            const newSocket = io(REACT_APP_API_URL, {
+            const newSocket = io(Config.REACT_APP_API_URL || '', {
                 auth: {
                     token: await auth().currentUser?.getIdToken()
                 },
@@ -69,7 +75,12 @@ export function SocketContextProvider({children} :PropsWithChildren<{
         } else {
             setDisconnected(true);
         }
-    }, [networkConnected, socket]);
+
+        await new Promise(res => setTimeout(res, 5000));
+        if (!socketRef.current?.connected) {
+            setDisconnected(true);
+        }
+    }, [networkConnected, socket, socketRef]);
 
     useEffect(() => {
         if (auth().currentUser && networkConnected) {

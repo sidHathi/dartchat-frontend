@@ -57,14 +57,11 @@ export default function PollBuilder({
 
     const constructPoll: () => Promise<Poll | undefined> = useCallback(async () => {
         if (!question) {
-            console.log('no question in poll');
             setError('Complete required fields')
             return;
         }
         const filteredOptions = options.filter(opt => opt.length > 0);
         if (filteredOptions.length < 0) {
-            console.log('no valid poll options');
-            console.log(filteredOptions);
             setError('Complete required fields')
             return;
         }

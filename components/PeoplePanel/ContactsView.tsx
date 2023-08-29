@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useContext, useCallback } from "re
 import { View, ScrollView, VStack, Text, Box, HStack, Spacer, Center, Input, Icon } from 'native-base';
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { userDataSelector } from "../../redux/slices/userDataSlice";
-import { Conversation, UserProfile } from "../../types/types";
+import { Conversation, UserConversationProfile, UserProfile } from "../../types/types";
 import useRequest from "../../requests/useRequest";
 import IconButton from "../generics/IconButton";
 import IconImage from "../generics/IconImage";
@@ -13,6 +13,10 @@ import UIContext from "../../contexts/UIContext";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import uuid from 'react-native-uuid';
 import { openPrivateMessage } from "../../redux/slices/chatSlice";
+import UserSecretsContext from "../../contexts/UserSecretsContext";
+import { buildCProfileForUserProfile } from "../../utils/identityUtils";
+import { getNewConversationKeys } from "../../utils/encryptionUtils";
+import { findPrivateMessageIdForUser } from "../../utils/messagingUtils";
 
 export default function ContactsView(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -21,6 +25,7 @@ export default function ContactsView(): JSX.Element {
     const { user } = useContext(AuthIdentityContext);
     const { navSwitch } = useContext(UIContext);
     const { conversationsApi } = useRequest();
+    const { handleNewConversationKey } = useContext(UserSecretsContext);
 
     const [pullRequestLoading, setPullRequestLoading] = useState(false);
     const [contactProfiles, setContactProfiles] = useState<UserProfile[] | undefined>();
@@ -51,27 +56,39 @@ export default function ContactsView(): JSX.Element {
         ));
     }, [contactProfiles, searchText]);
 
-    const handleMessage = useCallback((profile: UserProfile) => {
+    const handleMessage = useCallback(async (profile: UserProfile) => {
         if (!user) return;
+        const convoProfile = buildCProfileForUserProfile(profile)
+        const participants = [
+            convoProfile,
+            {
+                displayName: user.displayName || user.handle || user.email,
+                id: user.id || 'test',
+                handle: user.handle,
+                avatar: user.avatar,
+                notifications: 'all',
+            } as UserConversationProfile
+        ];
+        const keys = await getNewConversationKeys(participants);
+        const secretKey = keys?.keyPair.secretKey;
+        const encodedSecretKey = keys?.encodedKeyPair.secretKey;
+        const publicKey = keys?.encodedKeyPair.publicKey;
+        const recipientKeyMap = keys?.encryptedKeysForUsers;
+
         const seedConvo: Conversation = {
             id: uuid.v4() as string,
             settings: {},
-            participants: [
-                profile,
-                {
-                    displayName: user.displayName || user.handle || user.email,
-                    id: user.id || 'test',
-                    handle: user.handle,
-                    avatar: user.avatar,
-                    notifications: 'all',
-                }
-            ],
+            participants,
             name: 'Private Message',
             group: false,
             avatar: profile.avatar,
-            messages: []
+            messages: [],
+            publicKey
         };
-        dispatch(openPrivateMessage(seedConvo, user.id, userConversations, conversationsApi));
+        dispatch(openPrivateMessage(seedConvo, user.id, userConversations, conversationsApi, recipientKeyMap, secretKey));
+        if (secretKey && encodedSecretKey && !findPrivateMessageIdForUser(convoProfile, userConversations)) {
+            await handleNewConversationKey(seedConvo.id, secretKey, encodedSecretKey);
+        }
         navSwitch('messaging');
         return;
     }, [userConversations, user, conversationsApi, navSwitch]);

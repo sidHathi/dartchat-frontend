@@ -32,7 +32,6 @@ export default function NotificationsController(): JSX.Element {
         const eventListener = AppState.addEventListener('change', async (nextState) => {
             if (nextState === 'active' && (await getBackgroundUpdateFlag())) {
                 try {
-                    console.log('pulling notification updates');
                     if (currentConvo) {
                         const secretKey = (secrets && currentConvo.id in secrets) ? secrets[currentConvo.id] : undefined;
                         dispatch(pullConversation(currentConvo.id, conversationsApi, secretKey));
@@ -214,7 +213,6 @@ export default function NotificationsController(): JSX.Element {
     const handleNotifeeOpenEvent = async () => {
         dispatch(setNotificationLoading(true));
         const initialNotification = await notifee.getInitialNotification();
-        console.log(initialNotification);
 
         if (!initialNotification?.notification.data) {
             dispatch(setNotificationLoading(false));
@@ -225,7 +223,6 @@ export default function NotificationsController(): JSX.Element {
 
     useEffect(() => {
         const unsubscribe = messaging().onNotificationOpenedApp(async (notification) => {
-            console.log("FCM handler triggered");
             if (notification.data) {
                 const pnData: PNPacket = notification.data as PNPacket;
                 handleNotificationSelect(pnData);
@@ -249,10 +246,8 @@ export default function NotificationsController(): JSX.Element {
         return notifee.onForegroundEvent(({ type, detail }) => {
             switch (type) {
                 case EventType.DISMISSED:
-                    console.log('User dismissed notification', detail.notification);
                     break;
                 case EventType.PRESS:
-                    console.log('User pressed notification', detail.notification?.data);
                     if (detail?.notification?.data) {
                         dispatch(setNotificationLoading(true));
                         handleNotificationSelect(detail.notification.data as PNPacket)
@@ -260,7 +255,6 @@ export default function NotificationsController(): JSX.Element {
                     }
                     break;
                 default:
-                    console.log('foreground notification received');
                     break;
             }
         });
@@ -268,14 +262,11 @@ export default function NotificationsController(): JSX.Element {
 
     useEffect(() => {
         const addPushToken = async () => {
-            console.log('adding push token');
             try {
                 const token = await messaging().getToken();
-                console.log(`PNTOKEN: ${token}`);
                 if (token) {
                     await usersApi.addUserPushToken(token);
                 }
-                console.log('added');
             } catch (err) {
                 console.log(err);
             }

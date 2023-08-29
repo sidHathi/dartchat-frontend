@@ -22,39 +22,6 @@ export default function Home(): JSX.Element {
     const { disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
     const { silent, currentConvo, conversationLoading, conversationSet } = useAppSelector(chatSelector);
 
-    const [idle, setIdle] = useState(false);
-    const [timeForInactivityInSecond] = useState(300);
-
-    const handleIdleUser = useCallback(() => idle === false && setIdle(true), [idle]);
-
-    const handleActiveUser = useCallback(() => {
-        if (socketDisconnected && idle) resetSocket();
-        setIdle(false);
-    }, [socketDisconnected, idle]);
-    
-    useEffect(() => {
-        resetInactivityTimeout()
-    }, [])
-
-    const panResponder = React.useRef(
-        PanResponder.create({
-            onMoveShouldSetPanResponder:() => false,
-            onMoveShouldSetPanResponderCapture:() => false,
-            onStartShouldSetPanResponderCapture: () => {
-                handleActiveUser();
-                resetInactivityTimeout();
-                return false;
-            },
-        })
-    ).current
-
-    const resetInactivityTimeout = () => {
-        clearTimeout(timerId.current as any)
-        timerId.current = setTimeout(() => {
-            handleIdleUser();
-        }, timeForInactivityInSecond * 1000)
-    }
-
     const handleConversationExit = () => {
         if (silent && currentConvo) {
             forgetConversationKeys(currentConvo.id);
@@ -106,7 +73,7 @@ export default function Home(): JSX.Element {
         }
     }
 
-    return <View style={{flex: 1}} {...panResponder.panHandlers}>
+    return <View style={{flex: 1}}>
         <UserConversationsController>
             {getScreen()}
         </UserConversationsController>

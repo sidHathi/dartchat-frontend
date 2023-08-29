@@ -48,9 +48,6 @@ export const getMentionsFromMessage = (mText: string, profiles: UserConversation
 export const getDateTimeString = (date: Date): string => {
     try {
         const stringRep = date.toLocaleString([], {year: 'numeric', month: 'long', day: '2-digit', hour: '2-digit', minute:'2-digit'});
-        if (stringRep === 'Invalid Date') {
-            console.log(date);
-        }
         return stringRep;
     } catch (err) {
         console.log('date error:');

@@ -287,8 +287,10 @@ export const joinConversation = (cid: string, conversationsApi: ConversationsApi
         dispatch(setRequestLoading(true));
         await conversationsApi.joinChat(cid);
         dispatch(handleArchiveConvoRemoval(cid));
-        dispatch(pullLatestPreviews(usersApi));
-        onComplete && onComplete();
+        dispatch(pullLatestPreviews(usersApi, () => {
+            onComplete && onComplete();
+            dispatch(setRequestLoading(false));
+        }));
     } catch (err) {
         dispatch(setRequestLoading(false));
         console.log(err);

@@ -69,12 +69,8 @@ export const decryptString = (recipientPrivateKey: Uint8Array, messageWithNonce:
 };
 
 export const decryptJSON = (recipientPrivateKey: Uint8Array, messageWithNonce: string, senderPublicKey?: Uint8Array): any | undefined => {
-    console.log(encodeKey(recipientPrivateKey));
-    senderPublicKey && console.log(encodeKey(senderPublicKey));
-    console.log(`decrypted string: ${decryptString(recipientPrivateKey, messageWithNonce, senderPublicKey)}`);
     try {
         const decrypted = JSON.parse(decryptString(recipientPrivateKey, messageWithNonce, senderPublicKey));
-        console.log(decrypted);
         return decrypted;
     } catch (err) {
         console.log(err);
@@ -102,6 +98,7 @@ export const encryptMessage = (message: DecryptedMessage, userSecretKey: Uint8Ar
         delivered: message.delivered,
         mentions: message.mentions,
         replyRef: message.replyRef,
+        inGallery: message.inGallery,
         encryptedFields
     };
 };
@@ -147,7 +144,6 @@ export const initUserSecretKey = (encryptionKey: string, salt: string, existingK
         userSecretKey: encodeBase64(keyPair.secretKey)
     };
     
-    console.log(b64EncodedSecret);
     const encryptedKeySet = encryptUserSecrets(encryptionKey, salt, b64EncodedSecret)
     return {
         encryptedKeySet,
@@ -156,13 +152,10 @@ export const initUserSecretKey = (encryptionKey: string, salt: string, existingK
 };
 
 export const decryptUserKeys = (encryptionKey: string, salt: string, encryptedKeySet: string): any => {
-    console.log(encryptionKey);
     const iv = enc.Base64.parse(salt);
     const key = enc.Base64.parse(encryptionKey);
     const decryptedString = AES.decrypt(encryptedKeySet, key, { iv }).toString(enc.Utf8);
-    console.log(decryptedString);
     const decrypted = JSON.parse(decryptedString);
-    console.log(decrypted);
     return decrypted;
 };
 
@@ -170,9 +163,6 @@ export const encryptUserSecrets = (encryptionKey: string, salt: string, keys: an
     const iv = enc.Base64.parse(salt);
     const key = enc.Base64.parse(encryptionKey);
     const encrypted = AES.encrypt(JSON.stringify(keys), key, { iv }).toString();
-    console.log('encrypted vs decrypted');
-    console.log(encrypted);
-    console.log(`decrypted: ${decryptUserKeys(encryptionKey, salt, encrypted)}`);
     return encrypted;
 }
 

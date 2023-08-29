@@ -111,7 +111,6 @@ export const chatSlice = createSlice({
             const { socket, message } = action.payload;
             if (state.currentConvo) {
                 if (state.silent) {
-                    console.log(state.silentKeyMap);
                     socket.emit('newPrivateMessage', state.currentConvo, message, state.silentKeyMap);
                     state.onSilentCreate && state.onSilentCreate();
                     return {
@@ -840,19 +839,22 @@ export const resetLikeIcon = (api: ConversationsApi, onSuccess?: () => void): Th
 };
 
 export const pullGallery = (api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
-    const { currentConvo, galleryCursor } = getState().chatReducer;
+    const { currentConvo, galleryCursor, secretKey } = getState().chatReducer;
     if (!currentConvo) return;
 
     dispatch(setRequestLoading(true))
     try {
         const cursorContainer: CursorContainer = { cursor: galleryCursor || null };
         const messages: Message[] = await api.getGallery(currentConvo.id, cursorContainer);
+        const decryptedMessages = messages.map((m) => handlePossiblyEncryptedMessage(m, secretKey));
         if (cursorContainer.cursor && cursorContainer.cursor !== 'none') {
             dispatch(setGalleryCursor(cursorContainer.cursor));
         } else {
             dispatch(setGalleryCursor(undefined));
         }
-        dispatch(handleNewGalleryMessages(messages as DecryptedMessage[]));
+        dispatch(handleNewGalleryMessages(
+            decryptedMessages.filter((m) => m !== undefined) as DecryptedMessage[]
+        ));
         dispatch(setRequestLoading(false));
     } catch (err) {
         dispatch(setRequestLoading(false));

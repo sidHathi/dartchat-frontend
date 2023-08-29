@@ -26,13 +26,9 @@ const displayNotification = async (displayFields: {
 };
 
 export const setBackgroundHandler = () => notifee.onBackgroundEvent(async ({ type, detail }) => {
-    console.log('NOTIF EVENT');
-    console.log(type);
-    console.log(detail);
     if (type === EventType.PRESS) {
         await setBackgroundUpdateFlag(true);
         if (detail?.notification?.data) {
-            console.log(detail?.notification?.data);
             await notifee.decrementBadgeCount();
             await notificationStore.setNotificationAction(JSON.stringify(detail.notification.data));
         }
@@ -40,19 +36,15 @@ export const setBackgroundHandler = () => notifee.onBackgroundEvent(async ({ typ
         await notifee.decrementBadgeCount();
     } else {
         await setBackgroundUpdateFlag(true);
-        console.log('notification received');
     }
 });
 
 export const requestUserPermission = async () => {
     const authStatus = await messaging().requestPermission();
     // await messaging().registerDeviceForRemoteMessages();
-    const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-    if (enabled) {
-        console.log('Authorization status:', authStatus);
-    }
+    // const enabled =
+    //     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    //     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 };
 
 export const setBackgroundNotifications = () => messaging().setBackgroundMessageHandler(async remoteMessage => {
@@ -66,7 +58,6 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
         }
     } 
     if (remoteMessage.data.type === 'message') {
-        console.log(remoteMessage.data);
         const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
         const displayFields = await getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey);
         if (displayFields) {

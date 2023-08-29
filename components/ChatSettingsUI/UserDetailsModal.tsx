@@ -10,8 +10,11 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { chatSelector, openPrivateMessage, updateUserRole } from "../../redux/slices/chatSlice";
 import useRequest from "../../requests/useRequest";
 import { userDataSelector } from "../../redux/slices/userDataSlice";
-import { hasPermissionForAction } from "../../utils/messagingUtils";
+import { findPrivateMessageIdForUser, hasPermissionForAction } from "../../utils/messagingUtils";
 import SocketContext from "../../contexts/SocketContext";
+import { buildCProfileForUserProfile } from "../../utils/identityUtils";
+import { getNewConversationKeys } from "../../utils/encryptionUtils";
+import UserSecretsContext from "../../contexts/UserSecretsContext";
 
 export default function UserDetailsModal({
     isOpen,
@@ -31,6 +34,7 @@ export default function UserDetailsModal({
     const dispatch = useAppDispatch();
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
+    const { handleNewConversationKey } = useContext(UserSecretsContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { userConversations } = useAppSelector(userDataSelector);
     const { conversationsApi } = useRequest();
@@ -72,27 +76,38 @@ export default function UserDetailsModal({
         }
     }, [conversationsApi, currentConvo, profile, socket]);
 
-    const handleMessage = useCallback(() => {
-        if (!user) return;
+    const handleMessage = useCallback(async () => {
+        if (!user || !profile) return;
+        const participants = [
+            profile,
+            {
+                displayName: user.displayName || user.handle || user.email,
+                id: user.id || 'test',
+                handle: user.handle,
+                avatar: user.avatar,
+                notifications: 'all',
+            } as UserConversationProfile
+        ];
+        const keys = await getNewConversationKeys(participants);
+        const secretKey = keys?.keyPair.secretKey;
+        const encodedSecretKey = keys?.encodedKeyPair.secretKey;
+        const publicKey = keys?.encodedKeyPair.publicKey;
+        const recipientKeyMap = keys?.encryptedKeysForUsers;
+
         const seedConvo: Conversation = {
             id: uuid.v4() as string,
             settings: {},
-            participants: [
-                profile,
-                {
-                    displayName: user.displayName || user.handle || user.email,
-                    id: user.id || 'test',
-                    handle: user.handle,
-                    avatar: user.avatar,
-                    notifications: 'all',
-                }
-            ],
+            participants,
             name: 'Private Message',
             group: false,
             avatar: profile.avatar,
-            messages: []
+            messages: [],
+            publicKey
         };
-        dispatch(openPrivateMessage(seedConvo, user.id, userConversations, conversationsApi));
+        dispatch(openPrivateMessage(seedConvo, user.id, userConversations, conversationsApi, recipientKeyMap, secretKey));
+        if (secretKey && encodedSecretKey && !findPrivateMessageIdForUser(profile, userConversations)) {
+            await handleNewConversationKey(seedConvo.id, secretKey, encodedSecretKey);
+        }
         handleClose();
         navToMessages && navToMessages();
         return;

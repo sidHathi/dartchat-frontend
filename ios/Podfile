@@ -38,6 +38,9 @@ target 'dartchat' do
 
   config = use_native_modules!
 
+  # For extensions without React dependencies
+  pod 'react-native-config/Extension', :path => '../node_modules/react-native-config'
+
   # Flags change depending on the env values.
   flags = get_default_flags()
 

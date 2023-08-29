@@ -53,8 +53,12 @@ export default function ChatSelector({
         const unreads = userConversations.reduce((acc, preview) => {
             return acc + preview.unSeenMessages;
         }, 0);
-        notifee.setBadgeCount(unreads);
-    }, [userConversations])
+        if (unreads && !isNaN(unreads)) {
+            notifee.setBadgeCount(unreads);
+        } else {
+            notifee.setBadgeCount(0);
+        }
+    }, [userConversations]);
 
     const handleSelect = useCallback((chat: ConversationPreview) => {
         if (!networkConnected) return;
@@ -89,7 +93,10 @@ export default function ChatSelector({
         }
     };
 
-    const closeModal = () => setDcModalOpen(false);
+    const closeModal = () => {
+        setDcModalOpen(false);
+        setUpForDelete(undefined);
+    };
 
     const deleteConfirm = () => {
         setDcModalOpen(false);
@@ -143,6 +150,7 @@ export default function ChatSelector({
     }
 
     const renderListItem = ({item}: {item: ConversationPreview}) => {
+        if (!item.cid) return <></>;
         return <Swipeable
             key={item.cid}
             renderRightActions={() => RightButton(item)}>
@@ -163,14 +171,16 @@ export default function ChatSelector({
             ListFooterComponent={(() => <Box h='100px' />)}
         />
 
-        <ConfirmationModal
-            isOpen={dcModalOpen}
-            onClose={closeModal}
-            onConfirm={deleteConfirm}
-            title='Confirm Deletion'
-            content='This action cannot be reversed'
-            size='lg'
-        />
+        {upForDelete &&
+            <ConfirmationModal
+                isOpen={dcModalOpen}
+                onClose={closeModal}
+                onConfirm={deleteConfirm}
+                title='Confirm Deletion'
+                content='This action cannot be reversed'
+                size='lg'
+            />
+        }
 
         {/* <ConfirmationModal
             isOpen={confirmLeaveModalOpen}
@@ -185,7 +195,10 @@ export default function ChatSelector({
             <LeaveChatScreen
                 cid={upForLeave.cid}
                 isOpen={confirmLeaveModalOpen}
-                onClose={() => setConfirmLeaveModalOpen(false)}
+                onClose={() => {
+                    setConfirmLeaveModalOpen(false)
+                    setUpForLeave(undefined)
+                }}
                 />
         }
 

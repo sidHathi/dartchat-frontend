@@ -63,7 +63,6 @@ const reencryptor: Reencryptor = {
                 minDate: this.encryptionData.minDate,
                 data: this.encryptionData.data.map((messageData) => {
                     const decryptedFields = decryptString(oldSecretKey, messageData.encryptedFields, decodeKey(messageData.publicKey));
-                    console.log(decryptedFields);
                     const reencryptedFields = encryptString(newKeys.secretKey, decryptedFields, newKeys.publicKey);
                     return {
                         id: messageData.id,
@@ -73,8 +72,6 @@ const reencryptor: Reencryptor = {
                 })
             };
             const userKeyMap = getNewMemberKeys(this.convo.participants, newKeys.secretKey);
-            console.log(this.encryptionData);
-            console.log(this.reencryptedData)
             await this.api.changeEncryptionKey(this.convo.id, encodeKey(newKeys.publicKey), userKeyMap);
             return userKeyMap;
         } catch (err) {
@@ -84,7 +81,6 @@ const reencryptor: Reencryptor = {
     },
     async commit() {
         if (!this.convo || !this.api || !this.reencryptedData) return;
-        console.log(this.reencryptedData);
         await this.api.pushReencryptedMessages(this.convo.id, this.reencryptedData);
         return;
     },

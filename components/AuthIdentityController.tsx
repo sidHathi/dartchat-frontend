@@ -72,8 +72,6 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     };
 
     const initAppUser = useCallback((newUser: UserData) => {
-        console.log('intializing app');
-        console.log(newUser);
         setUser(newUser);
         setNeedsSetup(false);
         dispatch(initReduxUser(newUser));
@@ -125,9 +123,6 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                         }
                     }
                     const localUser = await getStoredUserData();
-                    console.log(`local user:`);
-                    // console.log(localUser);
-                    // console.log(authUser.uid);
                     if (localUser && localUser.handle && localUser.id === authUser.uid) {
                         initAppUser(localUser);
                     }

@@ -48,8 +48,6 @@ export default function UserConversationsController({
             let secretKey: Uint8Array | undefined = undefined;
             if (keyMap && user.id in keyMap &&  completedConvo.publicKey) {
                 secretKey = await handleNewEncryptedConversation(completedConvo.id, keyMap[user.id], completedConvo.publicKey);
-                console.log('newConvo secret key added');
-                console.log(completedConvo);
             }
             dispatch(addConversation({
                 newConvo: completedConvo,
@@ -208,8 +206,6 @@ export default function UserConversationsController({
         if (!socket || !user) return;
         socket.on('keyChange', async (cid: string, newPublicKey: string, userKeyMap: { [id: string]: string }) => {
             try {
-                console.log('key change received');
-                console.log(newPublicKey);
                 if (cid === currentConvo?.id) {
                     if (newPublicKey === currentConvo.publicKey) return;
                     dispatch(setCCPublicKey(newPublicKey));
@@ -244,7 +240,6 @@ export default function UserConversationsController({
     useEffect(() => {
         if (!socket) return;
         socket.on('userRoleChanged', (cid: string, uid: string, newRole: ChatRole) => {
-            console.log('user role change message received');
             if (cid === currentConvo?.id) {
                 dispatch(updateUserRole({uid, newRole}));
             }

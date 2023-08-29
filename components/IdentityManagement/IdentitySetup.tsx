@@ -165,7 +165,7 @@ export default function IdentitySetup(): JSX.Element {
                 </Center>
                 }
                 </FormControl>
-                <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={handleSubmit} variant='solid' color='white' marginY='12px' disabled={!handle}
+                <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' marginY='12px' disabled={!handle}
                 opacity={(!handle) ? 0.5 : 1}>
                     Continue
                 </Button>

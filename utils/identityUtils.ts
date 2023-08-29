@@ -51,6 +51,7 @@ export const selectProfileImage = async (
             forceJpg: true,
             includeBase64: true,
         });
+        console.log(res);
         setImage(res);
         setEdited && setEdited(true);
     } catch (err) {
@@ -68,7 +69,7 @@ export const buildDefaultProfileForUser = (user: UserData): UserConversationProf
     };
 };
 
-export const buildCProfileForUserProifle = (profile: UserProfile) => {
+export const buildCProfileForUserProfile = (profile: UserProfile) => {
     return {
         id: profile.id,
         displayName: profile.displayName,

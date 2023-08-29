@@ -10,7 +10,7 @@ import RemoveUserModal from "../RemoveUserModal";
 import SocketContext from "../../../contexts/SocketContext";
 import UserSecretsContext from "../../../contexts/UserSecretsContext";
 import { getNewMemberKeys } from "../../../utils/encryptionUtils";
-import { buildCProfileForUserProifle, buildDefaultProfileForUser } from "../../../utils/identityUtils";
+import { buildCProfileForUserProfile, buildDefaultProfileForUser } from "../../../utils/identityUtils";
 import AuthIdentityContext from "../../../contexts/AuthIdentityContext";
 import { hasPermissionForAction } from "../../../utils/messagingUtils";
 
@@ -81,7 +81,7 @@ export default function PrivilegedUsersList({
     const handleAddUser = useCallback((userPublicProfile: UserProfile) => {
         if (!currentConvo) return;
 
-        const cProfileForUser = buildCProfileForUserProifle(userPublicProfile);
+        const cProfileForUser = buildCProfileForUserProfile(userPublicProfile);
         let keyMap: { [id: string]: string } | undefined = undefined;
         if (currentConvo?.encryptionLevel && currentConvo.encryptionLevel !== 'none' && currentConvo.publicKey && secrets && secrets[currentConvo.id]) {
             const secretKey = secrets[currentConvo.id];
@@ -95,14 +95,14 @@ export default function PrivilegedUsersList({
 
     const handleRemoveUser = useCallback((profileToRemove: UserProfile) => {
         if (!currentConvo) return;
-        const cProfile = buildCProfileForUserProifle(profileToRemove);
+        const cProfile = buildCProfileForUserProfile(profileToRemove);
         setUpForRemove(cProfile);
         setRemoveUserModalOpen(true);
     }, [currentConvo]);
 
     const renderItem = ({item, index}: {item: UserProfile, index: number}) => {
         const permissionToRemove = hasPermissionForAction('removeUser', userProfile?.role, participantMap[item.id]?.role);
-        const showButton = !currentMembers || permissionToRemove;
+        const showButton = (!currentMembers || permissionToRemove) && currentConvo?.group;
         return <Box w='100%' borderRadius='12px' bgColor={index % 2 === 0 ? 'transparent': '#f5f5f5'}>
             <HStack px='6px' space={3} py='6px'>
                 {getAvatarElem(item)}

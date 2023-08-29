@@ -84,9 +84,6 @@ export default function ReencryptionModal({
 
         const reencrypt = async () => {
             if (!currentConvo || !stateReencryptor || !secrets || !(currentConvo.id in secrets)) {
-                console.log(secrets);
-                console.log(currentConvo?.id);
-                console.log(currentConvo && secrets && (currentConvo.id in secrets));
                 setError('Unable to fetch reencryption data');
                 return;
             }
@@ -185,7 +182,9 @@ export default function ReencryptionModal({
 
                 {
                     (stateReencryptor && !reencryptionComplete) &&
-                    <Spinner type='ThreeBounce' />
+                    <Center>
+                        <Spinner type='ThreeBounce' />
+                    </Center>
                 }
 
                 {

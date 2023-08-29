@@ -389,6 +389,11 @@ PODS:
     - React
   - react-native-cameraroll (5.7.2):
     - React-Core
+  - react-native-config (1.5.1):
+    - react-native-config/App (= 1.5.1)
+  - react-native-config/App (1.5.1):
+    - React-Core
+  - react-native-config/Extension (1.5.1)
   - react-native-fast-video (5.1.7):
     - React-Core
     - react-native-fast-video/Video (= 5.1.7)
@@ -607,6 +612,8 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - react-native-aes-cipher (from `../node_modules/react-native-aes-cipher`)
   - "react-native-cameraroll (from `../node_modules/@react-native-camera-roll/camera-roll`)"
+  - react-native-config (from `../node_modules/react-native-config`)
+  - react-native-config/Extension (from `../node_modules/react-native-config`)
   - react-native-fast-video (from `../node_modules/react-native-fast-video`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - "react-native-image-resizer (from `../node_modules/@bam.tech/react-native-image-resizer`)"
@@ -732,6 +739,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-aes-cipher"
   react-native-cameraroll:
     :path: "../node_modules/@react-native-camera-roll/camera-roll"
+  react-native-config:
+    :path: "../node_modules/react-native-config"
   react-native-fast-video:
     :path: "../node_modules/react-native-fast-video"
   react-native-image-picker:
@@ -854,6 +863,7 @@ SPEC CHECKSUMS:
   React-logger: 186dd536128ae5924bc38ed70932c00aa740cd5b
   react-native-aes-cipher: 87362294a7e70f99e19576137818121aeab74962
   react-native-cameraroll: 134805127580aed23403b8c2cb1548920dd77b3a
+  react-native-config: 86038147314e2e6d10ea9972022aa171e6b1d4d8
   react-native-fast-video: 2b3203e05780cbaf23694c64e0194ab66fb8825d
   react-native-image-picker: db60857e03d63721f19b6f4027de20429ddd9cba
   react-native-image-resizer: 00ceb0e05586c7aadf061eea676957a6c2ec60fa
@@ -892,6 +902,6 @@ SPEC CHECKSUMS:
   TOCropViewController: edfd4f25713d56905ad1e0b9f5be3fbe0f59c863
   Yoga: f7decafdc5e8c125e6fa0da38a687e35238420fa
 
-PODFILE CHECKSUM: 913edd0d7aa02b6d728acb23b8aff63dae5ac563
+PODFILE CHECKSUM: cdf1f9eaecb0c24a101cf3f70f8eb344e100bcb2
 
 COCOAPODS: 1.12.1
