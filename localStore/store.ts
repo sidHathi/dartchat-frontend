@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserData } from '../types/types';
+import { ConversationPreview, UserData } from '../types/types';
 import { parseUserData } from '../utils/requestUtils';
 
 export const storeUserData = async (user: UserData) => {
@@ -43,5 +43,23 @@ export const getBackgroundUpdateFlag = async () => {
         return await AsyncStorage.getItem('backgroundUpdateFlag') === 'true';
     } catch (err) {
         console.error(err);
+    }
+};
+
+export const storeUpdatedUserConversations = async (newConversations: ConversationPreview[]) => {
+    try {
+        const existingUser = await getStoredUserData();
+        if (existingUser) {
+            const updatedUser = {
+                ...existingUser,
+                conversations: newConversations
+            } as UserData;
+            await storeUserData(updatedUser);
+            return true;
+        }
+        return false;
+    } catch (err) {
+        console.log(err);
+        return false;
     }
 };

@@ -1,11 +1,12 @@
 import { createSlice, PayloadAction, ThunkAction } from '@reduxjs/toolkit';
-import { Message, ConversationPreview, Conversation, AvatarImage, UserData, DecryptedMessage, ChatRole } from '../../types/types';
+import { Message, ConversationPreview, Conversation, AvatarImage, UserData, DecryptedMessage, ChatRole, NotificationStatus } from '../../types/types';
 import { RootState } from '../store';
 import { Socket } from 'socket.io-client';
 import { UsersApi } from '../../requests/usersApi';
 import { ConversationsApi } from '../../requests/conversationsApi';
 import { getNewContacts, handlePossiblyEncryptedMessage } from '../../utils/messagingUtils';
 import secureStore from '../../localStore/secureStore';
+import { storeUpdatedUserConversations } from '../../localStore/store';
 
 const initialState: {
     id: string;
@@ -226,6 +227,26 @@ export const userDataSlice = createSlice({
                 needsServerSync: false,
                 requestLoading: false,
             }
+        },
+        updatePreviewNotifStatus: (state, action: PayloadAction<{
+            cid: string,
+            newStatus: NotificationStatus
+        }>) => {
+            const { cid, newStatus } = action.payload;
+            const updatedUserConvos = state.userConversations.map((c) => {
+                if (c.cid === cid) {
+                    return {
+                        ...c,
+                        notifications: newStatus
+                    }
+                }
+                return c;
+            });
+            storeUpdatedUserConversations(updatedUserConvos);
+            return {
+                ...state,
+                userConversations: updatedUserConvos
+            }
         }
     }
 });
@@ -248,7 +269,8 @@ export const {
     handleArchiveConvoRemoval,
     setPublicKey,
     handleRoleUpdate,
-    logOutUser
+    logOutUser,
+    updatePreviewNotifStatus
 } = userDataSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
@@ -273,6 +295,9 @@ export const pullLatestPreviews = (usersApi: UsersApi, onComplete?: () => void):
             updatedUser.conversations && dispatch(setConversations(updatedUser.conversations));
             dispatch(setContacts(updatedUser.contacts || []));
             dispatch(setArchivedConvos(updatedUser.archivedConvos || []));
+            if (updatedUser.conversations) {
+                await storeUpdatedUserConversations(updatedUser.conversations);
+            }
         }
         dispatch(setRequestLoading(false)); 
         onComplete && onComplete();

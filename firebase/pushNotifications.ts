@@ -2,7 +2,7 @@ import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messag
 import { setBackgroundUpdateFlag } from '../localStore/store';
 import notifee, { EventType } from '@notifee/react-native';
 import { PNPacket } from '../types/types';
-import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationInfo, handleBackgroundConversationKey, parsePNDisplay, parsePNNewConvo } from '../utils/notificationUtils';
+import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationInfo, handleBackgroundConversationKey, parsePNDisplay, parsePNLikeEvent, parsePNNewConvo } from '../utils/notificationUtils';
 import notificationStore from '../localStore/notificationStore';
 
 const displayNotification = async (displayFields: {
@@ -16,6 +16,7 @@ const displayNotification = async (displayFields: {
         await notifee.incrementBadgeCount();
     }
     notifee.displayNotification({
+        id: displayFields.id,
         title: displayFields.title,
         body: displayFields.body,
         data: displayFields.data || {},
@@ -62,14 +63,20 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
         const displayFields = await getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey);
         if (displayFields) {
             displayNotification(displayFields, remoteMessage.data.type);
-        } else {
-            displayNotification({
-                title: 'Decryption error',
-                body: 'no body'
-            }, remoteMessage.data.type);
         }
     } else if (remoteMessage.data.type === 'like') {
-        displayNotification(getUnencryptedDisplayFields(remoteMessage.data as PNPacket), remoteMessage.data.type);
+        const parsedLike = parsePNLikeEvent((remoteMessage.data.stringifiedBody as string));
+        const displayFields = getUnencryptedDisplayFields(remoteMessage.data as PNPacket);
+        const data = {
+            type: 'like',
+            cid: parsedLike?.cid || '',
+            mid: parsedLike?.mid
+        }
+        displayNotification({
+            ...displayFields,
+            data,
+            id: parsedLike?.mid
+        }, remoteMessage.data.type);
     } else {
         displayNotification({
             title: 'Unrecognized type',

@@ -1,9 +1,9 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useCallback } from 'react';
 import { Box, Button, HStack, Heading, Icon, Center, Text } from 'native-base';
 import IconButton from '../generics/IconButton';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { chatSelector, updateUserNotStatus } from '../../redux/slices/chatSlice';
-import { userDataSelector } from '../../redux/slices/userDataSlice';
+import { updatePreviewNotifStatus, userDataSelector } from '../../redux/slices/userDataSlice';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import { NotificationStatus } from '../../types/types';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -26,11 +26,12 @@ export default function NotificationsSettings({
         return undefined;
     }, [user, currentConvo]);
 
-    const onSelect = (setting: NotificationStatus) => {
+    const onSelect = useCallback((setting: NotificationStatus) => {
         // send message to the api indicating tha the change needs to be made -> on success update redux
         if (!user || requestLoading || setting === selectedButton) return;
         dispatch(updateUserNotStatus(user.id, setting, conversationsApi));
-    };
+        currentConvo && dispatch(updatePreviewNotifStatus({cid: currentConvo.id, newStatus: setting}));
+    }, [currentConvo, user, requestLoading, selectedButton]);
 
     const descriptorText = useMemo(() => {
         switch(selectedButton) {
@@ -45,7 +46,7 @@ export default function NotificationsSettings({
         }
     }, [selectedButton]);
 
-    return <Box w='96%' mx='auto' bgColor='white' borderRadius='12px' shadow='9' p='24px' mt='12px' style={{shadowOpacity: 0.18}}>
+    return <Box w='96%' mx='auto' bgColor='white' borderRadius='24px' shadow='9' p='24px' mt='6px' style={{shadowOpacity: 0.18}}>
         <HStack space={2}>
             <IconButton label='back' color='black' size={18} shadow='none' additionalProps={{mt: '2px'}} onPress={exit}/>
             <Heading fontSize='lg'>Notifications</Heading>
