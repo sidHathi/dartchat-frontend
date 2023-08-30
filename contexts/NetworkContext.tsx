@@ -34,7 +34,7 @@ export function NetworkContextProvider({children}: PropsWithChildren<{
             setApiReachable(isInternetReachable !== null ? isInternetReachable : isConnected || false);
             try {
                 const state = await NetInfo.fetch();
-                console.log(state);
+                // console.log(state);
                 if (state) {
                     setNetworkConnected(state.isConnected || false);
                     setApiReachable(state.isInternetReachable !== null ? state.isInternetReachable : state.isConnected || false);

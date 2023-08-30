@@ -97,7 +97,7 @@ export default function UserPinController(): JSX.Element {
     }, [user, secrets]);
 
     const userEncryptionStatus = useMemo(() => {
-        console.log(user);
+        // console.log(user);
         if (secretsLoading) {
             return 'loading';
         } else if (userSecretsInitialized) {

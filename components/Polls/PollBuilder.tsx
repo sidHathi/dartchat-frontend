@@ -176,7 +176,7 @@ export default function PollBuilder({
         setOptions(newOptions);
     }, [options])
 
-    return <View h={keyboardShown ? `${0.8*screenHeight - 90 + keyboardHeight}px`:`${0.8*screenHeight - 90}px`} flexShrink='0' w='100%'>
+    return <View h={keyboardShown ? `${0.85*screenHeight - 90}px`:`${0.8*screenHeight - 90}px`} flexShrink='0' w='100%'>
         <Box w='96%' m='auto' h='100%' flexShrink='0'>
             <Heading fontSize='lg'>
                 Create a Poll
@@ -206,6 +206,7 @@ export default function PollBuilder({
                 <Select.Item label="1 week" value="week" />
             </Select>
 
+            <ScrollView maxH={`${0.7*screenHeight - 90}px`} minH='200px' flexGrow='1'>
             <Box mb='12px'>
             {
             editField({
@@ -215,8 +216,7 @@ export default function PollBuilder({
                 })
             }
             </Box>
-            <ScrollView maxH={`${0.7*screenHeight - 90}px`} minH='200px' flexGrow='1'>
-            <VStack space='2' w='100%'>
+            <VStack space='2' w='100%' mb='6px'>
             {
                 options.map((opt, idx) => {
                     return <HStack space='2' flexGrow='1' key={idx}>
@@ -238,8 +238,6 @@ export default function PollBuilder({
                 Add another option
             </Button>
             </VStack>
-            </ScrollView>
-
             {
                 !pollReqLoading && error &&
                 <Text w='100%' textAlign='center' fontSize='xs' color='red.500'>{error}</Text>
@@ -254,9 +252,10 @@ export default function PollBuilder({
             leftIcon={<Icon as={Ionicons} name='ios-send' size='sm'/>}>
                 Send
             </Button>
-            <Button colorScheme='light' variant='subtle' w='100%' borderRadius='24px' onPress={close} my='3px'>
+            <Button colorScheme='light' variant='subtle' w='100%' borderRadius='24px' onPress={close} mt='3px' mb={keyboardShown ? '300px': '3px'}>
                 Cancel
             </Button>
+            </ScrollView>
         </Box>
     </View>
 }

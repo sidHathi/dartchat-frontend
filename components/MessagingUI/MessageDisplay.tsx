@@ -8,7 +8,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import IconImage from "../generics/IconImage";
 import MessageMediaDisplay from "./MessageMediaControllers/MessageMediaDisplay";
 import { FontAwesome5 } from '@expo/vector-icons';
-import MessageTextDisplay from "./Mentions/MentionsTextDisplay";
+import MentionsTextDisplay from "./Mentions/MentionsTextDisplay";
 import PollDisplay from "../Polls/PollDisplay";
 import { encryptMessageForConvo, getDateTimeString } from "../../utils/messagingUtils";
 import EventDisplay from "../EventsUI/EventDisplay";
@@ -20,6 +20,7 @@ import { chatSelector, removeLocalMessage, sendNewMessage } from "../../redux/sl
 import UserSecretsContext from "../../contexts/UserSecretsContext";
 import { handleNewMessage, userDataSelector } from "../../redux/slices/userDataSlice";
 import ReplyMessageDisplay from "./ReplyMessageDisplay";
+import Clipboard from "@react-native-clipboard/clipboard";
 
 export default function MessageDisplay({ 
         message,
@@ -54,6 +55,7 @@ export default function MessageDisplay({
     const { secrets } = useContext(UserSecretsContext);
 
     const [sendFailed, setSendFailed] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const messageRef = useRef(message);
 
@@ -161,7 +163,14 @@ export default function MessageDisplay({
             </VStack>
             {isSystemMessage && <Spacer />}
             <VStack maxWidth={`${screenWidth - 110} px`} overflowX='visible'>
-                <Pressable onPress={handleMessageTap}>
+                <Pressable onPress={handleMessageTap} onLongPress={async () => {
+                    if (message.content) {
+                        Clipboard.setString(message.content);
+                        setCopied(true);
+                        await new Promise(res => setTimeout(res, 2000));
+                        setCopied(false);
+                    }
+                }}>
                     {
                         message.objectRef && ['poll', 'event'].includes(message.objectRef.type) ?
                             message.objectRef.type === 'poll' ?
@@ -193,7 +202,8 @@ export default function MessageDisplay({
                                 }}/>
                             }
                             {/* <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'}>{message.content}</Text> */}
-                            <MessageTextDisplay message={message} fontSize='sm' color={(isSystemMessage || message.messageType === 'deletion') ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} textAlign={isSystemMessage ? 'center' : 'left'} />
+                            <MentionsTextDisplay message={message} fontSize='sm' color={(isSystemMessage || message.messageType === 'deletion') ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} textAlign={isSystemMessage ? 'center' : 'left'} />
+                            {copied && <Text fontSize='xs' color='gray.400' mx='auto'>Copied to clipboard</Text>}
                         </VStack>
                     </Box>
                     }

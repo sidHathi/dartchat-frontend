@@ -5,6 +5,7 @@ import {View, Box, HStack, VStack, Text, Spacer, Pressable} from 'native-base';
 import IconButton from '../generics/IconButton';
 import IconImage from '../generics/IconImage';
 import { FontAwesome5 } from '@expo/vector-icons';
+import MentionsTextDisplay from './Mentions/MentionsTextDisplay';
 
 export default function ReplyMessagePreview({
     participants, message, handleDeselect
@@ -34,7 +35,7 @@ export default function ReplyMessagePreview({
                                     </Text>
                                 </HStack>
                             }
-                            <Text fontSize='sm'>{message.content}</Text>
+                            <MentionsTextDisplay fontSize='sm' message={message} />
                         </VStack>
                     </Box>
                     <Spacer />

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
     Part,
     PartType,
@@ -6,7 +6,11 @@ import {
     isMentionPartType,
   } from 'react-native-controlled-mentions';
 import { Text, ITextProps } from 'native-base';
+import Autolink from 'react-native-autolink';
 import { UserConversationProfile } from '../../../types/types';
+import { Pressable } from 'react-native';
+import { Linking } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 export default function MentionsTextDisplay({
     message,
@@ -22,21 +26,7 @@ export default function MentionsTextDisplay({
     },
     handleMentionSelect?: (id: string) => void
 } & ITextProps): JSX.Element {
-    const idProfileMap = useMemo(() => {
-        if (!message.mentions) return {};
-        return Object.fromEntries(
-            message.mentions.map((mention) => ([
-                mention.id, mention
-            ]))
-        )
-    }, [message]);
-
-    const getProfileForId = useCallback((id: string) => {
-        if (id in idProfileMap) {
-            return idProfileMap[id];
-        }
-        return undefined;
-    }, [idProfileMap]);
+    const [copied, setCopied] = useState(false);
 
     const renderPart = (
         part: Part,
@@ -44,7 +34,33 @@ export default function MentionsTextDisplay({
         ) => {
         // Just plain text
         if (!part.partType) {
-            return <Text key={index}>{part.text}</Text>;
+            return <Autolink 
+                key={`${index}-pattern`}
+                text={part.text} 
+                linkStyle={{
+                    fontWeight: 'bold',
+                    color: 'blue'
+                }}
+                renderLink={(text, match) => (
+                    <Text color='blue.500' fontWeight='bold' 
+                        onPress={() => {
+                            Linking.openURL(match.getAnchorHref())
+                        }}
+                        onLongPress={async () => {
+                            Clipboard.setString(match.getAnchorText());
+                            setCopied(true);
+                            await new Promise(res => setTimeout(res, 2000));
+                            setCopied(false);
+                        }}>
+                        {text}
+                    </Text>
+                )}
+                url={true}
+                email={true}
+                phone='text'
+                component={Text} 
+                selectable
+                />;
         }
 
         // Mention type part
@@ -63,12 +79,22 @@ export default function MentionsTextDisplay({
 
         // Other styled part types
         return (
-            <Text
+            <Autolink 
                 key={`${index}-pattern`}
-                style={part.partType.textStyle}
-                >
-                {part.text}
-            </Text>
+                text={part.text} 
+                linkStyle={{
+                    fontWeight: 'bold',
+                    color: 'blue'
+                }}
+                renderLink={(text, match) => (
+                    <Text color='blue.500' fontWeight='bold' onPress={() => Linking.openURL(match.getAnchorHref())}>
+                        {text}
+                    </Text>
+                )}
+                url={true}
+                phone='sms'
+                component={Text}
+                />
         );
     };
 
@@ -78,5 +104,8 @@ export default function MentionsTextDisplay({
 
     const {parts} = parseValue(message.content, types);
   
-    return <Text {...props}>{parts.map(renderPart)}</Text>;
+    return <>
+        <Text {...props}>{parts.map(renderPart)}</Text>
+        {copied && <Text fontSize='xs' color='gray.400' mx='auto'>Copied to clipboard</Text>}
+    </>;
 }
