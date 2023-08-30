@@ -51,7 +51,7 @@ export const selectProfileImage = async (
             forceJpg: true,
             includeBase64: true,
         });
-        console.log(res);
+        // console.log(res);
         setImage(res);
         setEdited && setEdited(true);
     } catch (err) {

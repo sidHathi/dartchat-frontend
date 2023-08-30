@@ -42,6 +42,7 @@
     "react": "18.2.0",
     "react-native": "0.71.11",
     "react-native-aes-cipher": "^1.0.9",
+    "react-native-autolink": "^4.1.0",
     "react-native-config": "^1.5.1",
     "react-native-controlled-mentions": "^2.2.5",
     "react-native-crypto-js": "^1.0.0",

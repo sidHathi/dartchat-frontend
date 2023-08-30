@@ -101,7 +101,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     useEffect(() => {
         const eventListener = AppState.addEventListener('change', (nextState) => {
             if (nextState === 'active') {
-                console.log('app state changed');
+                // console.log('app state changed');
                 appState.current = nextState;
                 if (!socket?.connected) {
                     resetSocket().then(() => {

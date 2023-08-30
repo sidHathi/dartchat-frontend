@@ -102,8 +102,8 @@ export default function ReencryptionModal({
         const completeReencryption = async () => {
             if (!currentConvo || !newKeys) return;
             await stateReencryptor.commit();
-            console.log(newKeys);
-            console.log(secrets);
+            // console.log(newKeys);
+            // console.log(secrets);
             await handleNewConversationKey(currentConvo.id, newKeys.secretKey, encodeKey(newKeys.secretKey));
             if (userKeyMap && socket && newKeys) {
                 socket.emit('keyChange', currentConvo.id, encodeKey(newKeys.publicKey), userKeyMap);

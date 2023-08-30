@@ -6,7 +6,10 @@ import {
     isMentionPartType,
   } from 'react-native-controlled-mentions';
 import { Text, ITextProps } from 'native-base';
+import Autolink from 'react-native-autolink';
 import { UserConversationProfile } from '../../../types/types';
+import { Pressable } from 'react-native';
+import { Linking } from 'react-native';
 
 export default function MentionsTextDisplay({
     message,
@@ -22,29 +25,29 @@ export default function MentionsTextDisplay({
     },
     handleMentionSelect?: (id: string) => void
 } & ITextProps): JSX.Element {
-    const idProfileMap = useMemo(() => {
-        if (!message.mentions) return {};
-        return Object.fromEntries(
-            message.mentions.map((mention) => ([
-                mention.id, mention
-            ]))
-        )
-    }, [message]);
-
-    const getProfileForId = useCallback((id: string) => {
-        if (id in idProfileMap) {
-            return idProfileMap[id];
-        }
-        return undefined;
-    }, [idProfileMap]);
-
     const renderPart = (
         part: Part,
         index: number,
         ) => {
         // Just plain text
         if (!part.partType) {
-            return <Text key={index}>{part.text}</Text>;
+            return <Autolink 
+                key={`${index}-pattern`}
+                text={part.text} 
+                linkStyle={{
+                    fontWeight: 'bold',
+                    color: 'blue'
+                }}
+                renderLink={(text, match) => (
+                    <Text color='blue.500' fontWeight='bold' onPress={() => Linking.openURL(match.getAnchorHref())}>
+                        {text}
+                    </Text>
+                )}
+                url={true}
+                email={false}
+                phone='sms'
+                component={Text} 
+                />;
         }
 
         // Mention type part
@@ -63,12 +66,22 @@ export default function MentionsTextDisplay({
 
         // Other styled part types
         return (
-            <Text
+            <Autolink 
                 key={`${index}-pattern`}
-                style={part.partType.textStyle}
-                >
-                {part.text}
-            </Text>
+                text={part.text} 
+                linkStyle={{
+                    fontWeight: 'bold',
+                    color: 'blue'
+                }}
+                renderLink={(text, match) => (
+                    <Text color='blue.500' fontWeight='bold' onPress={() => Linking.openURL(match.getAnchorHref())}>
+                        {text}
+                    </Text>
+                )}
+                url={true}
+                phone='sms'
+                component={Text}
+                />
         );
     };
 
