@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
     Part,
     PartType,
@@ -10,6 +10,7 @@ import Autolink from 'react-native-autolink';
 import { UserConversationProfile } from '../../../types/types';
 import { Pressable } from 'react-native';
 import { Linking } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 export default function MentionsTextDisplay({
     message,
@@ -25,6 +26,8 @@ export default function MentionsTextDisplay({
     },
     handleMentionSelect?: (id: string) => void
 } & ITextProps): JSX.Element {
+    const [copied, setCopied] = useState(false);
+
     const renderPart = (
         part: Part,
         index: number,
@@ -39,14 +42,24 @@ export default function MentionsTextDisplay({
                     color: 'blue'
                 }}
                 renderLink={(text, match) => (
-                    <Text color='blue.500' fontWeight='bold' onPress={() => Linking.openURL(match.getAnchorHref())}>
+                    <Text color='blue.500' fontWeight='bold' 
+                        onPress={() => {
+                            Linking.openURL(match.getAnchorHref())
+                        }}
+                        onLongPress={async () => {
+                            Clipboard.setString(match.getAnchorText());
+                            setCopied(true);
+                            await new Promise(res => setTimeout(res, 2000));
+                            setCopied(false);
+                        }}>
                         {text}
                     </Text>
                 )}
                 url={true}
-                email={false}
-                phone='sms'
+                email={true}
+                phone='text'
                 component={Text} 
+                selectable
                 />;
         }
 
@@ -91,5 +104,8 @@ export default function MentionsTextDisplay({
 
     const {parts} = parseValue(message.content, types);
   
-    return <Text {...props}>{parts.map(renderPart)}</Text>;
+    return <>
+        <Text {...props}>{parts.map(renderPart)}</Text>
+        {copied && <Text fontSize='10px' color='gray.500' mx='auto'>Copied to clipboard</Text>}
+    </>;
 }
