@@ -59,7 +59,7 @@ export default function UserPinEntry({
     }, [enteredPin, confirmPin]);
 
     return <View flex='1' bgColor='#fefefe'>
-        <Box w='90%' m='auto' p='24px' bgColor='#f5f5f5' shadow='9' borderRadius='24px' mt={keyboardShown ? '90px' : 'auto'}>
+        <Box w='90%' m='auto' p='24px' bgColor='#f5f5f5' shadow='9' borderRadius='24px' mt={keyboardShown ? '40px' : 'auto'}>
             <VStack space='2'>
             <Heading mt='12px'>
                 {headingText}

@@ -51,7 +51,10 @@ type MessageBase = {
     inGallery?: boolean;
     senderProfile?: UserConversationProfile;
     delivered?: boolean;
-    mentions?: UserConversationProfile[];
+    mentions?: {
+        id: string;
+        displayName: string;
+    }[];
     replyRef?: ReplyRef;
     messageLink?: string;
 };
@@ -118,6 +121,7 @@ export type ConversationPreview = {
     keyUpdate?: string;
     publicKey?: string;
     userRole?: ChatRole;
+    notfications?: NotificationStatus;
 };
 
 export type UserProfile = {

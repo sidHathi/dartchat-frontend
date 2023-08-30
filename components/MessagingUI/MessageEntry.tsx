@@ -137,7 +137,7 @@ export default function MessageEntry({
             inGallery: messageMedia !== undefined,
             media: messageMedia,
             senderProfile: userProfile,
-            mentions: mentions,
+            mentions: mentions?.map(m => ({id: m.id, displayName: m.displayName})),
             delivered: false,
             messageType: 'user',
             encryptionLevel: 'none'
@@ -150,9 +150,7 @@ export default function MessageEntry({
             setMessageText(undefined);
             onSend && onSend();
         } else {
-            console.log(socketDisconnected);
-            console.log(socket);
-            console.log(currentConvo);
+            console.log('socket disconnected');
         }
         return;
     }, [selectedMediaBuffer, messageText, user, networkConnected, currentConvo, socket, secrets]);
@@ -198,6 +196,7 @@ export default function MessageEntry({
             /> */}
             <Box flex='1'>
             <MentionsInput
+                maxLength={512}
                 onPressIn={() => {
                     checkSocketReconnect()
                     setPollBuilderOpen(false)

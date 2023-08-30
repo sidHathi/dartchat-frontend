@@ -8,7 +8,7 @@ import { addConversation, handleNewMessage, handleRoleUpdate, pullLatestPreviews
 import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } from '../localStore/store';
 import messaging from '@react-native-firebase/messaging';
 import SocketContext from '../contexts/SocketContext';
-import { PNPacket } from '../types/types';
+import { PNPacket, PNType } from '../types/types';
 import { constructNewConvo } from '../utils/messagingUtils';
 import { extractMentionNotification, parsePNLikeEvent, parsePNMessage, parsePNNewConvo, parsePNRC, parsePNSecrets, parsedPNDelete } from '../utils/notificationUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
@@ -17,6 +17,7 @@ import { ConversationPreview, DecryptedMessage } from '../types/types';
 import UserSecretsContext from '../contexts/UserSecretsContext';
 import notifee, { EventType } from '@notifee/react-native';
 import notificationStore from '../localStore/notificationStore';
+import secureStore from '../localStore/secureStore';
 
 export default function NotificationsController(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -165,39 +166,19 @@ export default function NotificationsController(): JSX.Element {
         return unsubscribe();
     }, [currentConvo, socket, socketDisconnected, user, userConversations, secrets, handleNewEncryptedConversation]);
 
-    const handleNotificationSelect = (pnData: PNPacket) => {
-        if (pnData.type && (pnData.type === 'message' || pnData.type === 'like' || pnData.type === 'newConvo')) {
-            let parsed: {
-                cid: string;
-                mid?: string;
-            } | undefined;
-            switch (pnData.type) {
-                case 'message':
-                    const parsedPNM = parsePNMessage(pnData.stringifiedBody);
-                    if (parsedPNM) {
-                        parsed = {
-                            cid: parsedPNM.cid,
-                            mid: parsedPNM.message.id
-                        }
-                    }
-                    break;
-                case 'like':
-                    parsed = parsePNLikeEvent(pnData.stringifiedBody);
-                    break;
-                case 'newConvo':
-                    const parsedNC = parsePNNewConvo(pnData.stringifiedBody);
-                    if (!parsedNC?.convo) {
-                        parsed = undefined;
-                    } else {
-                        parsed = {
-                            cid: parsedNC.convo.id
-                        };
-                    }
-                    break;
-            }
+    const handleNotificationSelect = async (pnData: {
+        type: PNType,
+        cid: string,
+        mid?: string,
+    }) => {
+        if (pnData.type === 'message' || pnData.type === 'newConvo' || pnData.type === 'like') {
+            const parsed = {
+                cid: pnData.cid,
+                mid: pnData.mid
+            };
 
             if (parsed) {
-                const secretKey = (secrets && parsed.cid in secrets) ? secrets[parsed.cid] : undefined;
+                const secretKey = await secureStore.getSecretKeyForKey(user?.id || 'error', parsed.cid);
                 dispatch(exitConvo());
                 navSwitch('messaging');
                 dispatch(pullConversation(parsed.cid, conversationsApi, secretKey));
@@ -218,13 +199,13 @@ export default function NotificationsController(): JSX.Element {
             dispatch(setNotificationLoading(false));
             return;
         }
-        await handleNotificationSelect(initialNotification.notification.data as PNPacket);
+        await handleNotificationSelect(initialNotification.notification.data as any);
     };
 
     useEffect(() => {
         const unsubscribe = messaging().onNotificationOpenedApp(async (notification) => {
             if (notification.data) {
-                const pnData: PNPacket = notification.data as PNPacket;
+                const pnData: any = notification.data as any;
                 handleNotificationSelect(pnData);
             }
         });
@@ -243,14 +224,14 @@ export default function NotificationsController(): JSX.Element {
     }, []);
 
     useEffect(() => {
-        return notifee.onForegroundEvent(({ type, detail }) => {
+        return notifee.onForegroundEvent(async ({ type, detail }) => {
             switch (type) {
                 case EventType.DISMISSED:
                     break;
                 case EventType.PRESS:
                     if (detail?.notification?.data) {
                         dispatch(setNotificationLoading(true));
-                        handleNotificationSelect(detail.notification.data as PNPacket)
+                        await handleNotificationSelect(detail.notification.data as any)
                         dispatch(setNotificationLoading(false));
                     }
                     break;

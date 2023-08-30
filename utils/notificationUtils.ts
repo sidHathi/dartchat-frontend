@@ -1,5 +1,5 @@
 import { parseSocketMessage, parseSocketEvent, parseConversation } from "./requestUtils";
-import { Message, SocketEvent, Conversation, DecryptedMessage, UserData, UserConversationProfile, ConversationPreview, ChatRole } from '../types/types';
+import { Message, SocketEvent, Conversation, DecryptedMessage, UserData, UserConversationProfile, ConversationPreview, ChatRole, NotificationStatus } from '../types/types';
 import secureStore from "../localStore/secureStore";
 import { decodeKey, decryptString } from "./encryptionUtils";
 import { getStoredUserData, storeUserData } from "../localStore/store";
@@ -8,16 +8,19 @@ import { constructPreviewForConversation, handlePossiblyEncryptedMessage } from 
 
 export const parsePNMessage = (stringifiedBody: string): {
     cid: string;
-    message: Message,
-    convoProfiles?: UserConversationProfile[]
+    message: Message
 } | undefined => {
-    const parsedBody = JSON.parse(stringifiedBody);
-    if (!('cid' in parsedBody) || !('message' in parsedBody)) return undefined;
-    return {
-        cid: parsedBody['cid'],
-        message: parseSocketMessage(parsedBody.message),
-        convoProfiles: parsedBody['convoProfiles'] || undefined
-    };
+    try {
+        const parsedBody = JSON.parse(stringifiedBody);
+        if (!('cid' in parsedBody) || !('message' in parsedBody)) return undefined;
+        return {
+            cid: parsedBody['cid'],
+            message: parseSocketMessage(parsedBody.message)
+        };
+    } catch (err) {
+        console.log(err);
+        return undefined;
+    }
 };
 
 export const parsePNLikeEvent = (stringifiedBody: string): {
@@ -182,6 +185,7 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
     try {
         switch (notif.type) {
             case 'message':
+                // console.log('mesage notif received');
                 const messageData = parsePNMessage(notif.stringifiedBody);
                 if (!messageData) return undefined;
                 const encryptedMessage = messageData.message || undefined;
@@ -193,13 +197,17 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                 const storedPreview = storedUserData?.conversations?.find((c) => c.cid === messageData.cid);
                 if (!storedUserData || !storedPreview) return undefined;
                 const mentionFields = extractMentionNotification(decrypted, storedUserData.id, storedPreview);
-                if (mentionFields !== undefined) {
+                const notifStatus = storedPreview?.notfications;
+                if (mentionFields !== undefined && notifStatus !== 'none') {
                     return {
                         ...mentionFields,
-                        data: notif
+                        data: {
+                            type: 'message',
+                            cid: messageData.cid,
+                            mid: decrypted.id
+                        }
                     };
-                }
-                if (messageData.convoProfiles && messageData.convoProfiles.find((p) => p.id === storedUserData.id)?.notifications === 'mentions') {
+                } else if (mentionFields === undefined && notifStatus && (notifStatus === 'none' || notifStatus === 'mentions')) {
                     return undefined;
                 }
                 const decryptedContents = getPossiblyDecryptedMessageContents(decrypted);
@@ -210,7 +218,11 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                         id: decrypted.id,
                         title: ((!showPrefix && decrypted.senderProfile) ? decrypted.senderProfile?.displayName : storedPreview.name),
                         body: `${bodyPrefix}${decryptedContents}`,
-                        data: notif,
+                        data: {
+                            type: 'message',
+                            cid: messageData.cid,
+                            mid: decrypted.id
+                        },
                         imageUri: storedPreview.avatar?.tinyUri
                     };
                 } else {
@@ -248,8 +260,7 @@ export const getUnencryptedDisplayFields = (notif: PNPacket) => {
     try {
         const parsedDisplay = JSON.parse(notif.stringifiedDisplay);
         if ('title' in parsedDisplay) return {
-            ...parsedDisplay,
-            data: notif as any
+            ...parsedDisplay
         };
     } catch (err) {
         console.log(err);
@@ -264,6 +275,7 @@ export const extractMentionNotification = (message: DecryptedMessage, storedUid:
         const mention = message.mentions.find((m) => m.id === storedUid);
         if (!mention) return undefined;
         const constructedNotifBody = `${sender?.displayName || 'Someone'} mentioned you in ${storedPreview?.name || 'the chat'}`;
+        // console.log(constructedNotifBody);
         return {
             id: message.id,
             title: storedPreview.name,
