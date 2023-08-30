@@ -21,6 +21,8 @@ import UserSecretsContext from "../../contexts/UserSecretsContext";
 import { handleNewMessage, userDataSelector } from "../../redux/slices/userDataSlice";
 import ReplyMessageDisplay from "./ReplyMessageDisplay";
 import Clipboard from "@react-native-clipboard/clipboard";
+import { LinkPreview as FlyerLinkPreview } from "@flyerhq/react-native-link-preview";
+import LinkPreview from "../generics/LinkPreview";
 
 export default function MessageDisplay({ 
         message,
@@ -204,6 +206,26 @@ export default function MessageDisplay({
                             {/* <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'}>{message.content}</Text> */}
                             <MentionsTextDisplay message={message} fontSize='sm' color={(isSystemMessage || message.messageType === 'deletion') ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} textAlign={isSystemMessage ? 'center' : 'left'} />
                             {copied && <Text fontSize='xs' color='gray.400' mx='auto'>Copied to clipboard</Text>}
+                            {
+                                message.content &&
+                                <FlyerLinkPreview 
+                                    containerStyle={{
+                                        overflow: 'visible',
+                                        shadowRadius: 24,
+                                        shadowOpacity: 0.18
+                                    }}
+                                    text={message.content} 
+                                    renderLinkPreview={(payload) => (
+                                        payload.previewData ? 
+                                        <LinkPreview 
+                                            data={payload.previewData || undefined}
+                                            width={payload.containerWidth}
+                                            aspect={payload.aspectRatio || 2} />: <></>
+                                    )} 
+                                    renderTitle={() => <></>}
+                                    renderText={() => <></>}
+                                />
+                            }
                         </VStack>
                     </Box>
                     }
