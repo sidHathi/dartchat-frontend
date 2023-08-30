@@ -237,11 +237,11 @@ export default function ChatBuilder({exit}: {
 
     return <View w='100%' flex='1' backgroundColor='#111'>
         <Center h='100%' borderTopLeftRadius='24px' backgroundColor='#fefefe'>
-            <Box w={isGroup ? '96%': '90%'} shadow='9' backgroundColor='#f5f5f5' p='20px' marginTop={isGroup ? '-72px' : '-144px'} borderRadius='24px' maxH={`${screenHeight - 190} px`} style={{shadowOpacity: 0.18}}>
+            <Box w={isGroup ? '96%': '90%'} shadow='9' overflow='hidden' backgroundColor='#f5f5f5' p='20px' marginTop={isGroup ? '-72px' : '-144px'} borderRadius='24px' maxH={`${screenHeight - 190} px`} style={{shadowOpacity: 0.18}}>
+                <ScrollView overflow='visible' maxH='100%'>
                 <Heading  marginY='12px' size='md'>
                     New {isGroup ? 'Group' : 'Chat'}
                 </Heading>
-                <ScrollView overflow='visible'>
                 <Button.Group isAttached marginBottom='20px' w='100%'>
                     <Button borderLeftRadius='30px' colorScheme={isGroup ? 'light' : 'dark'} variant={isGroup ? 'outline' : 'subtle'} onPress={() => setIsGroup(false)} marginX='0' w='50%'>
                         Private Message
@@ -251,7 +251,7 @@ export default function ChatBuilder({exit}: {
                     </Button>
                 </Button.Group>
                
-                <VStack space={1} pb={keyboardShown ? '200px': '18px'} overflow='visible'>
+                <VStack space={1} pb='18px' overflow='visible'>
                     {
                         isGroup &&
                         <Box>
@@ -377,7 +377,7 @@ export default function ChatBuilder({exit}: {
                 <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' mb='12px'>
                     Create Chat
                 </Button>
-                <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={exit} variant='subtle'>
+                <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={exit} variant='subtle' mb={keyboardShown ? '300px': '18px'} >
                     Close
                 </Button>
                 </ScrollView>
