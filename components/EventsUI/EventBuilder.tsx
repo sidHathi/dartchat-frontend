@@ -214,7 +214,7 @@ export default function EventBuilder({
         }
     }, [buildEvent, secrets, currentConvo, user, socket, close])
 
-    return <View w='100%'  h={keyboardShown ? `${keyboardHeight + 2*screenHeight/3}px`: `${2*screenHeight/3}px`} maxH={`${3*screenHeight/4}px`}>
+    return <View w='100%' minH={`${2*screenHeight/3}px`} maxH={`${3*screenHeight/4}px`}>
         <Box w='96%' minH='100%' flexShrink='0'>
             <Heading fontSize='lg' mb='12px'>
                 Create an Event
@@ -244,7 +244,7 @@ export default function EventBuilder({
             <Text fontSize='sm' fontWeight='bold' mt='12px'>
                 Remind me
             </Text>
-            <ScrollView showsVerticalScrollIndicator={true} flexGrow='0' flexShrink='1' maxH={`${screenHeight/7}px`}>
+            <ScrollView showsVerticalScrollIndicator={true} flexGrow='0' flexShrink='1' maxH={`${screenHeight/2}px`}>
             <VStack>
             {
                 reminderTimes.map((_, idx) => (
@@ -275,7 +275,6 @@ export default function EventBuilder({
                 ))
             }
             </VStack>
-            </ScrollView>
             <Button 
                 w='100%'
                 mb='12px'
@@ -306,6 +305,7 @@ export default function EventBuilder({
                 onPress={close}>
                 Cancel
             </Button>
+            </ScrollView>
         </Box>
 
         <DateTimePickerModal 

@@ -374,13 +374,13 @@ export default function ChatBuilder({exit}: {
                         </Text>
                     </Center>
                 }
-                </ScrollView>
                 <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' mb='12px'>
                     Create Chat
                 </Button>
                 <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={exit} variant='subtle'>
                     Close
                 </Button>
+                </ScrollView>
             </Box>
         </Center>
     </View>;
