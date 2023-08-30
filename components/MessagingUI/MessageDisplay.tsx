@@ -203,7 +203,7 @@ export default function MessageDisplay({
                             }
                             {/* <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'}>{message.content}</Text> */}
                             <MentionsTextDisplay message={message} fontSize='sm' color={(isSystemMessage || message.messageType === 'deletion') ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} textAlign={isSystemMessage ? 'center' : 'left'} />
-                            {copied && <Text fontSize='10px' color='gray.500' mx='auto'>Copied to clipboard</Text>}
+                            {copied && <Text fontSize='xs' color='gray.400' mx='auto'>Copied to clipboard</Text>}
                         </VStack>
                     </Box>
                     }

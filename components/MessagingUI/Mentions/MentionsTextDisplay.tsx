@@ -106,6 +106,6 @@ export default function MentionsTextDisplay({
   
     return <>
         <Text {...props}>{parts.map(renderPart)}</Text>
-        {copied && <Text fontSize='10px' color='gray.500' mx='auto'>Copied to clipboard</Text>}
+        {copied && <Text fontSize='xs' color='gray.400' mx='auto'>Copied to clipboard</Text>}
     </>;
 }
