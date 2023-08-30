@@ -120,7 +120,7 @@ export default function PollBuilder({
         const userSecretKey = secrets ? secrets.userSecretKey : undefined;
         const encryptedMessage = encryptMessageForConvo(message, currentConvo, userSecretKey);
         if (socket && currentConvo) {
-            console.log('sending message')
+            // console.log('sending message')
             dispatch(sendNewMessage({socket, message: encryptedMessage}));
             socket.emit('schedulePoll', currentConvo.id, poll);
             // dispatch(handleNewMessage({cid: currentConvo.id, message: message, messageForCurrent: true}));

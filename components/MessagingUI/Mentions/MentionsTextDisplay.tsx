@@ -15,9 +15,12 @@ export default function MentionsTextDisplay({
 }: {
     message: {
         content: string,
-        mentions?: UserConversationProfile[]
+        mentions?: {
+            id: string,
+            displayName: string,
+        }[]
     },
-    handleMentionSelect?: (profile?: UserConversationProfile) => void
+    handleMentionSelect?: (id: string) => void
 } & ITextProps): JSX.Element {
     const idProfileMap = useMemo(() => {
         if (!message.mentions) return {};
@@ -51,7 +54,7 @@ export default function MentionsTextDisplay({
                     fontWeight='bold'
                     key={`${index}-${part.data?.trigger}`}
                     style={part.partType.textStyle}
-                    onPress={() => handleMentionSelect && part.data && handleMentionSelect(getProfileForId(part.data.id))}
+                    onPress={() => handleMentionSelect && part.data && handleMentionSelect(part.data.id)}
                 >
                     {part.text}
                 </Text>

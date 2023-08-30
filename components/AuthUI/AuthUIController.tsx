@@ -33,7 +33,7 @@ export default function AuthUIController(): JSX.Element {
     };
 
     return <Flex flex={1} bgColor='#fafafa' w='100%' h='100%'>
-        <View bgColor='#222' borderRadius={20} width='90%' m='auto' p='10' shadow='9' mt={keyboardShown ? '90px' : 'auto'}>
+        <View bgColor='#222' borderRadius={20} width='90%' m='auto' p='10' shadow='9' mt={keyboardShown ? '40px' : 'auto'}>
             <VStack>
                 <Center>
                     <SvgXml xml={DartChatLogoXML} height='20' width='100'/>
