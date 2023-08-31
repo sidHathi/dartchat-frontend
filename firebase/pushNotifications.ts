@@ -1,9 +1,10 @@
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
-import { setBackgroundUpdateFlag } from '../localStore/store';
+import { getStoredUserData, setBackgroundUpdateFlag } from '../localStore/store';
 import notifee, { EventType } from '@notifee/react-native';
 import { PNPacket } from '../types/types';
-import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationInfo, handleBackgroundConversationKey, parsePNDisplay, parsePNLikeEvent, parsePNNewConvo } from '../utils/notificationUtils';
+import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationInfo, handleBackgroundConversationKey, handleBackgroundSecrets, parsePNDisplay, parsePNLikeEvent, parsePNNewConvo, parsePNSecrets } from '../utils/notificationUtils';
 import notificationStore from '../localStore/notificationStore';
+import { encodeKey } from '../utils/encryptionUtils';
 
 const displayNotification = async (displayFields: {
     title: string,
@@ -15,6 +16,19 @@ const displayNotification = async (displayFields: {
     if (type === 'message') {
         await notifee.incrementBadgeCount();
     }
+    // console.log({
+    //     id: displayFields.id,
+    //     title: displayFields.title,
+    //     body: displayFields.body,
+    //     data: displayFields.data || {},
+    //     android: {
+    //         channelId: type,
+    //     },
+    //     ios: {
+    //         sound: 'default',
+    //         interruptionLevel: 'active'
+    //     }
+    // });
     notifee.displayNotification({
         id: displayFields.id,
         title: displayFields.title,
@@ -58,6 +72,10 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
     if ((remoteMessage.data.type === 'newConvo' || remoteMessage.data.type === 'addedToConvo') && remoteMessage.data.stringifiedBody) {
         const parsedConvo = parsePNNewConvo(remoteMessage.data.stringifiedBody as string);
         parsedConvo && await handleBackgroundConversationInfo(parsedConvo.convo);
+        if (!parsedConvo) {
+            console.log('conversation parsing failure');
+            return;
+        }
         if (parsedConvo?.keyMap) {
             handleBackgroundConversationKey(parsedConvo.keyMap, parsedConvo.convo);
         }
@@ -66,11 +84,11 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
         const data = {
             type: 'newConvo',
             cid: parsedConvo.convo.id || '',
-        }
+        };
         displayNotification({
             ...displayFields,
             data,
-            id: parsedConvo.convo.id
+            id: data.cid
         }, remoteMessage.data.type);
     } else if (remoteMessage.data.type === 'message') {
         const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
@@ -91,10 +109,22 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
             data,
             id: parsedLike?.mid
         }, remoteMessage.data.type);
+    } else if (remoteMessage.data.type === 'secrets') {
+        const parsedPNS = parsePNSecrets(remoteMessage.data.stringifiedBody);
+        try {
+            const user = await getStoredUserData();
+            if (!user) return;
+            if (parsedPNS?.newKeyMap && user.id in parsedPNS.newKeyMap) {
+                const { cid, newPublicKey, newKeyMap } = parsedPNS;
+                await handleBackgroundSecrets(cid, newKeyMap, newPublicKey);
+            }
+        } catch (err) {
+            console.log(err);
+        }
     } else {
-        displayNotification({
-            title: 'Unrecognized type',
-            body: JSON.stringify(remoteMessage.data)
-        }, remoteMessage.data.type);
+        // displayNotification({
+        //     title: 'Unrecognized type',
+        //     body: JSON.stringify(remoteMessage.data)
+        // }, remoteMessage.data.type);
     }
 });

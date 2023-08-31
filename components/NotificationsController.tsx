@@ -33,6 +33,7 @@ export default function NotificationsController(): JSX.Element {
         const eventListener = AppState.addEventListener('change', async (nextState) => {
             if (nextState === 'active' && (await getBackgroundUpdateFlag())) {
                 try {
+                    await pullUserSecrets();
                     if (currentConvo) {
                         const secretKey = (secrets && currentConvo.id in secrets) ? secrets[currentConvo.id] : undefined;
                         dispatch(pullConversation(currentConvo.id, conversationsApi, secretKey));

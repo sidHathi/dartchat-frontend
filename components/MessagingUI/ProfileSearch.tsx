@@ -69,7 +69,7 @@ export default function ProfilesSearch({
         ));
     }, [pulledContacts, queryString])
 
-    const maxSelected = () => !isGroup && selectedProfiles.length > 0;
+    const maxSelected = useMemo(() => !isGroup && selectedProfiles.length > 0, [isGroup, selectedProfiles]);
 
     const filterMatches = useCallback((raw: UserProfile[]) => {
         const contactIds = contactMatches ? contactMatches.map((c) => c.id) : [];
@@ -97,7 +97,7 @@ export default function ProfilesSearch({
             })
     }, [contactMatches, filterMatches]);
 
-    const handleQueryInput = (input: string) => {
+    const handleQueryInput = useCallback((input: string) => {
         setQueryString(input);
         if (input.length > 0) {
             if (!searchSelected) setSearchSelected(true);
@@ -105,10 +105,10 @@ export default function ProfilesSearch({
         } else {
             setSearchSelected(false);
         }
-    }
+    }, [searchSelected, pullMatchingUsers]);
 
-    const handleAddProfile = (profile: UserProfile) => {
-        if (maxSelected()) return;
+    const handleAddProfile = useCallback((profile: UserProfile) => {
+        if (maxSelected) return;
         if (addedProfiles && addedProfiles.filter((p) => p.id === profile.id).length > 0) return;
         if (selectedProfiles.filter(
             (p) => p.id === profile.id
@@ -125,13 +125,13 @@ export default function ProfilesSearch({
             setQueryString(undefined);
             setSearchSelected(false);
         }
-    };
+    }, [addedProfiles, selectedProfiles]);
 
     const queryInput = (): JSX.Element => {
-        if (maxSelected()) return <></>
+        if (maxSelected) return <></>
         return (
             <Box w='100%' opacity={
-                maxSelected() ?
+                maxSelected ?
                 0.5 :
                 1
             }>
@@ -143,7 +143,7 @@ export default function ProfilesSearch({
                     ref={inputRef}
                     // autoFocus={true}
                     placeholder='Email, phone number, or username'
-                    value={!maxSelected() ? queryString: ''}
+                    value={!maxSelected ? queryString: ''}
                     onChangeText={handleQueryInput}
                     w='100%'
                     h='40px'
