@@ -27,12 +27,13 @@ export default function NotificationsController(): JSX.Element {
     const { user } = useContext(AuthIdentityContext);
     const { userConversations } = useAppSelector(userDataSelector);
     const { navSwitch } = useContext(UIContext);
-    const { secrets, handleNewEncryptedConversation } = useContext(UserSecretsContext);
+    const { secrets, handleNewEncryptedConversation, pullUserSecrets } = useContext(UserSecretsContext);
     
     useEffect(() => { 
         const eventListener = AppState.addEventListener('change', async (nextState) => {
             if (nextState === 'active' && (await getBackgroundUpdateFlag())) {
                 try {
+                    await pullUserSecrets();
                     if (currentConvo) {
                         const secretKey = (secrets && currentConvo.id in secrets) ? secrets[currentConvo.id] : undefined;
                         dispatch(pullConversation(currentConvo.id, conversationsApi, secretKey));
@@ -88,12 +89,15 @@ export default function NotificationsController(): JSX.Element {
                         case 'newConvo':
                             const parsedPNC = parsePNNewConvo(messageData.stringifiedBody);
                             if (parsedPNC && user) {
-                                if (userConversations.map(c => c.cid).includes(parsedPNC.convo.id)) return; 
-                                const completedConvo = await constructNewConvo(parsedPNC.convo, user);
+                                if (userConversations.map(c => c.cid).includes(parsedPNC.convo.id)) return;
+                                const dbConvo = await conversationsApi.getConversationInfo(parsedPNC.convo.id);
+                                if (!dbConvo) return;
+                                const completedConvo = await constructNewConvo(dbConvo, user);
                                 let secretKey: Uint8Array | undefined = undefined;
                                 if (completedConvo.publicKey && parsedPNC.keyMap && parsedPNC.keyMap[user.id]) {
                                     secretKey = await handleNewEncryptedConversation(completedConvo.id, parsedPNC.keyMap[user.id], completedConvo.publicKey);
                                 }
+                                await pullUserSecrets();
                                 dispatch(addConversation({
                                     newConvo: completedConvo,
                                     uid: user.id,
@@ -115,11 +119,12 @@ export default function NotificationsController(): JSX.Element {
                                     const newSecretKey = parsedPNS.newKeyMap[user.id];
                                     const updatedConvo = await conversationsApi.getConversationInfo(parsedPNS.cid);
                                     if (updatedConvo.publicKey && newSecretKey) {
+                                        await pullUserSecrets();
                                         const secretKey = await handleNewEncryptedConversation(parsedPNS.cid, newSecretKey, updatedConvo.publicKey);
                                         if (parsedPNS.cid === currentConvo?.id && secretKey) {
                                             dispatch(setSecretKey(secretKey))
                                         }   
-                                    }     
+                                    } 
                                 } catch (err) {
                                     console.log(err);
                                 }
@@ -149,11 +154,14 @@ export default function NotificationsController(): JSX.Element {
                             const parsedPNAC = parsePNNewConvo(messageData.stringifiedBody);
                             if (parsedPNAC && user) {
                                 if (userConversations.map(c => c.cid).includes(parsedPNAC.convo.id)) return; 
-                                const completedConvo = await constructNewConvo(parsedPNAC.convo, user);
+                                const dbConvo = await conversationsApi.getConversationInfo(parsedPNAC.convo.id);
+                                if (!dbConvo) return;
+                                const completedConvo = await constructNewConvo(dbConvo, user);
                                 let secretKey: Uint8Array | undefined = undefined;
                                 if (completedConvo.publicKey && parsedPNAC.keyMap && parsedPNAC.keyMap[user.id]) {
                                     secretKey = await handleNewEncryptedConversation(completedConvo.id, parsedPNAC.keyMap[user.id], completedConvo.publicKey);
                                 }
+                                await pullUserSecrets();
                                 dispatch(pullLatestPreviews(usersApi));
                                 socket?.emit('joinRoom', userConversations.map((c: ConversationPreview) => c.cid));
                             }

@@ -92,8 +92,9 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
                 keySalt,
                 secrets: undefined
             });
+            socket?.emit('joinRoom', [user.id]);
         }
-    }, [user]);
+    }, [user, socket]);
 
     useEffect(() => {
         const unsubscribe = auth().onAuthStateChanged(async (authUser) => {

@@ -1,7 +1,7 @@
 import { parseSocketMessage, parseSocketEvent, parseConversation } from "./requestUtils";
 import { Message, SocketEvent, Conversation, DecryptedMessage, UserData, UserConversationProfile, ConversationPreview, ChatRole, NotificationStatus } from '../types/types';
 import secureStore from "../localStore/secureStore";
-import { decodeKey, decryptString } from "./encryptionUtils";
+import { decodeKey, decryptJSON, decryptString } from "./encryptionUtils";
 import { getStoredUserData, storeUserData } from "../localStore/store";
 import { PNPacket } from "../types/types";
 import { constructPreviewForConversation, handlePossiblyEncryptedMessage } from "./messagingUtils";
@@ -49,8 +49,8 @@ export const parsePNNewConvo = (stringifiedBody: string): {
     const parsedBody = JSON.parse(stringifiedBody);
     if (!('convo' in parsedBody)) return;
     return {
-        convo: parseConversation(parsedBody),
-        keyMap: parsedBody.keyMap || undefined
+        convo: parseConversation(parsedBody.convo),
+        keyMap: parsedBody.userKeyMap || undefined
     };
 };
 
@@ -129,9 +129,33 @@ export const handleBackgroundConversationKey = async (encodedKeyMap: { [id: stri
             const userSecretKey = await secureStore.getUserSecretKey(userId);
             if (userSecretKey && convo.publicKey) {
                 const decodedPublicKey = decodeKey(convo.publicKey);
-                const decryptedSecretKey = decryptString(userSecretKey, encryptedKeyForUser, decodedPublicKey);
-                await secureStore.addSecureKey(userId, convo.id, decryptedSecretKey);
-                return decryptedSecretKey;
+                const decryptedSecretKeyMap = decryptJSON(userSecretKey, encryptedKeyForUser, decodedPublicKey);
+                if (!decryptedSecretKeyMap.secretKey) return;
+                await secureStore.addSecureKey(userId, convo.id, decryptedSecretKeyMap.secretKey);
+                return decryptedSecretKeyMap.secretKey;
+            }
+            return undefined;
+        }
+        return undefined;
+    } catch (err) {
+        console.log(err);
+        return undefined;
+    }
+};
+
+export const handleBackgroundSecrets = async (cid: string, encodedKeyMap: { [id: string]: string}, encodedPublicKey: string) => {
+    try {
+        const userData = await getStoredUserData();
+        const userId = userData?.id;
+        if (userId && userId in encodedKeyMap) {
+            const encryptedKeyForUser = encodedKeyMap[userId];
+            const userSecretKey = await secureStore.getUserSecretKey(userId);
+            if (userSecretKey) {
+                const decodedPublicKey = decodeKey(encodedPublicKey);
+                const decryptedSecretKeyMap = decryptJSON(userSecretKey, encryptedKeyForUser, decodedPublicKey);
+                if (!decryptedSecretKeyMap.secretKey) return;
+                await secureStore.addSecureKey(userId, cid, decryptedSecretKeyMap.secretKey);
+                return decryptedSecretKeyMap.secretKey;
             }
             return undefined;
         }
@@ -246,7 +270,10 @@ export const getSecureKeyForMessage = async (notif: PNPacket) => {
         const parsedData = JSON.parse(notif.stringifiedBody);
         if (!('cid' in parsedData)) return undefined;
         const storedUserData = await getStoredUserData();
-        if (!storedUserData) return undefined;
+        if (!storedUserData) {
+            console.log('no stored user');
+            return undefined;
+        }
         const storedSecretKey = await secureStore.getSecretKeyForKey(storedUserData.id, parsedData.cid);
         return storedSecretKey;
     } catch (err) {

@@ -116,10 +116,10 @@ export default function MessageList({
 
         return (
             <>
-            {timeDif < -10 &&
+            {timeDif < -10 && currentConvo && 
             <Center mt='12px' mb='6px'>
                 <Text fontSize='xs' color='gray.500' textAlign='center'>
-                    { getDateTimeString(message.timestamp) }
+                    { getDateTimeString(currentConvo.messages[index - 1].timestamp) }
                 </Text>
             </Center>
             }

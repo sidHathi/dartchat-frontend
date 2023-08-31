@@ -38,7 +38,7 @@ export default function MentionsTextDisplay({
                 key={`${index}-pattern`}
                 text={part.text} 
                 linkStyle={{
-                    fontWeight: 'bold',
+                    fontWeight: '600',
                     color: 'blue'
                 }}
                 renderLink={(text, match) => (

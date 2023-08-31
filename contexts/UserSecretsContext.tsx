@@ -11,6 +11,7 @@ type UserSecretsContextType = {
     handleNewEncryptedConversation: (cid: string, encryptedPrivateKey: string, publicKey: string) => Promise<Uint8Array | undefined>;
     handleNewConversationKey: (cid: string, key: Uint8Array, encodedKey: string) => Promise<boolean>;
     forgetConversationKeys: (cid: string) => Promise<boolean>;
+    pullUserSecrets: () => Promise<void>;
 };
 
 const UserSecretsContext = createContext<UserSecretsContextType>({
@@ -21,7 +22,8 @@ const UserSecretsContext = createContext<UserSecretsContextType>({
     handleNewDBSecrets: () => {},
     handleNewEncryptedConversation: async () => undefined,
     handleNewConversationKey: async () => false,
-    forgetConversationKeys: async () => false
+    forgetConversationKeys: async () => false,
+    pullUserSecrets: async () => {}
 });
 
 export default UserSecretsContext;
