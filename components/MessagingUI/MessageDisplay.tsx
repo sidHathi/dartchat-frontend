@@ -207,7 +207,7 @@ export default function MessageDisplay({
                             <MentionsTextDisplay message={message} fontSize='sm' color={(isSystemMessage || message.messageType === 'deletion') ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} textAlign={isSystemMessage ? 'center' : 'left'} />
                             {copied && <Text fontSize='xs' color='gray.400' mx='auto'>Copied to clipboard</Text>}
                             {
-                                message.content &&
+                                message.content && !message.media &&
                                 <FlyerLinkPreview 
                                     containerStyle={{
                                         overflow: 'visible',

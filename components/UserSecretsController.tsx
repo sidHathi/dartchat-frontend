@@ -43,6 +43,36 @@ export default function UserSecretsController({
             return false;
         }
     }, [secrets, usersApi, user, userPinKey]);
+
+    const pullUserSecrets = useCallback(async () => {
+        if (!user) return;
+        setSecretsLoading(true);
+        try {
+            const latestUser = await usersApi.getCurrentUser();
+            const updates: {[key: string]: Uint8Array} = {};
+            if (!latestUser.conversations || !secrets || !secrets.userSecretKey) return;
+            await Promise.all(
+                latestUser.conversations.map(async (c: ConversationPreview) => {
+                    if (c.keyUpdate && c.publicKey) {
+                        const decodedPublicKey = decodeKey(c.publicKey);
+                        const newKeyObj = decryptJSON(secrets.userSecretKey, c.keyUpdate, decodedPublicKey);
+                        if (newKeyObj && newKeyObj.secretKey) {
+                            await secureStore.addSecureKey(user.id, c.cid, newKeyObj.secretKey);
+                            updates[c.cid] = decodeKey(newKeyObj.secretKey);
+                        }
+                    }
+                })
+            );
+            setSecrets({
+                ...secrets,
+                ...updates
+            });
+            setSecretsLoading(false);
+        } catch (err) {
+            console.log(err);
+            setSecretsLoading(false);
+        }
+    }, [usersApi, secrets, user]);
     
     const checkForUpdates = useCallback(async (currSecrets: { [key: string]: Uint8Array } | undefined) => {
         if (!user || !currSecrets?.userSecretKey) return;
@@ -258,7 +288,8 @@ export default function UserSecretsController({
         handleNewDBSecrets,
         handleNewEncryptedConversation,
         handleNewConversationKey,
-        forgetConversationKeys
+        forgetConversationKeys,
+        pullUserSecrets
     }}>
         {
             secrets ?

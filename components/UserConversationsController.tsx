@@ -19,7 +19,7 @@ export default function UserConversationsController({
 }: PropsWithChildren<{children: ReactNode}>): JSX.Element {
     const { socket } = useContext(SocketContext);
     const { navSwitch } = useContext(UIContext);
-    const { secrets, handleNewEncryptedConversation, forgetConversationKeys } = useContext(UserSecretsContext);
+    const { secrets, handleNewEncryptedConversation, forgetConversationKeys, pullUserSecrets } = useContext(UserSecretsContext);
     const { user } = useContext(AuthIdentityContext);
     const dispatch = useAppDispatch();
     const { userConversations, needsServerSync }: {userConversations: ConversationPreview[], needsServerSync: boolean} = useAppSelector(userDataSelector);
@@ -49,6 +49,7 @@ export default function UserConversationsController({
             if (keyMap && user.id in keyMap &&  completedConvo.publicKey) {
                 secretKey = await handleNewEncryptedConversation(completedConvo.id, keyMap[user.id], completedConvo.publicKey);
             }
+            await pullUserSecrets();
             dispatch(addConversation({
                 newConvo: completedConvo,
                 uid: user.id,
@@ -213,6 +214,7 @@ export default function UserConversationsController({
                 const updatedConvo = await conversationsApi.getConversationInfo(cid);
                 if (userKeyMap && user.id in userKeyMap && updatedConvo.publicKey) {
                     await handleNewEncryptedConversation(updatedConvo.id, userKeyMap[user.id], updatedConvo.publicKey);
+                    await pullUserSecrets();
                 }
             } catch (err) {
                 console.log(err);

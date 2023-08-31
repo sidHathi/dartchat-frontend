@@ -23,6 +23,10 @@ const displayNotification = async (displayFields: {
         android: {
             channelId: type,
         },
+        ios: {
+            sound: 'default',
+            interruptionLevel: 'active'
+        }
     });
 };
 
@@ -51,14 +55,24 @@ export const requestUserPermission = async () => {
 export const setBackgroundNotifications = () => messaging().setBackgroundMessageHandler(async remoteMessage => {
     await setBackgroundUpdateFlag(true);
     if (!remoteMessage.data) return;
-    if (remoteMessage.data.type === 'newConvo' && remoteMessage.data.stringifiedBody) {
+    if ((remoteMessage.data.type === 'newConvo' || remoteMessage.data.type === 'addedToConvo') && remoteMessage.data.stringifiedBody) {
         const parsedConvo = parsePNNewConvo(remoteMessage.data.stringifiedBody as string);
         parsedConvo && await handleBackgroundConversationInfo(parsedConvo.convo);
         if (parsedConvo?.keyMap) {
             handleBackgroundConversationKey(parsedConvo.keyMap, parsedConvo.convo);
         }
-    } 
-    if (remoteMessage.data.type === 'message') {
+        if (!parsedConvo) return;
+        const displayFields = getUnencryptedDisplayFields(remoteMessage.data as PNPacket);
+        const data = {
+            type: 'newConvo',
+            cid: parsedConvo.convo.id || '',
+        }
+        displayNotification({
+            ...displayFields,
+            data,
+            id: parsedConvo.convo.id
+        }, remoteMessage.data.type);
+    } else if (remoteMessage.data.type === 'message') {
         const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
         const displayFields = await getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey);
         if (displayFields) {
