@@ -15,6 +15,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 export default function MentionsTextDisplay({
     message,
     handleMentionSelect,
+    linkHighlight,
     ...props
 }: {
     message: {
@@ -24,7 +25,8 @@ export default function MentionsTextDisplay({
             displayName: string,
         }[]
     },
-    handleMentionSelect?: (id: string) => void
+    handleMentionSelect?: (id: string) => void,
+    linkHighlight?: boolean,
 } & ITextProps): JSX.Element {
     const [copied, setCopied] = useState(false);
 
@@ -36,13 +38,9 @@ export default function MentionsTextDisplay({
         if (!part.partType) {
             return <Autolink 
                 key={`${index}-pattern`}
-                text={part.text} 
-                linkStyle={{
-                    fontWeight: '600',
-                    color: 'blue'
-                }}
+                text={part.text}
                 renderLink={(text, match) => (
-                    <Text color='blue.500' fontWeight='bold' 
+                    <Text color='blue.500' fontWeight='medium' 
                         onPress={() => {
                             Linking.openURL(match.getAnchorHref())
                         }}
@@ -55,9 +53,9 @@ export default function MentionsTextDisplay({
                         {text}
                     </Text>
                 )}
-                url={true}
-                email={true}
-                phone='text'
+                url={linkHighlight || false}
+                email={linkHighlight || false}
+                phone={linkHighlight ? 'text' : undefined}
                 component={Text} 
                 selectable
                 />;
@@ -81,13 +79,9 @@ export default function MentionsTextDisplay({
         return (
             <Autolink 
                 key={`${index}-pattern`}
-                text={part.text} 
-                linkStyle={{
-                    fontWeight: 'bold',
-                    color: 'blue'
-                }}
+                text={part.text}
                 renderLink={(text, match) => (
-                    <Text color='blue.500' fontWeight='bold' onPress={() => Linking.openURL(match.getAnchorHref())}>
+                    <Text color='blue.500' fontWeight='medium' onPress={() => Linking.openURL(match.getAnchorHref())}>
                         {text}
                     </Text>
                 )}

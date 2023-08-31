@@ -204,7 +204,13 @@ export default function MessageDisplay({
                                 }}/>
                             }
                             {/* <Text fontSize='sm' color={isSystemMessage ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'}>{message.content}</Text> */}
-                            <MentionsTextDisplay message={message} fontSize='sm' color={(isSystemMessage || message.messageType === 'deletion') ? 'gray.500' : 'black'} mt={message.media && message.content ? '12px' : '0px'} textAlign={isSystemMessage ? 'center' : 'left'} />
+                            <MentionsTextDisplay 
+                                message={message} 
+                                linkHighlight={true}
+                                fontSize='sm' 
+                                color={(isSystemMessage || message.messageType === 'deletion') ? 'gray.500' : 'black'} 
+                                mt={message.media && message.content ? '12px' : '0px'} 
+                                textAlign={isSystemMessage ? 'center' : 'left'} />
                             {copied && <Text fontSize='xs' color='gray.400' mx='auto'>Copied to clipboard</Text>}
                             {
                                 message.content && !message.media &&
