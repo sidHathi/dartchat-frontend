@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useContext } from 'react';
 import { View, Box, Input, Heading, Text, VStack, Button, Center } from 'native-base';
 import Spinner from 'react-native-spinkit';
 import { useKeyboard } from '@react-native-community/hooks';
+import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 
 type PinEntryVariant = 'initialization' | 'confirmation';
 
@@ -14,6 +15,7 @@ export default function UserPinEntry({
     onSubmit: (pin: string) => void;
     validationLoading: boolean;
 }): JSX.Element {
+    const { logOut } = useContext(AuthIdentityContext);
     const { keyboardShown } = useKeyboard();
 
     const [enteredPin, setEnteredPin] = useState<string | undefined>();
@@ -48,7 +50,7 @@ export default function UserPinEntry({
     }, [variant]);
 
     const handleSubmit = useCallback(() => {
-        if (variant ==='initialization' && enteredPin !== confirmPin) {
+        if (variant === 'initialization' && enteredPin !== confirmPin) {
             setError('PINs do not match');
             return;
         } else if (!enteredPin || enteredPin.length < 6) {
@@ -59,7 +61,7 @@ export default function UserPinEntry({
     }, [enteredPin, confirmPin]);
 
     return <View flex='1' bgColor='#fefefe'>
-        <Box w='90%' m='auto' p='24px' bgColor='#f5f5f5' shadow='9' borderRadius='24px' mt={keyboardShown ? '40px' : 'auto'}>
+        <Box w='90%' m='auto' p='24px' bgColor='#f5f5f5' shadow='9' borderRadius='24px' mt={keyboardShown ? '60px' : 'auto'}>
             <VStack space='2'>
             <Heading mt='12px'>
                 {headingText}
@@ -124,8 +126,11 @@ export default function UserPinEntry({
                 </Center>
             }
 
-            <Button colorScheme='dark' variant='subtle' borderRadius='24px' w='100%' onPress={handleSubmit} mb='12px'>
+            <Button colorScheme='dark' variant='subtle' borderRadius='24px' w='100%' onPress={handleSubmit} mb='6px'>
                 Submit
+            </Button>
+            <Button colorScheme='light' variant='subtle' borderRadius='24px' w='100%' onPress={() => logOut()} mb='12px'>
+                Cancel
             </Button>
             </VStack>
         </Box>

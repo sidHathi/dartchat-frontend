@@ -63,7 +63,12 @@ export default function MessageDisplay({
 
     useEffect(() => {
         messageRef.current = message;
-    }, [message])
+    }, [message]);
+
+    const userIsAdmin = useMemo(() => {
+        if (!user || !(user.id in participants)) return false;
+        return participants[user.id].role === 'admin';
+    }, [user, participants])
 
     const handleMessageResend = useCallback(() => {
         // store message info locally -> modify timestamp -> delete local copy -> attempt resend with socket if socket connected -> return
@@ -157,7 +162,7 @@ export default function MessageDisplay({
             }
             <Spacer />
             {
-                (selected && message.senderId === user?.id && message.messageType !== 'deletion') &&
+                (selected && ((message.senderId === user?.id && message.messageType !== 'deletion') || userIsAdmin)) &&
                 <Box mb='20px'>
                     <IconButton label='delete' size={24} color='gray' onPress={handleDelete} />
                 </Box>

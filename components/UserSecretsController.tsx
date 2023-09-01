@@ -3,7 +3,7 @@ import secureStore from '../localStore/secureStore';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import { decodeKey, decryptJSON, decryptString, decryptUserKeys, encodeKey, encryptJSON, encryptUserSecrets } from '../utils/encryptionUtils';
 import useRequest from '../requests/useRequest';
-import { ConversationPreview } from '../types/types';
+import { ConversationPreview, UserData } from '../types/types';
 import UserPinController from './EncryptionUI/UserPinController';
 import auth from '@react-native-firebase/auth';
 import UserSecretsContext from '../contexts/UserSecretsContext';
@@ -15,7 +15,7 @@ export default function UserSecretsController({
 }: PropsWithChildren<{
     children: ReactNode
 }>): JSX.Element {
-    const { user } = useContext(AuthIdentityContext);
+    const { user, logOut } = useContext(AuthIdentityContext);
     const { usersApi } = useRequest();
     const dispatch = useAppDispatch();
     const { currentConvo } = useAppSelector(chatSelector); 
@@ -26,11 +26,42 @@ export default function UserSecretsController({
     } | undefined>(undefined);
     const [secretsLoading, setSecretsLoading] = useState(true);
 
+    const validateUserKeys = useCallback(async (dbUser: UserData, currSecrets?: { [key: string]: Uint8Array }) => {
+        if (!userPinKey || !dbUser.keySalt || !dbUser.secrets) {
+            return true;
+        }
+
+        try {
+            const decryptedSecrets = await decryptUserKeys(userPinKey, dbUser.keySalt, dbUser.secrets);
+            const decodedSecrets = Object.fromEntries(
+                Object.entries(decryptedSecrets).map(([key, val]) => {
+                    return [key, decodeKey(val as string)]
+                })
+            );
+            const workingSecrets = currSecrets || secrets || undefined;
+            // console.log(encodeKey(decodedSecrets.userSecretKey));
+            // console.log(encodeKey(decodedSecrets.userSecretKey));
+            if ((decryptedSecrets === undefined) || ((workingSecrets?.userSecretKey !== undefined && (encodeKey(decodedSecrets.userSecretKey) !== encodeKey(workingSecrets.userSecretKey))))) {
+                // this happens during environment switches when local and db keys are out of sync
+                console.log('logging out user')
+                logOut();
+                return false;
+            }
+            return true;
+        } catch (err) {
+            console.log('unable to decrypt db secrets');
+            logOut();
+            return true;
+        }
+    }, [userPinKey, secrets])
+
     const updateDBSecrets = useCallback(async (newSecrets: {
         [key: string]: Uint8Array
-    }) => {
+    }, dbUser?: UserData) => {
         if (!userPinKey || !user || !user.keySalt) return false;
         try {
+            const latestUser = dbUser || await usersApi.getCurrentUser();
+            if (!await validateUserKeys(latestUser)) return;
             const encodedSecrets = Object.fromEntries(
                 Object.entries(newSecrets).map(([key, val]) => [key, encodeKey(val)])
             );
@@ -42,13 +73,14 @@ export default function UserSecretsController({
             console.log(err);
             return false;
         }
-    }, [secrets, usersApi, user, userPinKey]);
+    }, [secrets, usersApi, user, userPinKey, validateUserKeys]);
 
     const pullUserSecrets = useCallback(async () => {
         if (!user) return;
         setSecretsLoading(true);
         try {
             const latestUser = await usersApi.getCurrentUser();
+            if (!await validateUserKeys(latestUser)) return;
             const updates: {[key: string]: Uint8Array} = {};
             if (!latestUser.conversations || !secrets || !secrets.userSecretKey) return;
             await Promise.all(
@@ -72,13 +104,15 @@ export default function UserSecretsController({
             console.log(err);
             setSecretsLoading(false);
         }
-    }, [usersApi, secrets, user]);
+    }, [usersApi, secrets, user, validateUserKeys]);
     
     const checkForUpdates = useCallback(async (currSecrets: { [key: string]: Uint8Array } | undefined) => {
         if (!user || !currSecrets?.userSecretKey) return;
         setSecretsLoading(true);
         try {
             const latestUser = await usersApi.getCurrentUser();
+            if (!await validateUserKeys(latestUser)) return;
+            
             const updates: {[key: string]: Uint8Array} = {};
             if (!latestUser.conversations) return
             await Promise.all(
@@ -97,7 +131,7 @@ export default function UserSecretsController({
                 ...currSecrets,
                 ...updates,
             };
-            if (await updateDBSecrets(newSecrets)) {
+            if (await updateDBSecrets(newSecrets, latestUser)) {
                 await usersApi.readConversationKeyUpdates(Object.keys(updates));
                 setSecrets(newSecrets);
             }
@@ -108,7 +142,7 @@ export default function UserSecretsController({
             console.log(err);
             return;
         }
-    }, [user, updateDBSecrets]);
+    }, [user, updateDBSecrets, validateUserKeys]);
 
     const getSecrets = useCallback(async () => {
         if (!user) return;
