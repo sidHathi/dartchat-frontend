@@ -16,7 +16,8 @@ export default function ReplyMessagePreview({
 }): JSX.Element {
     return <View w='100%' marginBottom='-4px'>
         <VStack w='100%'>
-            <Box shadow='9' w='100%' borderBottomColor='gray.300' borderTopRadius='24px' borderBottomWidth='1px' backgroundColor='white' paddingY='12px'>
+            <Box shadow='9' w='100%' borderBottomColor='gray.300' borderTopRadius='24px' borderBottomWidth='1px' backgroundColor='white' paddingY='12px'
+            style={{shadowOpacity: 0.12}}>
                 <HStack space={1} w='100%' paddingX='18px'>
                     {
                         message.senderId in participants && participants[message.senderId].avatar ? 

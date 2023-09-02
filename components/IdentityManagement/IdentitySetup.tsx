@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 
 import { View, Box, VStack, Button, Input, Heading, Text, Center, FormControl} from 'native-base';
 import DartChatLogoDarkXML from '../../assets/DartChatLogoDarkXML';
@@ -71,11 +71,15 @@ export default function IdentitySetup(): JSX.Element {
         });
     };
 
+    const constructedProfileUri = useMemo(() => {
+        return selectedAvatarImage ? `file://${selectedAvatarImage.path}` : undefined
+    }, [selectedAvatarImage]);
+
     const ProfileSelector = () => (
         <Center w='100%' mb='30px' h='90px' mt='-30px'>
                 {
                     (selectedAvatarImage && selectedAvatarImage.sourceURL) ?
-                    <IconImage imageUri={selectedAvatarImage?.sourceURL || ''} size={100} shadow='9' /> :
+                    <IconImage imageUri={selectedAvatarImage?.sourceURL || constructedProfileUri || ''} size={100} shadow='9' /> :
                     <IconButton label='profile' size={100} />
                 }
                 <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'

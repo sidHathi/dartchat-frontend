@@ -10,7 +10,6 @@ import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Touchable } from 'react-native';
 import { useAppSelector } from '../../redux/hooks';
 import { chatSelector } from '../../redux/slices/chatSlice';
-import { useKeyboard } from "@react-native-community/hooks";
 import { current } from '@reduxjs/toolkit';
 
 export default function NewMemberSearch({
@@ -21,7 +20,6 @@ export default function NewMemberSearch({
     setSelectedNewMembers: (newArr: UserConversationProfile[] | undefined) => void;
 }): JSX.Element {
     const { currentConvo } = useAppSelector(chatSelector);
-    const { keyboardShown, keyboardHeight } = useKeyboard();
 
     const handleRemovePnm = (id: string) => {
         if (selectedNewMembers) {
@@ -72,7 +70,7 @@ export default function NewMemberSearch({
         </Box></Box>
     }
 
-    return <Box mb='12px' pb={keyboardShown ? `${keyboardHeight}px` : '0px'}>
+    return <Box mb='12px'>
         <Heading fontSize='lg' mb='12px'>Search</Heading>
         <ProfilesSearch 
             isGroup 

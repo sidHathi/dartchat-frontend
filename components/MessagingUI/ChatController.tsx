@@ -14,6 +14,7 @@ import ExpandedSettingsMenu, { MenuPage } from '../ChatSettingsUI/ExpandedSettin
 import { setEnabled } from 'react-native/Libraries/Performance/Systrace';
 import { pullLatestPreviews } from '../../redux/slices/userDataSlice';
 import useRequest from '../../requests/useRequest';
+import UserSecretsContext from '../../contexts/UserSecretsContext';
 
 export default function ChatController({
     exit
@@ -23,6 +24,7 @@ export default function ChatController({
     const dispatch = useAppDispatch();
     const { usersApi } = useRequest();
     const screenHeight = Dimensions.get('window').height;
+    const { pullUserSecrets } = useContext(UserSecretsContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { disconnected: socketDisconnected } = useContext(SocketContext);
     const { networkConnected, apiReachable } = useContext(NetworkContext);
@@ -65,10 +67,17 @@ export default function ChatController({
                     toggleProfileOpen();
                 }}
                 onConvoExit={() => {
-                    settingsMenuOpen ? 
-                        expandedSettingsOpen ? setExpandedSettingsOpen(false) :  setSettingsMenuOpen(false) 
-                    : exit();
-                    dispatch(pullLatestPreviews(usersApi));
+                    if (settingsMenuOpen) {
+                        if (expandedSettingsOpen) {
+                            setExpandedSettingsOpen(false) 
+                        } else {
+                            setSettingsMenuOpen(false) 
+                        }
+                    } else {
+                        exit();
+                        dispatch(pullLatestPreviews(usersApi));
+                        pullUserSecrets();
+                    }
                 }} 
             />
         </Box>

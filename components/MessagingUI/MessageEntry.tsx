@@ -1,5 +1,5 @@
-import React, { useState, useContext, useCallback, useMemo } from "react";
-import { Box, HStack, VStack, Spacer} from 'native-base';
+import React, { useState, useContext, useCallback, useMemo, useEffect } from "react";
+import { Box, HStack, VStack, Spacer, Text} from 'native-base';
 import IconButton from "../generics/IconButton";
 import { Dimensions } from "react-native";
 import { DecryptedMessage, Message, MessageMedia, MessageMediaBuffer, ReplyRef, UserConversationProfile } from '../../types/types';
@@ -55,6 +55,7 @@ export default function MessageEntry({
     const [mediaProgress, setMediaProgress] = useState<{[id: string]: number}>({});
     const [mediaLoading, setMediaLoading] = useState(false);
     const [socketReconnectSent, setSocketReconnectSent] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     // Need better way to render mentions inline as the user is typing -> version of MessageText for input??
 
@@ -165,6 +166,14 @@ export default function MessageEntry({
         }
     }, [socketReconnectSent, socket, socketDisconnected, resetSocket]);
 
+    useEffect(() => {
+        if (messageText && messageText.length > 512) {
+            setErrorMessage('512 char limit exceeded');
+        } else {
+            setErrorMessage(undefined);
+        }
+    }, [messageText]);
+
     return <Box w='100%' paddingBottom={keyboardShown && !eventBuilderOpen && !pollBuilderOpen ? `${keyboardHeight + 12}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible' mt={keyboardShown ? '24px': '0px'}>
         {
             selectedMediaBuffer &&
@@ -195,6 +204,9 @@ export default function MessageEntry({
                 isDisabled={!networkConnected || socketDisconnected}
             /> */}
             <Box flex='1'>
+            {errorMessage &&
+            <Text color='red.500' fontSize='xs'>{errorMessage}</Text>
+            }
             <MentionsInput
                 maxLength={512}
                 onPressIn={() => {

@@ -250,9 +250,16 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                         imageUri: storedPreview.avatar?.tinyUri
                     };
                 } else {
+                    console.log(decrypted);
+                    console.log(await secureStore.getUserSecretKeyStore(storedUserData.id));
+                    console.log(storedPreview.cid);
                     return {
-                        title: 'unable to find message contents',
-                        body: `${JSON.stringify(decrypted)}`,
+                        id: decrypted.id,
+                        title: storedPreview.name || 'New Message',
+                        body: `Message contents encrypted`,
+                        data: {
+                            cid: messageData.cid,
+                        }
                     };
                 }
             default:

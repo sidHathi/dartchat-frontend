@@ -147,7 +147,7 @@ export default function LeaveChatScreen({
             w='100%'
             maxHeight='500px'
             my='6px'
-            data={convoData?.participants}
+            data={convoData?.participants.filter((p) => p.id !== user?.id)}
             renderItem={renderSuccessorSelector}
             />
     );

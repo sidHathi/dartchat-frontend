@@ -22,13 +22,13 @@ export default function Home(): JSX.Element {
     const { disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
     const { silent, currentConvo, conversationLoading, conversationSet } = useAppSelector(chatSelector);
 
-    const handleConversationExit = () => {
-        if (silent && currentConvo) {
+    const handleConversationExit = useCallback(() => {
+        if (silent && currentConvo && currentConvo.messages.length < 1) {
             forgetConversationKeys(currentConvo.id);
         }
         dispatch(exitConvo());
         navSwitch('conversations');
-    }
+    }, [silent, currentConvo]);
 
     const Main = (): JSX.Element => <>
         <NavContainer>

@@ -55,6 +55,8 @@ const getUserSecretKey = async (uid: string): Promise<Uint8Array | undefined> =>
 
 const initUserSecretKeyStore = async (uid: string, keys: { [id: string]: string }) => {
     try {
+        // console.log('setting store:')
+        // console.log(keys);
         await AsyncStorage.setItem(`user-${uid}-secrets`, JSON.stringify(keys));
         return true;
     } catch (err) {
@@ -66,6 +68,8 @@ const initUserSecretKeyStore = async (uid: string, keys: { [id: string]: string 
 const addSecureKey = async (uid: string, key: string, newVal: string) =>{
     try {
         const currStore = await getUserSecretKeyStore(uid) || {};
+        // console.log(`adding key for ${key} to store`)
+        // console.log(currStore);
         const updatedStore = {
             ...currStore,
             [key]: newVal

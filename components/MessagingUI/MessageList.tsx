@@ -125,6 +125,7 @@ export default function MessageList({
             }
             <Pressable 
             pt={currentConvo && index === currentConvo.messages.length - 1 ? '40px' : '0px'}
+            overflow='visible'
             onPress={() => {
                 if (selectedMid !== undefined && selectedMid !== message.id) {
                     setSelectedMid(undefined);

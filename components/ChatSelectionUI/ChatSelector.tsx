@@ -153,7 +153,8 @@ export default function ChatSelector({
         if (!item.cid) return <></>;
         return <Swipeable
             key={item.cid}
-            renderRightActions={() => RightButton(item)}>
+            renderRightActions={() => RightButton(item)}
+            containerStyle={{overflow: 'visible'}}>
             <ChatPreview 
                 key={item.cid} 
                 chat={item}

@@ -9,7 +9,7 @@ import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } f
 import messaging from '@react-native-firebase/messaging';
 import SocketContext from '../contexts/SocketContext';
 import { PNPacket, PNType } from '../types/types';
-import { constructNewConvo } from '../utils/messagingUtils';
+import { constructNewConvo, handlePossiblyEncryptedMessage } from '../utils/messagingUtils';
 import { extractMentionNotification, parsePNLikeEvent, parsePNMessage, parsePNNewConvo, parsePNRC, parsePNSecrets, parsedPNDelete } from '../utils/notificationUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import UIContext from '../contexts/UIContext';
@@ -63,14 +63,16 @@ export default function NotificationsController(): JSX.Element {
                     switch (messageData.type) {
                         case 'message':
                             const parsedPNM = parsePNMessage(messageData.stringifiedBody);
+                            if(!parsedPNM) return;
+                            const dbMessage = await conversationsApi.getMessage(parsedPNM?.cid, parsedPNM.message.id);
                             if (parsedPNM && parsedPNM.cid === currentConvo?.id) {
-                                dispatch(receiveNewMessage({message: parsedPNM.message, cid: parsedPNM.cid}));
+                                dispatch(receiveNewMessage({message: dbMessage, cid: parsedPNM.cid}));
                             }
                             if (parsedPNM) {
                                 const secretKey = secrets ? secrets[parsedPNM.cid] : undefined;
                                 dispatch(handleNewMessage({
                                     cid: parsedPNM.cid,
-                                    message: parsedPNM.message as DecryptedMessage,
+                                    message: dbMessage,
                                     messageForCurrent: parsedPNM.cid === currentConvo?.id,
                                     secretKey
                                 }));
@@ -261,7 +263,7 @@ export default function NotificationsController(): JSX.Element {
             }
         }
         addPushToken();
-    }, []);
+    }, [user]);
 
     return <></>;
 }

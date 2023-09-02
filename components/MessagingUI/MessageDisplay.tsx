@@ -136,7 +136,7 @@ export default function MessageDisplay({
         return undefined;
     }, [message, participants]);
 
-    return <Box w='100%' paddingBottom='8px' paddingX='18px'>
+    return <Box w='100%' paddingBottom='8px' paddingX='18px' >
         {
             message.replyRef &&
             <ReplyMessageDisplay 
@@ -145,6 +145,10 @@ export default function MessageDisplay({
                 />
         }
         <HStack space={1} w='100%'>
+            {
+                message.senderId === user?.id &&
+                <Box w='2px' bgColor='gray.700' h='21px' mt='10px' ml='-12px' mr='5px' borderRadius='full' />
+            }
             <VStack space='3'>
             {
                 !isSystemMessage ?
@@ -162,7 +166,7 @@ export default function MessageDisplay({
             }
             <Spacer />
             {
-                (selected && ((message.senderId === user?.id && message.messageType !== 'deletion') || userIsAdmin)) &&
+                (selected && ((message.senderId === user?.id || userIsAdmin) && message.messageType !== 'deletion')) &&
                 <Box mb='20px'>
                     <IconButton label='delete' size={24} color='gray' onPress={handleDelete} />
                 </Box>

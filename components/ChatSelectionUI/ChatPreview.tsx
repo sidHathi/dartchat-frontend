@@ -38,7 +38,7 @@ export default function ChatPreview({
         return 'New conversation';
     }, [chat, secrets]);
 
-    return <Pressable onPress={onSelect}>
+    return <Pressable onPress={onSelect} overflow='visible'>
         <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='7' style={{shadowOpacity: 0.07}} mx='12px'>
             <HStack w='100%'>
                 <Box bgColor='transparent' borderRadius='25px' shadow='7' mr='12px'>
@@ -60,7 +60,7 @@ export default function ChatPreview({
                 </Box>
                 <VStack h='100%'>
                     <Spacer />
-                    <Heading fontSize='md' mb='2px'>
+                    <Heading fontSize='md' mb='2px' fontWeight='bold'>
                         {chat.name}
                     </Heading>
                     <MentionsTextDisplay

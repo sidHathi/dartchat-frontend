@@ -117,12 +117,16 @@ export default function ConversationProfileEditor({
         </Box>
     };
 
+    const constructedProfileUri = useMemo(() => {
+        return selectedProfile ? `file://${selectedProfile.path}` : undefined
+    }, [selectedProfile]);
+
     return <Box>
         <HStack space={7} mt='6px'>
         <Center mt='-12px'>
             {
-                ((selectedProfile && selectedProfile.sourceURL) || currProfile?.avatar) ?
-                <IconImage imageUri={selectedProfile?.sourceURL || currProfile?.avatar?.mainUri || ''} size={72} shadow='9' /> :
+                (selectedProfile || currProfile?.avatar) ?
+                <IconImage imageUri={selectedProfile?.sourceURL || constructedProfileUri || currProfile?.avatar?.mainUri || ''} size={72} shadow='9' /> :
                 <IconButton label='profile' size={72} shadow='9' />
             }
             <Button colorScheme='coolGray' m='auto' borderRadius='24px' px='12px' variant='solid'

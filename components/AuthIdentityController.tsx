@@ -150,8 +150,6 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
         return unsubscribe();
     }, [apiReachable, socket]);
 
-
-
     const isSetup = useCallback(() => {
         if (!needsSetup && user && user.handle) {
             return true;

@@ -9,12 +9,15 @@ import auth from '@react-native-firebase/auth';
 import UserSecretsContext from '../contexts/UserSecretsContext';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { chatSelector, setSecretKey } from '../redux/slices/chatSlice';
+import NetworkContext from '../contexts/NetworkContext';
+import { storeUserData } from '../localStore/store';
 
 export default function UserSecretsController({
     children
 }: PropsWithChildren<{
     children: ReactNode
 }>): JSX.Element {
+    const { networkConnected } = useContext(NetworkContext);
     const { user, logOut } = useContext(AuthIdentityContext);
     const { usersApi } = useRequest();
     const dispatch = useAppDispatch();
@@ -27,7 +30,8 @@ export default function UserSecretsController({
     const [secretsLoading, setSecretsLoading] = useState(true);
 
     const validateUserKeys = useCallback(async (dbUser: UserData, currSecrets?: { [key: string]: Uint8Array }) => {
-        if (!userPinKey || !dbUser.keySalt || !dbUser.secrets) {
+        if (!networkConnected || !userPinKey || !dbUser.keySalt || !dbUser.secrets) {
+            console.log('unable to validate')
             return true;
         }
 
@@ -39,31 +43,41 @@ export default function UserSecretsController({
                 })
             );
             const workingSecrets = currSecrets || secrets || undefined;
+            console.log(workingSecrets);
+            if (!('userSecretKey' in decodedSecrets)) {
+                console.log('invalid db secrets');
+                return false;
+            }
             // console.log(encodeKey(decodedSecrets.userSecretKey));
-            // console.log(encodeKey(decodedSecrets.userSecretKey));
+            // console.log(encodeKey(workingSecrets?.userSecretKey || new Uint8Array()));
             if ((decryptedSecrets === undefined) || ((workingSecrets?.userSecretKey !== undefined && (encodeKey(decodedSecrets.userSecretKey) !== encodeKey(workingSecrets.userSecretKey))))) {
                 // this happens during environment switches when local and db keys are out of sync
                 console.log('logging out user')
                 logOut();
                 return false;
+            } else {
+                if (dbUser) {
+                    await storeUserData(dbUser);
+                }
             }
             return true;
         } catch (err) {
             console.log('unable to decrypt db secrets');
-            logOut();
-            return true;
+            // logOut();
+            return false;
         }
-    }, [userPinKey, secrets])
+    }, [userPinKey, secrets, networkConnected])
 
     const updateDBSecrets = useCallback(async (newSecrets: {
         [key: string]: Uint8Array
     }, dbUser?: UserData) => {
-        if (!userPinKey || !user || !user.keySalt) return false;
+        if (!userPinKey || !user || !user.keySalt || newSecrets.userSecretKey) return false;
         try {
+            // console.log('attempting db update');
             const latestUser = dbUser || await usersApi.getCurrentUser();
             if (!await validateUserKeys(latestUser)) return;
             const encodedSecrets = Object.fromEntries(
-                Object.entries(newSecrets).map(([key, val]) => [key, encodeKey(val)])
+                Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
             );
             const encryptedSecrets = encryptUserSecrets(userPinKey, user.keySalt, encodedSecrets);
             await usersApi.setUserSecrets(encryptedSecrets);
@@ -89,16 +103,29 @@ export default function UserSecretsController({
                         const decodedPublicKey = decodeKey(c.publicKey);
                         const newKeyObj = decryptJSON(secrets.userSecretKey, c.keyUpdate, decodedPublicKey);
                         if (newKeyObj && newKeyObj.secretKey) {
-                            await secureStore.addSecureKey(user.id, c.cid, newKeyObj.secretKey);
                             updates[c.cid] = decodeKey(newKeyObj.secretKey);
                         }
                     }
                 })
             );
-            setSecrets({
+            const newSecrets = {
                 ...secrets,
                 ...updates
-            });
+            }
+            setSecrets(newSecrets);
+            try {
+                // console.log('attempting to pull user secrets');
+                const encodedSecrets = Object.fromEntries(
+                    Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
+                );
+                if (encodedSecrets.userSecretKey) {
+                    // console.log('STORING SECRETS:')
+                    // console.log(encodedSecrets);
+                    await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
+                }
+            } catch (err) {
+                console.log(err);
+            }
             setSecretsLoading(false);
         } catch (err) {
             console.log(err);
@@ -121,23 +148,31 @@ export default function UserSecretsController({
                         const decodedPublicKey = decodeKey(c.publicKey);
                         const newKeyObj = decryptJSON(currSecrets.userSecretKey, c.keyUpdate, decodedPublicKey);
                         if (newKeyObj && newKeyObj.secretKey) {
-                            await secureStore.addSecureKey(user.id, c.cid, newKeyObj.secretKey);
                             updates[c.cid] = decodeKey(newKeyObj.secretKey);
                         }
                     }
                 })
             );
             const newSecrets = {
-                ...currSecrets,
-                ...updates,
-            };
+                ...secrets,
+                ...updates
+            }
+            const encodedSecrets = Object.fromEntries(
+                Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
+            );
+            setSecrets(newSecrets);
+            if (encodedSecrets.userSecretKey) {
+                console.log('STORING SECRETS:')
+                console.log(encodedSecrets);
+                await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
+            }
             if (await updateDBSecrets(newSecrets, latestUser)) {
                 await usersApi.readConversationKeyUpdates(Object.keys(updates));
-                setSecrets(newSecrets);
             }
             setSecretsLoading(false);
             return;
         } catch (err) {
+            console.log('secrets update failed');
             setSecretsLoading(false);
             console.log(err);
             return;
@@ -147,16 +182,26 @@ export default function UserSecretsController({
     const getSecrets = useCallback(async () => {
         if (!user) return;
         try {
+            console.log('setting up user secrets context');
             const storedSecrets = await secureStore.getUserSecretKeyStore(user.id);
             if (storedSecrets && 'userSecretKey' in storedSecrets) {
                 const decodedSecrets = (Object.fromEntries(
                     Object.entries(storedSecrets).map(([key, val]) => [key, decodeKey(val as string)])
                 ));
                 if (secrets) {
-                    setSecrets({
+                    const newSecrets = {
                         ...secrets,
                         ...decodedSecrets
-                    });
+                    }
+                    const encodedSecrets = Object.fromEntries(
+                        Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
+                    );
+                    setSecrets(newSecrets);
+                    if (encodedSecrets.userSecretKey) {
+                        console.log('STORING SECRETS:')
+                        console.log(encodedSecrets);
+                         await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
+                    }
                 } else {
                     setSecrets(decodedSecrets);
                 }
@@ -170,19 +215,32 @@ export default function UserSecretsController({
                     })
                 );
                 if (decodedSecrets && 'userSecretKey' in decodedSecrets) {
-                    await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
+                    // await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
                     if (secrets) {
-                        setSecrets({
+                        const newSecrets = {
                             ...secrets,
                             ...decodedSecrets
-                        });
+                        }
+                        const encodedSecrets = Object.fromEntries(
+                            Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
+                        );
+                        setSecrets(newSecrets);
+                        if (encodedSecrets.userSecretKey) {
+                            // console.log('STORING SECRETS:')
+                            // console.log(encodedSecrets);
+                            await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
+                        }
                     } else {
+                        // console.log('STORING SECRETS:')
+                        // console.log(decryptedSecrets);
                         setSecrets(decodedSecrets);
+                        await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
                     }
                     return decodedSecrets;
                 }
             }
         } catch (err) {
+            console.log('getSecrets failed');
             console.log(err);
             return;
         }
@@ -196,16 +254,20 @@ export default function UserSecretsController({
         const initialSecrets = {
             userSecretKey
         };
-        if (await updateDBSecrets(initialSecrets)) {
-            setSecrets(initialSecrets);
-        }
+        await updateDBSecrets(initialSecrets);
+        setSecrets(initialSecrets);
     }, [setSecrets, updateDBSecrets]);
 
-    const handleNewDBSecrets = useCallback((decryptedSecrets: {[key: string]: string}) => {
+    const handleNewDBSecrets = useCallback(async (decryptedSecrets: {[key: string]: string}) => {
         const newSecrets = Object.fromEntries(
             Object.entries(decryptedSecrets)
                 .map(([key, val]) => [key, decodeKey(val)])
         );
+        if (user && decryptedSecrets.userSecretKey && newSecrets) {
+            // console.log('STORING SECRETS:')
+            // console.log(decryptedSecrets);
+            await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
+        }
         setSecrets(newSecrets);
     }, [secrets]);
 
@@ -234,6 +296,9 @@ export default function UserSecretsController({
                 dispatch(setSecretKey(decryptedKey));
             }
             return decodeKey(decryptedKey);
+        } else {
+            await secureStore.addSecureKey(user.id, cid, decryptedKey);
+            setSecrets(newSecrets);
         }
         return undefined;
     }, [secrets, secretsLoading, user, userPinKey, updateDBSecrets]);
@@ -252,6 +317,9 @@ export default function UserSecretsController({
                     dispatch(setSecretKey(key));
                 }
                 return true;
+            } else {
+                await secureStore.addSecureKey(user.id, cid, encodedKey);
+                setSecrets(newSecrets);
             }
             return false;
         } catch (err) {

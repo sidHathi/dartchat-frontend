@@ -15,6 +15,7 @@ import RemoveUserModal from './RemoveUserModal';
 import UserDetailsModal from './UserDetailsModal';
 import UserSecretsContext from '../../contexts/UserSecretsContext';
 import { getNewMemberKeys } from '../../utils/encryptionUtils';
+import { useKeyboard } from '@react-native-community/hooks';
 
 export default function MembersList({
     exit
@@ -28,6 +29,7 @@ export default function MembersList({
     const { userConversations } = useAppSelector(userDataSelector);
     const { conversationsApi } = useRequest();
     const { secrets } = useContext(UserSecretsContext);
+    const { keyboardShown, keyboardHeight } = useKeyboard();
 
     const [addMenuOpen, setAddMenuOpen] = useState(false);
     const [userDetailModal, setUserDetailModalOpen] = useState(false);
@@ -143,8 +145,9 @@ export default function MembersList({
             keyExtractor={(item, index) => item.id} 
             />
         
-        <View flexGrow='0' flexShrink='0'>
-            <Box m='6px' shadow='9' borderRadius='24px' bgColor='white' w='100%' p='24px' style={{shadowOpacity: 0.12}} mb='-6px'>
+        <View flexGrow='0' flexShrink='0' bgColor='transparent' overflow='visible'>
+            <Box m='6px' shadow='9' borderRadius='24px' bgColor='white' w='100%' p='24px' style={{shadowOpacity: 0.12}} mb='-6px' pb={keyboardShown ? `${keyboardHeight + 12}px`: '24px'}>
+            <ScrollView overflow='visible'>
                 {
                     addMenuOpen &&
                     <NewMemberSearch selectedNewMembers={selectedNewMembers} setSelectedNewMembers={setSelectedNewMembers} />
@@ -155,6 +158,7 @@ export default function MembersList({
                             selectedNewMembers && selectedNewMembers.length > 0 ? 'Confirm' : 'Cancel'
                     }
                 </Button>
+            </ScrollView>
             </Box>
         </View>
         {

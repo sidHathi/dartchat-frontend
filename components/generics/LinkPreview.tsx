@@ -41,9 +41,11 @@ export default function LinkPreview({
             />
         }
         <Box w='100%'>
+            {data.title &&
             <Text fontWeight='medium' fontSize='11px' mt='12px' mb='3px' mx='18px' maxW='85%'>
                 {data.title}
             </Text>
+            }
             <Text color='gray.500' fontSize='10px' mx='18px' mb='12px'>
                 {data.link}
             </Text>
