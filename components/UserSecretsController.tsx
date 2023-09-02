@@ -71,11 +71,11 @@ export default function UserSecretsController({
     const updateDBSecrets = useCallback(async (newSecrets: {
         [key: string]: Uint8Array
     }, dbUser?: UserData) => {
-        if (!userPinKey || !user || !user.keySalt || newSecrets.userSecretKey) return false;
+        if (!userPinKey || !user || !user.keySalt || !newSecrets.userSecretKey) return false;
         try {
             // console.log('attempting db update');
             const latestUser = dbUser || await usersApi.getCurrentUser();
-            if (!await validateUserKeys(latestUser)) return;
+            if (!await validateUserKeys(latestUser)) return false;
             const encodedSecrets = Object.fromEntries(
                 Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
             );
