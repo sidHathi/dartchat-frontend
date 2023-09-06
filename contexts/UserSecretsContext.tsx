@@ -9,7 +9,7 @@ type UserSecretsContextType = {
     initUserSecret: (userSecretKey: Uint8Array) => Promise<void>;
     handleNewDBSecrets: (decodedSecrets: {[key: string]: string}) => void;
     handleNewEncryptedConversation: (cid: string, encryptedPrivateKey: string, publicKey: string) => Promise<Uint8Array | undefined>;
-    handleNewConversationKey: (cid: string, key: Uint8Array, encodedKey: string) => Promise<boolean>;
+    handleNewConversationKey: (cid: string, key: Uint8Array) => Promise<boolean>;
     forgetConversationKeys: (cid: string) => Promise<boolean>;
     pullUserSecrets: () => Promise<void>;
 };

@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Button, Center, Modal, VStack, Text, Select, CheckIcon } from "native-base";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
-import { chatSelector, pullConversation, setCCPublicKey } from "../../../redux/slices/chatSlice";
+import { chatSelector, pullConversation, setCCPublicKey, updatePrivUsersForNewKey } from "../../../redux/slices/chatSlice";
 import reencryptor, { Reencryptor } from "../../../utils/reencryptor";
 import useRequest from "../../../requests/useRequest";
 import UserSecretsContext from "../../../contexts/UserSecretsContext";
@@ -90,6 +90,7 @@ export default function ReencryptionModal({
             const generatedKeys = genKeyPair();
             setUserKeyMap(await stateReencryptor.reencrypt(secrets[currentConvo.id], generatedKeys));
             setNewKeys(generatedKeys);
+            dispatch(updatePrivUsersForNewKey());
             setDataReencrypted(true);
         };
 
@@ -162,6 +163,8 @@ export default function ReencryptionModal({
         setReencryptionComplete(false);
         setTimeGap(1000*60*60*24*30);
         setCanceled(false);
+        setNewKeys(undefined);
+        setUserKeyMap(undefined);
         onClose();
     }
 

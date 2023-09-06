@@ -45,7 +45,7 @@ export default function MembersList({
                 keyMap = getNewMemberKeys(selectedNewMembers, secretKey);
             }
 
-            dispatch(addUsers(selectedNewMembers, conversationsApi, () => {
+            dispatch(addUsers(selectedNewMembers, conversationsApi, keyMap, () => {
                 socket && socket.emit('newConversationUsers', currentConvo.id, selectedNewMembers, keyMap);
                 setSelectedNewMembers(undefined);
             }));

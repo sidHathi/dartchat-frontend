@@ -1,5 +1,5 @@
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
-import { getStoredUserData, setBackgroundUpdateFlag } from '../localStore/store';
+import { getStoredUserData, setBackgroundUpdateFlag } from '../localStore/localStore';
 import notifee, { EventType } from '@notifee/react-native';
 import { PNPacket } from '../types/types';
 import { getEncryptedDisplayFields, getSecureKeyForMessage, getUnencryptedDisplayFields, handleBackgroundConversationInfo, handleBackgroundConversationKey, handleBackgroundSecrets, parsePNDisplay, parsePNLikeEvent, parsePNNewConvo, parsePNSecrets } from '../utils/notificationUtils';
@@ -14,6 +14,7 @@ const displayNotification = async (displayFields: {
 }, type: string) => {
     if (type === 'message') {
         await notifee.incrementBadgeCount();
+        await setBackgroundUpdateFlag(true);
     }
   
     try {
@@ -97,7 +98,7 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
             displayNotification({
                 ...displayFields,
                 data,
-                id: data.cid
+                id: remoteMessage.messageId || parsedConvo.convo.id
             }, remoteMessage.data.type);
         } else if (remoteMessage.data.type === 'message') {
             const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
@@ -120,7 +121,7 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
             displayNotification({
                 ...displayFields,
                 data,
-                id: parsedLike?.mid
+                id: remoteMessage.messageId || parsedLike?.mid
             }, remoteMessage.data.type);
         } else if (remoteMessage.data.type === 'secrets') {
             const parsedPNS = parsePNSecrets(remoteMessage.data.stringifiedBody);
@@ -136,7 +137,7 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
             }
         }   
     } catch (err) {
-        console.log('NOTIFICATOIN ERROR');
+        console.log('NOTIFICATION ERROR');
         console.log(remoteMessage);
         console.log(err);
     }

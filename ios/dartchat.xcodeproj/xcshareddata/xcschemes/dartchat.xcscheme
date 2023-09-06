@@ -38,6 +38,20 @@
                ReferencedContainer = "container:dartchat.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3C0EDF3B2AA52B0C00769429"
+               BuildableName = "NotifeeNotificationService.appex"
+               BlueprintName = "NotifeeNotificationService"
+               ReferencedContainer = "container:dartchat.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

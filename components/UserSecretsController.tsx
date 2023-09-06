@@ -10,7 +10,7 @@ import UserSecretsContext from '../contexts/UserSecretsContext';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { chatSelector, setSecretKey } from '../redux/slices/chatSlice';
 import NetworkContext from '../contexts/NetworkContext';
-import { storeUserData } from '../localStore/store';
+import { storeUserData } from '../localStore/localStore';
 
 export default function UserSecretsController({
     children
@@ -43,7 +43,7 @@ export default function UserSecretsController({
                 })
             );
             const workingSecrets = currSecrets || secrets || undefined;
-            console.log(workingSecrets);
+            // console.log(workingSecrets);
             if (!('userSecretKey' in decodedSecrets)) {
                 console.log('invalid db secrets');
                 return false;
@@ -75,12 +75,33 @@ export default function UserSecretsController({
         try {
             // console.log('attempting db update');
             const latestUser = dbUser || await usersApi.getCurrentUser();
-            if (!await validateUserKeys(latestUser)) return false;
+            if (!(await validateUserKeys(latestUser))) return false;
+            let localSecrets = await secureStore.getUserSecretKeyStore(user.id);
+            if (!localSecrets || Object.entries(localSecrets).length < 1) {
+                localSecrets = {};
+            }
             const encodedSecrets = Object.fromEntries(
                 Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
             );
-            const encryptedSecrets = encryptUserSecrets(userPinKey, user.keySalt, encodedSecrets);
-            await usersApi.setUserSecrets(encryptedSecrets);
+            const completedSecrets = {
+                ...(localSecrets || {}),
+                ...encodedSecrets
+            };
+            const encryptedSecrets = encryptUserSecrets(userPinKey, user.keySalt, completedSecrets);
+            const decodedCompletedSecrets = Object.fromEntries(
+                Object.entries(completedSecrets).map(([key, val]) => [key, decodeKey(val as string)])
+            );
+            if (completedSecrets.userSecretKey) {
+                // console.log('updating universal secrets');
+                // console.log(localSecrets);
+                // console.log(completedSecrets);
+                setSecrets(decodedCompletedSecrets);
+                await secureStore.initUserSecretKeyStore(user.id, completedSecrets);
+                await usersApi.setUserSecrets(encryptedSecrets);
+            } else {
+                console.log('db update failed');
+                console.log(completedSecrets);
+            }
             return true;
         } catch (err) {
             console.log('db update error');
@@ -108,23 +129,30 @@ export default function UserSecretsController({
                     }
                 })
             );
+            const localKeyStore = await secureStore.getUserSecretKeyStore(user.id);
+            const localKeys = localKeyStore ? Object.fromEntries(
+                Object.entries(localKeyStore).map(([key, val]) => {
+                    if (val) {
+                        return [key, decodeKey(val as string)];
+                    }
+                    return [key, new Uint8Array()]
+                })
+            ) : {};
             const newSecrets = {
+                ...localKeys,
                 ...secrets,
                 ...updates
             }
-            setSecrets(newSecrets);
-            try {
-                // console.log('attempting to pull user secrets');
-                const encodedSecrets = Object.fromEntries(
-                    Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
-                );
-                if (encodedSecrets.userSecretKey) {
-                    // console.log('STORING SECRETS:')
-                    // console.log(encodedSecrets);
-                    await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
-                }
-            } catch (err) {
-                console.log(err);
+            if (secrets.userSecretKey) {
+                setSecrets(newSecrets);
+            }
+            const encodedSecrets = Object.fromEntries(
+                Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
+            );
+            if (encodedSecrets.userSecretKey) {
+                // console.log('STORING SECRETS (153):')
+                // console.log(encodedSecrets);
+                await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
             }
             setSecretsLoading(false);
         } catch (err) {
@@ -153,18 +181,19 @@ export default function UserSecretsController({
                     }
                 })
             );
+            const localKeyStore = await secureStore.getUserSecretKeyStore(user.id);
+            const localKeys = localKeyStore ? Object.fromEntries(
+                Object.entries(localKeyStore).map(([key, val]) => {
+                    if (val) {
+                        return [key, decodeKey(val as string)];
+                    }
+                    return [key, new Uint8Array()]
+                })
+            ) : {};
             const newSecrets = {
+                ...localKeys,
                 ...secrets,
                 ...updates
-            }
-            const encodedSecrets = Object.fromEntries(
-                Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
-            );
-            setSecrets(newSecrets);
-            if (encodedSecrets.userSecretKey) {
-                console.log('STORING SECRETS:')
-                console.log(encodedSecrets);
-                await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
             }
             if (await updateDBSecrets(newSecrets, latestUser)) {
                 await usersApi.readConversationKeyUpdates(Object.keys(updates));
@@ -182,7 +211,7 @@ export default function UserSecretsController({
     const getSecrets = useCallback(async () => {
         if (!user) return;
         try {
-            console.log('setting up user secrets context');
+            // console.log('setting up user secrets context');
             const storedSecrets = await secureStore.getUserSecretKeyStore(user.id);
             if (storedSecrets && 'userSecretKey' in storedSecrets) {
                 const decodedSecrets = (Object.fromEntries(
@@ -196,14 +225,16 @@ export default function UserSecretsController({
                     const encodedSecrets = Object.fromEntries(
                         Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
                     );
-                    setSecrets(newSecrets);
                     if (encodedSecrets.userSecretKey) {
-                        console.log('STORING SECRETS:')
-                        console.log(encodedSecrets);
-                         await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
+                        // console.log('STORING SECRETS (229)');
+                        // console.log(encodedSecrets);
+                        setSecrets(newSecrets);
+                        await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
                     }
                 } else {
-                    setSecrets(decodedSecrets);
+                    if (decodedSecrets.userSecretKey) {
+                        setSecrets(decodedSecrets);
+                    }
                 }
                 return decodedSecrets;
             } else if (user && user.secrets && user.keySalt && userPinKey) {
@@ -224,17 +255,19 @@ export default function UserSecretsController({
                         const encodedSecrets = Object.fromEntries(
                             Object.entries(newSecrets).map(([key, val]) => [key, val ? encodeKey(val): ''])
                         );
-                        setSecrets(newSecrets);
                         if (encodedSecrets.userSecretKey) {
-                            // console.log('STORING SECRETS:')
+                            // console.log('STORING SECRETS (259):')
                             // console.log(encodedSecrets);
+                            setSecrets(newSecrets);
                             await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
                         }
                     } else {
-                        // console.log('STORING SECRETS:')
-                        // console.log(decryptedSecrets);
-                        setSecrets(decodedSecrets);
-                        await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
+                        if (decodedSecrets.userSecretKey) {
+                            // console.log('STORING SECRETS (266):')
+                            // console.log(decryptedSecrets);
+                            setSecrets(decodedSecrets);
+                            await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
+                        }
                     }
                     return decodedSecrets;
                 }
@@ -264,11 +297,11 @@ export default function UserSecretsController({
                 .map(([key, val]) => [key, decodeKey(val)])
         );
         if (user && decryptedSecrets.userSecretKey && newSecrets) {
-            // console.log('STORING SECRETS:')
+            // console.log('STORING SECRETS (300):')
             // console.log(decryptedSecrets);
             await secureStore.initUserSecretKeyStore(user.id, decryptedSecrets);
+            setSecrets(newSecrets);
         }
-        setSecrets(newSecrets);
     }, [secrets]);
 
     const handleNewEncryptedConversation = useCallback(async (cid: string, encryptedPrivateKey: string, publicKey: string) => {
@@ -290,36 +323,35 @@ export default function UserSecretsController({
             [cid]: decodeKey(decryptedKey)
         }
         if (await updateDBSecrets(newSecrets)) {
-            await secureStore.addSecureKey(user.id, cid, decryptedKey);
-            setSecrets(newSecrets);
             if (currentConvo?.id === cid) {
                 dispatch(setSecretKey(decryptedKey));
             }
             return decodeKey(decryptedKey);
-        } else {
-            await secureStore.addSecureKey(user.id, cid, decryptedKey);
+        } else if (newSecrets.userSecretKey) {
             setSecrets(newSecrets);
         }
         return undefined;
     }, [secrets, secretsLoading, user, userPinKey, updateDBSecrets]);
 
-    const handleNewConversationKey = useCallback(async (cid: string, key: Uint8Array, encodedKey: string) => {
+    const handleNewConversationKey = useCallback(async (cid: string, key: Uint8Array) => {
         if (!user) return false;
         try {
             const newSecrets = {
                 ...(secrets || {}),
                 [cid]: key
             };
+            // console.log('SETTING NEW SECRETS');
+            // console.log(Object.fromEntries(
+            //     Object.entries(newSecrets).map(([key, val]) => [key, encodeKey(val || new Uint8Array())])
+            // ));
             if (await updateDBSecrets(newSecrets)) {
-                await secureStore.addSecureKey(user.id, cid, encodedKey);
-                setSecrets(newSecrets);
                 if (currentConvo?.id === cid) {
                     dispatch(setSecretKey(key));
                 }
-                return true;
-            } else {
-                await secureStore.addSecureKey(user.id, cid, encodedKey);
+            }
+            if (newSecrets.userSecretKey) {
                 setSecrets(newSecrets);
+                return true;
             }
             return false;
         } catch (err) {
@@ -329,13 +361,14 @@ export default function UserSecretsController({
     }, [secrets, user, updateDBSecrets]);
 
     const forgetConversationKeys = useCallback(async (cid: string) => {
+        // console.log('FORGETTING USER SECRETS');
         try {
             if (secrets && cid in secrets) {   
                 const newSecrets = Object.fromEntries(
                     Object.entries(secrets).filter(([s, _]) => s !== cid)
                 )
                 const updateRes = await updateDBSecrets(newSecrets);
-                if (!updateRes) return false;
+                if (!updateRes || !newSecrets.userSecretKey) return false;
                 setSecrets(
                    newSecrets
                 )
@@ -346,7 +379,7 @@ export default function UserSecretsController({
             console.log(err);
             return false;
         }
-    }, [secrets]);
+    }, [secrets, updateDBSecrets]);
 
     useEffect(() => {
         if (userPinKey || !user) return;

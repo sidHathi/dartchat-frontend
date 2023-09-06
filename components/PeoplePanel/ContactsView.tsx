@@ -99,6 +99,7 @@ export default function ContactsView(): JSX.Element {
         </Text>
         <Box w='100%' px='12px' py='6px'>
             <Input 
+                size='md'
                 placeholder="Search" 
                 variant="filled" 
                 borderRadius="full" 

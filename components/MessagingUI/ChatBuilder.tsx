@@ -167,23 +167,23 @@ export default function ChatBuilder({exit}: {
                 secretKey: secretKey
             }));
             if (socket && user) {
+                if (secretKey) {
+                    handleNewConversationKey(newConvo.id, secretKey);
+                }
                 socket.emit('newConversation', newConvo, recipientKeyMap);
                 dispatch(addConversation({
                     newConvo,
                     uid: user.id,
                     secretKey
                 }));
-                if (secretKey && encodedSecretKey) {
-                    handleNewConversationKey(newConvo.id, secretKey, encodedSecretKey);
-                }
             }
         } else if (user) {
-            dispatch(openPrivateMessage(newConvo, user.id, userConversations, conversationsApi, recipientKeyMap, secretKey));
-            if (secretKey && encodedSecretKey) {
-                await handleNewConversationKey(newConvo.id, secretKey, encodedSecretKey);
+            if (secretKey) {
+                await handleNewConversationKey(newConvo.id, secretKey);
             }
+            dispatch(openPrivateMessage(newConvo, user.id, userConversations, conversationsApi, recipientKeyMap, secretKey));
         }
-    }, [user, selectedProfiles, groupAvatar, isGroup, userConversations, getConversationKeys, encryptedGroup, getGroupName]);
+    }, [user, selectedProfiles, groupAvatar, isGroup, userConversations, getConversationKeys, encryptedGroup, getGroupName, handleNewConversationKey]);
 
     useEffect(() => {
         if (!isGroup) {

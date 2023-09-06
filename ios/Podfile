@@ -1,6 +1,7 @@
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+source 'https://github.com/CocoaPods/Specs.git'
 
 platform :ios, '13.0'
 prepare_react_native_project!
@@ -22,10 +23,12 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-
 $RNFirebaseAsStaticFramework = true # toggle this to true (and set 'use_frameworks!' below to test static frameworks)
 
 target 'dartchat' do
+  use_frameworks! :linkage => :static
+  use_native_modules!
+
   use_expo_modules!
   post_integrate do |installer|
     begin
@@ -34,12 +37,8 @@ target 'dartchat' do
       Pod::UI.warn e
     end
   end
-  use_frameworks! :linkage => :static
 
   config = use_native_modules!
-
-  # For extensions without React dependencies
-  pod 'react-native-config/Extension', :path => '../node_modules/react-native-config'
 
   # Flags change depending on the env values.
   flags = get_default_flags()
@@ -60,18 +59,31 @@ target 'dartchat' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
+  pod 'react-native-config/Extension', :path => '../node_modules/react-native-config'
+  
+  pod 'TweetNacl', '~> 1.0.0'
+
   target 'dartchatTests' do
     inherit! :complete
     # Pods for testing
   end
-
+  
   post_install do |installer|
     react_native_post_install(
-      installer,
-      # Set `mac_catalyst_enabled` to `true` in order to apply patches
-      # necessary for Mac Catalyst builds
-      :mac_catalyst_enabled => false
-    )
-    __apply_Xcode_12_5_M1_post_install_workaround(installer)
-  end
+        installer,
+        # Set `mac_catalyst_enabled` to `true` in order to apply patches
+        # necessary for Mac Catalyst builds
+        :mac_catalyst_enabled => false
+      )
+      __apply_Xcode_12_5_M1_post_install_workaround(installer)
+    end
+end
+
+$NotifeeExtension = true
+  
+target 'EncryptionNotificationService' do
+  use_frameworks! :linkage => :static
+  inherit! :complete
+  pod 'TweetNacl', '~> 1.0.0'
+  pod 'RNNotifeeCore', :path => '../node_modules/@notifee/react-native/RNNotifeeCore.podspec'
 end

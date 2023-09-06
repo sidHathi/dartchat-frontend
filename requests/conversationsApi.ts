@@ -16,7 +16,7 @@ export type ConversationsApi = {
         newAvatar?: AvatarImage
     }) => any;
     updateUserNotStatus: (cid: string, newStatus: NotificationStatus) => Promise<any | never>;
-    addConversationUsers: (cid: string, newUsers: UserConversationProfile[]) => Promise<any | never>;
+    addConversationUsers: (cid: string, newUsers: UserConversationProfile[], userKeyMap?: { [id: string]: string }) => Promise<any | never>;
     removeConversationUser: (cid: string, userId: string) => Promise<any | never>;
     leaveChat: (cid: string) => Promise<any | never>;
     joinChat: (cid: string) => Promise<any | never>;
@@ -203,16 +203,18 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
-    const addConversationUsers = (cid: string, newUsers: UserConversationProfile[]) => {
+    const addConversationUsers = (cid: string, newUsers: UserConversationProfile[], userKeyMap?: { [id: string]: string }) => {
         return apiService.request({
             method: 'PUT',
             url: `/conversations/${cid}/addUsers`,
-            data: newUsers
+            data: {
+                profiles: newUsers,
+                userKeyMap: userKeyMap
+            }
         }).then((res) => {
             if (res && res.data) {
                 return res.data;
             }
-            return Promise.reject(res);
         })
         .catch((err) => Promise.reject(err));
     };

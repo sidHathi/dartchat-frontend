@@ -1,65 +1,16 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ConversationPreview, UserData } from '../types/types';
-import { parseUserData } from '../utils/requestUtils';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NativeModules } from 'react-native';
 
-export const storeUserData = async (user: UserData) => {
+const storeData = async (key: string, stringifiedData: string) => {
     try {
-        await AsyncStorage.setItem('userData', JSON.stringify(user));
-    } catch (err) {
-        console.error(err);
-    }
-};
-
-export const getStoredUserData = async () => {
-    try {
-        const val = await AsyncStorage.getItem('userData');
-        if (!val) {
-            return undefined;
+        await AsyncStorage.setItem(key, stringifiedData);
+        const { OCUserDefaults } = NativeModules;
+        if (OCUserDefaults) {
+            await OCUserDefaults.storeData(key, stringifiedData);
         }
-        return parseUserData(JSON.parse(val));
-    } catch (err) {
-        console.error(err);
-    }
-};
-
-export const deleteStoredUserData = async () => {
-    try {
-        await AsyncStorage.removeItem('userData');
-    } catch (err) {
-        console.error(err);
-    }
-};
-
-export const setBackgroundUpdateFlag = async (needsUpdate: boolean) => {
-    try {
-        await AsyncStorage.setItem('backgroundUpdateFlag', needsUpdate.toString());
-    } catch (err) {
-        console.error(err);
-    }
-};
-
-export const getBackgroundUpdateFlag = async () => {
-    try {
-        return await AsyncStorage.getItem('backgroundUpdateFlag') === 'true';
-    } catch (err) {
-        console.error(err);
-    }
-};
-
-export const storeUpdatedUserConversations = async (newConversations: ConversationPreview[]) => {
-    try {
-        const existingUser = await getStoredUserData();
-        if (existingUser) {
-            const updatedUser = {
-                ...existingUser,
-                conversations: newConversations
-            } as UserData;
-            await storeUserData(updatedUser);
-            return true;
-        }
-        return false;
     } catch (err) {
         console.log(err);
-        return false;
     }
 };
+
+export default storeData;

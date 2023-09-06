@@ -5,7 +5,7 @@ import useRequest from '../requests/useRequest';
 import { chatSelector, exitConvo, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConversationLoading, setConvo, setNotificationLoading, setNotificationSelection, setSecretKey, updateUserRole } from '../redux/slices/chatSlice';
 import { getUserData } from '../utils/identityUtils';
 import { addConversation, handleNewMessage, handleRoleUpdate, pullLatestPreviews, setConversations, userDataSelector } from '../redux/slices/userDataSlice';
-import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } from '../localStore/store';
+import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } from '../localStore/localStore';
 import messaging from '@react-native-firebase/messaging';
 import SocketContext from '../contexts/SocketContext';
 import { PNPacket, PNType } from '../types/types';
@@ -241,6 +241,7 @@ export default function NotificationsController(): JSX.Element {
                 case EventType.PRESS:
                     if (detail?.notification?.data) {
                         dispatch(setNotificationLoading(true));
+                        await pullUserSecrets();
                         await handleNotificationSelect(detail.notification.data as any)
                         dispatch(setNotificationLoading(false));
                     }

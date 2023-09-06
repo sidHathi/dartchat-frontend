@@ -74,23 +74,17 @@ export default function EventBuilder({
     };
 
     const getDateForReminderTime = (date: Date, rt: ReminderTime) => {
-        let raw = (new Date()).getTime();
         switch (rt) {
             case '@':
-                raw = date.getTime();
-                return new Date(raw);
+                return date;
             case '10min':
-                raw = date.getTime() - 10*60*1000;
-                return new Date(raw);
+                return new Date(date.getTime() - 10*60*1000);
             case '30min':
-                raw = date.getTime() - 30*60*1000;
-                return new Date(raw);
+                return new Date(date.getTime() - 30*60*1000);
             case '1hr':
-                raw = date.getTime() - 60*60*1000;
-                return new Date(raw);
+                return new Date(date.getTime() - 60*60*1000);
             case '1day':
-                raw = date.getTime() - 24*60*60*1000;
-                return new Date(raw);
+                return new Date(date.getTime() - 24*60*60*1000);
             default:
                 return new Date();
         }

@@ -9,7 +9,7 @@ import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import SocketContext from '../contexts/SocketContext';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { initReduxUser, logOutUser, setConversations } from '../redux/slices/userDataSlice';
-import { storeUserData, getStoredUserData, deleteStoredUserData } from '../localStore/store';
+import { storeUserData, getStoredUserData, deleteStoredUserData } from '../localStore/localStore';
 import Spinner from 'react-native-spinkit';
 import { Center } from 'native-base';
 import NetworkContext from '../contexts/NetworkContext';

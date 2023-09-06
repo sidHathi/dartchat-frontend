@@ -2,7 +2,7 @@ import { parseSocketMessage, parseSocketEvent, parseConversation } from "./reque
 import { Message, SocketEvent, Conversation, DecryptedMessage, UserData, UserConversationProfile, ConversationPreview, ChatRole, NotificationStatus } from '../types/types';
 import secureStore from "../localStore/secureStore";
 import { decodeKey, decryptJSON, decryptString } from "./encryptionUtils";
-import { getStoredUserData, storeUserData } from "../localStore/store";
+import { getStoredUserData, storeUserData } from "../localStore/localStore";
 import { PNPacket } from "../types/types";
 import { constructPreviewForConversation, handlePossiblyEncryptedMessage } from "./messagingUtils";
 
@@ -199,7 +199,7 @@ export const getPossiblyDecryptedMessageContents = (decryptedMessage: DecryptedM
     }
 };
 
-export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uint8Array): Promise<{
+export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uint8Array, rmId?: string): Promise<{
     title: string;
     body: string;
     imageUri?: string;
@@ -220,7 +220,7 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                 const storedUserData = await getStoredUserData();
                 const storedPreview = storedUserData?.conversations?.find((c) => c.cid === messageData.cid);
                 if (!storedUserData || !storedPreview) return undefined;
-                const mentionFields = extractMentionNotification(decrypted, storedUserData.id, storedPreview);
+                const mentionFields = extractMentionNotification(decrypted, storedUserData.id, storedPreview, rmId);
                 const notifStatus = storedPreview?.notfications;
                 if (mentionFields !== undefined && notifStatus !== 'none') {
                     return {
@@ -239,7 +239,7 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                     const showPrefix = (storedPreview.group && decrypted.senderProfile)
                     const bodyPrefix = showPrefix ? `${decrypted.senderProfile?.displayName}: `: '';
                     return {
-                        id: decrypted.id,
+                        id: rmId || decrypted.id,
                         title: ((!showPrefix && decrypted.senderProfile) ? decrypted.senderProfile?.displayName : storedPreview.name),
                         body: `${bodyPrefix}${decryptedContents}`,
                         data: {
@@ -254,7 +254,7 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                     console.log(await secureStore.getUserSecretKeyStore(storedUserData.id));
                     console.log(storedPreview.cid);
                     return {
-                        id: decrypted.id,
+                        id: rmId || decrypted.id,
                         title: storedPreview.name || 'New Message',
                         body: `Message contents encrypted`,
                         data: {
@@ -302,7 +302,7 @@ export const getUnencryptedDisplayFields = (notif: PNPacket) => {
     }
 };
 
-export const extractMentionNotification = (message: DecryptedMessage, storedUid: string, storedPreview?: ConversationPreview) => {
+export const extractMentionNotification = (message: DecryptedMessage, storedUid: string, storedPreview?: ConversationPreview, rmId?: string) => {
     if (!message.mentions || !storedPreview) return undefined;
     try {
         const sender = message.senderProfile;
@@ -311,7 +311,7 @@ export const extractMentionNotification = (message: DecryptedMessage, storedUid:
         const constructedNotifBody = `${sender?.displayName || 'Someone'} mentioned you in ${storedPreview?.name || 'the chat'}`;
         // console.log(constructedNotifBody);
         return {
-            id: message.id,
+            id: rmId || message.id,
             title: storedPreview.name,
             body: constructedNotifBody
         }

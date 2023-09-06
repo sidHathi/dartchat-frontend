@@ -13,8 +13,19 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		26E3F23053118C26992177AC /* Pods_dartchat.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78A6EC429758D15CB06992C1 /* Pods_dartchat.framework */; };
 		301A4E38F1DF8749978AF8F0 /* Pods_dartchat_dartchatTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 44B3E5EB37433CC9E1D9A661 /* Pods_dartchat_dartchatTests.framework */; };
+		3C03CDD92AA53A7700BC6F47 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C03CDD82AA53A7700BC6F47 /* NotificationService.swift */; };
+		3C03CDDD2AA53A7700BC6F47 /* EncryptionNotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3C03CDD62AA53A7700BC6F47 /* EncryptionNotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3C03CDE12AA53A9400BC6F47 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C03CDD82AA53A7700BC6F47 /* NotificationService.swift */; };
 		3C5087A52A3BE4A800A9A756 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3C5087A42A3BE4A800A9A756 /* GoogleService-Info.plist */; };
 		3C5087A62A3BE4A800A9A756 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3C5087A42A3BE4A800A9A756 /* GoogleService-Info.plist */; };
+		3C51FD5F2AA5AF1C0023D577 /* Decodables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C51FD5E2AA5AF1C0023D577 /* Decodables.swift */; };
+		3C51FD602AA5BF7E0023D577 /* Decodables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C51FD5E2AA5AF1C0023D577 /* Decodables.swift */; };
+		3C51FD6F2AA69AC90023D577 /* RNUserDefaults.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C51FD6C2AA69AC90023D577 /* RNUserDefaults.m */; };
+		3C51FD702AA69AC90023D577 /* RNUserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C51FD6E2AA69AC90023D577 /* RNUserDefaults.swift */; };
+		3C51FD762AA7B0A30023D577 /* objc_rn.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C51FD752AA7B0A30023D577 /* objc_rn.m */; };
+		3C51FD792AA7C4E50023D577 /* Decryptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C51FD782AA7C4E50023D577 /* Decryptor.swift */; };
+		3C51FD7A2AA7C4E50023D577 /* Decryptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C51FD782AA7C4E50023D577 /* Decryptor.swift */; };
+		60C15C09B64BA9E063CB4733 /* Pods_EncryptionNotificationService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1144F10E9AC6D26DAE6C7F6 /* Pods_EncryptionNotificationService.framework */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		884F53E99B6D6E95FBA18B42 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD1A78225666E7A49364DC6E /* ExpoModulesProvider.swift */; };
 		A212B1A3E57F6D32AFF2B056 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF699B2613125495684369D7 /* ExpoModulesProvider.swift */; };
@@ -28,12 +39,35 @@
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
 			remoteInfo = dartchat;
 		};
+		3C03CDDB2AA53A7700BC6F47 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3C03CDD52AA53A7700BC6F47;
+			remoteInfo = EncryptionNotificationService;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3CF691912AA4754700486E8D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3C03CDDD2AA53A7700BC6F47 /* EncryptionNotificationService.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		00E356EE1AD99517003FC87E /* dartchatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = dartchatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* dartchatTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = dartchatTests.m; sourceTree = "<group>"; };
+		06A45B99FDEC07BF43BDFEE0 /* Pods-dartchat-EncryptionNotificationService.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dartchat-EncryptionNotificationService.release.xcconfig"; path = "Target Support Files/Pods-dartchat-EncryptionNotificationService/Pods-dartchat-EncryptionNotificationService.release.xcconfig"; sourceTree = "<group>"; };
+		10F7EAE338C896E250B0E16D /* Pods-NotifeeNotificationService.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NotifeeNotificationService.release.xcconfig"; path = "Target Support Files/Pods-NotifeeNotificationService/Pods-NotifeeNotificationService.release.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* dartchat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dartchat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = dartchat/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = dartchat/AppDelegate.mm; sourceTree = "<group>"; };
@@ -41,16 +75,33 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = dartchat/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = dartchat/main.m; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-dartchat.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dartchat.debug.xcconfig"; path = "Target Support Files/Pods-dartchat/Pods-dartchat.debug.xcconfig"; sourceTree = "<group>"; };
+		3C03CDD62AA53A7700BC6F47 /* EncryptionNotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = EncryptionNotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3C03CDD82AA53A7700BC6F47 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		3C03CDDA2AA53A7700BC6F47 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3C5087A42A3BE4A800A9A756 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		3C51FD5E2AA5AF1C0023D577 /* Decodables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Decodables.swift; sourceTree = "<group>"; };
+		3C51FD6C2AA69AC90023D577 /* RNUserDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RNUserDefaults.m; path = dartchat/RNUserDefaults.m; sourceTree = "<group>"; };
+		3C51FD6E2AA69AC90023D577 /* RNUserDefaults.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RNUserDefaults.swift; path = dartchat/RNUserDefaults.swift; sourceTree = "<group>"; };
+		3C51FD732AA71C4D0023D577 /* dartchat-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "dartchat-Bridging-Header.h"; sourceTree = "<group>"; };
+		3C51FD742AA7B0420023D577 /* objc_rn.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = objc_rn.h; sourceTree = "<group>"; };
+		3C51FD752AA7B0A30023D577 /* objc_rn.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = objc_rn.m; sourceTree = "<group>"; };
+		3C51FD772AA7BB8A0023D577 /* EncryptionNotificationService.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EncryptionNotificationService.entitlements; sourceTree = "<group>"; };
+		3C51FD782AA7C4E50023D577 /* Decryptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Decryptor.swift; sourceTree = "<group>"; };
 		3C9B0AE32A75C0FA008BC92E /* dartchat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = dartchat.entitlements; path = dartchat/dartchat.entitlements; sourceTree = "<group>"; };
 		44B3E5EB37433CC9E1D9A661 /* Pods_dartchat_dartchatTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_dartchat_dartchatTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5709B34CF0A7D63546082F79 /* Pods-dartchat.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dartchat.release.xcconfig"; path = "Target Support Files/Pods-dartchat/Pods-dartchat.release.xcconfig"; sourceTree = "<group>"; };
 		5B7EB9410499542E8C5724F5 /* Pods-dartchat-dartchatTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dartchat-dartchatTests.debug.xcconfig"; path = "Target Support Files/Pods-dartchat-dartchatTests/Pods-dartchat-dartchatTests.debug.xcconfig"; sourceTree = "<group>"; };
+		754E0EECB8757740D02B34FA /* Pods-NotifeeNotificationService.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NotifeeNotificationService.debug.xcconfig"; path = "Target Support Files/Pods-NotifeeNotificationService/Pods-NotifeeNotificationService.debug.xcconfig"; sourceTree = "<group>"; };
 		78A6EC429758D15CB06992C1 /* Pods_dartchat.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_dartchat.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = dartchat/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		845ECE603AA7EA07956E7AA0 /* Pods-EncryptionNotificationService.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-EncryptionNotificationService.debug.xcconfig"; path = "Target Support Files/Pods-EncryptionNotificationService/Pods-EncryptionNotificationService.debug.xcconfig"; sourceTree = "<group>"; };
 		89C6BE57DB24E9ADA2F236DE /* Pods-dartchat-dartchatTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dartchat-dartchatTests.release.xcconfig"; path = "Target Support Files/Pods-dartchat-dartchatTests/Pods-dartchat-dartchatTests.release.xcconfig"; sourceTree = "<group>"; };
+		A1144F10E9AC6D26DAE6C7F6 /* Pods_EncryptionNotificationService.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_EncryptionNotificationService.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB4C12132103A26ECD2C6EEC /* Pods-dartchat-EncryptionNotificationService.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-dartchat-EncryptionNotificationService.debug.xcconfig"; path = "Target Support Files/Pods-dartchat-EncryptionNotificationService/Pods-dartchat-EncryptionNotificationService.debug.xcconfig"; sourceTree = "<group>"; };
+		DB9E7DF0303B5B61A58C708E /* Pods_NotifeeNotificationService.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_NotifeeNotificationService.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		EF699B2613125495684369D7 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-dartchat/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		F205E228A1B1F1695DF88E8B /* Pods-EncryptionNotificationService.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-EncryptionNotificationService.release.xcconfig"; path = "Target Support Files/Pods-EncryptionNotificationService/Pods-EncryptionNotificationService.release.xcconfig"; sourceTree = "<group>"; };
 		FD1A78225666E7A49364DC6E /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-dartchat-dartchatTests/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -68,6 +119,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				26E3F23053118C26992177AC /* Pods_dartchat.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3C03CDD32AA53A7700BC6F47 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				60C15C09B64BA9E063CB4733 /* Pods_EncryptionNotificationService.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,6 +153,8 @@
 		13B07FAE1A68108700A75B9A /* dartchat */ = {
 			isa = PBXGroup;
 			children = (
+				3C51FD6C2AA69AC90023D577 /* RNUserDefaults.m */,
+				3C51FD6E2AA69AC90023D577 /* RNUserDefaults.swift */,
 				3C9B0AE32A75C0FA008BC92E /* dartchat.entitlements */,
 				3C5087A42A3BE4A800A9A756 /* GoogleService-Info.plist */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
@@ -102,6 +163,9 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				3C51FD732AA71C4D0023D577 /* dartchat-Bridging-Header.h */,
+				3C51FD742AA7B0420023D577 /* objc_rn.h */,
+				3C51FD752AA7B0A30023D577 /* objc_rn.m */,
 			);
 			name = dartchat;
 			sourceTree = "<group>";
@@ -112,8 +176,22 @@
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				78A6EC429758D15CB06992C1 /* Pods_dartchat.framework */,
 				44B3E5EB37433CC9E1D9A661 /* Pods_dartchat_dartchatTests.framework */,
+				DB9E7DF0303B5B61A58C708E /* Pods_NotifeeNotificationService.framework */,
+				A1144F10E9AC6D26DAE6C7F6 /* Pods_EncryptionNotificationService.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3C03CDD72AA53A7700BC6F47 /* EncryptionNotificationService */ = {
+			isa = PBXGroup;
+			children = (
+				3C51FD772AA7BB8A0023D577 /* EncryptionNotificationService.entitlements */,
+				3C03CDD82AA53A7700BC6F47 /* NotificationService.swift */,
+				3C03CDDA2AA53A7700BC6F47 /* Info.plist */,
+				3C51FD5E2AA5AF1C0023D577 /* Decodables.swift */,
+				3C51FD782AA7C4E50023D577 /* Decryptor.swift */,
+			);
+			path = EncryptionNotificationService;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -129,6 +207,7 @@
 				13B07FAE1A68108700A75B9A /* dartchat */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* dartchatTests */,
+				3C03CDD72AA53A7700BC6F47 /* EncryptionNotificationService */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -144,6 +223,7 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* dartchat.app */,
 				00E356EE1AD99517003FC87E /* dartchatTests.xctest */,
+				3C03CDD62AA53A7700BC6F47 /* EncryptionNotificationService.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -171,6 +251,12 @@
 				5709B34CF0A7D63546082F79 /* Pods-dartchat.release.xcconfig */,
 				5B7EB9410499542E8C5724F5 /* Pods-dartchat-dartchatTests.debug.xcconfig */,
 				89C6BE57DB24E9ADA2F236DE /* Pods-dartchat-dartchatTests.release.xcconfig */,
+				754E0EECB8757740D02B34FA /* Pods-NotifeeNotificationService.debug.xcconfig */,
+				10F7EAE338C896E250B0E16D /* Pods-NotifeeNotificationService.release.xcconfig */,
+				AB4C12132103A26ECD2C6EEC /* Pods-dartchat-EncryptionNotificationService.debug.xcconfig */,
+				06A45B99FDEC07BF43BDFEE0 /* Pods-dartchat-EncryptionNotificationService.release.xcconfig */,
+				845ECE603AA7EA07956E7AA0 /* Pods-EncryptionNotificationService.debug.xcconfig */,
+				F205E228A1B1F1695DF88E8B /* Pods-EncryptionNotificationService.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -221,15 +307,35 @@
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
 				5B510930E803A19E46B5A6C8 /* [CP-User] [RNFB] Core Configuration */,
+				3CF691912AA4754700486E8D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				3C03CDDC2AA53A7700BC6F47 /* PBXTargetDependency */,
 			);
 			name = dartchat;
 			productName = dartchat;
 			productReference = 13B07F961A680F5B00A75B9A /* dartchat.app */;
 			productType = "com.apple.product-type.application";
+		};
+		3C03CDD52AA53A7700BC6F47 /* EncryptionNotificationService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3C03CDDE2AA53A7700BC6F47 /* Build configuration list for PBXNativeTarget "EncryptionNotificationService" */;
+			buildPhases = (
+				AFBFFAC3B70249E03304C219 /* [CP] Check Pods Manifest.lock */,
+				3C03CDD22AA53A7700BC6F47 /* Sources */,
+				3C03CDD32AA53A7700BC6F47 /* Frameworks */,
+				3C03CDD42AA53A7700BC6F47 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EncryptionNotificationService;
+			productName = EncryptionNotificationService;
+			productReference = 3C03CDD62AA53A7700BC6F47 /* EncryptionNotificationService.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -237,6 +343,7 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1430;
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					00E356ED1AD99517003FC87E = {
@@ -245,6 +352,9 @@
 					};
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
+					};
+					3C03CDD52AA53A7700BC6F47 = {
+						CreatedOnToolsVersion = 14.3.1;
 					};
 				};
 			};
@@ -263,6 +373,7 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* dartchat */,
 				00E356ED1AD99517003FC87E /* dartchatTests */,
+				3C03CDD52AA53A7700BC6F47 /* EncryptionNotificationService */,
 			);
 		};
 /* End PBXProject section */
@@ -283,6 +394,13 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3C5087A52A3BE4A800A9A756 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3C03CDD42AA53A7700BC6F47 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,6 +469,28 @@
 			);
 			outputPaths = (
 				"$(DERIVED_FILE_DIR)/Pods-dartchat-dartchatTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		AFBFFAC3B70249E03304C219 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-EncryptionNotificationService-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -466,8 +606,24 @@
 			buildActionMask = 2147483647;
 			files = (
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				3C51FD762AA7B0A30023D577 /* objc_rn.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				3C51FD702AA69AC90023D577 /* RNUserDefaults.swift in Sources */,
+				3C03CDE12AA53A9400BC6F47 /* NotificationService.swift in Sources */,
+				3C51FD792AA7C4E50023D577 /* Decryptor.swift in Sources */,
+				3C51FD6F2AA69AC90023D577 /* RNUserDefaults.m in Sources */,
+				3C51FD602AA5BF7E0023D577 /* Decodables.swift in Sources */,
 				A212B1A3E57F6D32AFF2B056 /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3C03CDD22AA53A7700BC6F47 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C03CDD92AA53A7700BC6F47 /* NotificationService.swift in Sources */,
+				3C51FD5F2AA5AF1C0023D577 /* Decodables.swift in Sources */,
+				3C51FD7A2AA7C4E50023D577 /* Decryptor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -478,6 +634,11 @@
 			isa = PBXTargetDependency;
 			target = 13B07F861A680F5B00A75B9A /* dartchat */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
+		};
+		3C03CDDC2AA53A7700BC6F47 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3C03CDD52AA53A7700BC6F47 /* EncryptionNotificationService */;
+			targetProxy = 3C03CDDB2AA53A7700BC6F47 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -541,6 +702,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-dartchat.debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = dartchat/dartchat.entitlements;
@@ -563,6 +725,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = dartchat;
+				SWIFT_OBJC_BRIDGING_HEADER = "dartchat-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -573,6 +736,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-dartchat.release.xcconfig */;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = dartchat/dartchat.entitlements;
@@ -594,8 +758,93 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = dartchat;
+				SWIFT_OBJC_BRIDGING_HEADER = "dartchat-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		3C03CDDF2AA53A7700BC6F47 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 845ECE603AA7EA07956E7AA0 /* Pods-EncryptionNotificationService.debug.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = EncryptionNotificationService/EncryptionNotificationService.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = DRKH8X25XM;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EncryptionNotificationService/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = EncryptionNotificationService;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.dartchat.EncryptionNotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3C03CDE02AA53A7700BC6F47 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F205E228A1B1F1695DF88E8B /* Pods-EncryptionNotificationService.release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = EncryptionNotificationService/EncryptionNotificationService.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = DRKH8X25XM;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EncryptionNotificationService/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = EncryptionNotificationService;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.dartchat.EncryptionNotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -755,6 +1004,15 @@
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
 				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3C03CDDE2AA53A7700BC6F47 /* Build configuration list for PBXNativeTarget "EncryptionNotificationService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3C03CDDF2AA53A7700BC6F47 /* Debug */,
+				3C03CDE02AA53A7700BC6F47 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

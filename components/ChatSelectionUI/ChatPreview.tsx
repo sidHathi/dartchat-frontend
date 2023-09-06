@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import { ConversationPreview } from '../../types/types';
 
 import { Box, HStack, Spacer, Pressable, Center, Heading, Text, VStack } from 'native-base';
@@ -8,6 +8,7 @@ import MentionsTextDisplay from '../MessagingUI/Mentions/MentionsTextDisplay';
 import { getTimeString, handlePossiblyEncryptedMessage } from '../../utils/messagingUtils';
 import UserSecretsContext from '../../contexts/UserSecretsContext';
 import { decryptJSON } from '../../utils/encryptionUtils';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 export default function ChatPreview({
     chat,
@@ -18,7 +19,7 @@ export default function ChatPreview({
 }) : JSX.Element {
     const screenWidth = Dimensions.get('window').width;
 
-    const { secrets } = useContext(UserSecretsContext);
+    const { secrets, pullUserSecrets } = useContext(UserSecretsContext);
     const lastMessageTimeStr = getTimeString(chat.lastMessageTime);
 
     const safeLastMessageContent = useMemo(() => {
@@ -38,7 +39,7 @@ export default function ChatPreview({
         return 'New conversation';
     }, [chat, secrets]);
 
-    return <Pressable onPress={onSelect} overflow='visible'>
+    return <TouchableOpacity onPress={onSelect}>
         <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='7' style={{shadowOpacity: 0.07}} mx='12px'>
             <HStack w='100%'>
                 <Box bgColor='transparent' borderRadius='25px' shadow='7' mr='12px'>
@@ -92,5 +93,5 @@ export default function ChatPreview({
                 </VStack>
             </HStack>
         </Box>
-    </Pressable>
+    </TouchableOpacity>
 }

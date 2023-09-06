@@ -24,8 +24,8 @@ export default function ChatController({
     const dispatch = useAppDispatch();
     const { usersApi } = useRequest();
     const screenHeight = Dimensions.get('window').height;
-    const { pullUserSecrets } = useContext(UserSecretsContext);
-    const { currentConvo } = useAppSelector(chatSelector);
+    const { pullUserSecrets, forgetConversationKeys } = useContext(UserSecretsContext);
+    const { currentConvo, silent, silentKeyMap } = useAppSelector(chatSelector);
     const { disconnected: socketDisconnected } = useContext(SocketContext);
     const { networkConnected, apiReachable } = useContext(NetworkContext);
 
@@ -52,7 +52,25 @@ export default function ChatController({
     const openExpandedSettings = (page: MenuPage) => {
         setExpandedSettingsOpen(true);
         setExpandedSettingsPage(page);
-    }
+    };
+
+    const handleExit = useCallback(() => {
+        if (settingsMenuOpen) {
+            if (expandedSettingsOpen) {
+                setExpandedSettingsOpen(false) 
+            } else {
+                setSettingsMenuOpen(false) 
+            }
+        } else {
+            if (silent && silentKeyMap && currentConvo && currentConvo.messages.length < 1) {
+                // console.log("FORGETTING FROM CONTROLLER")
+                forgetConversationKeys(currentConvo.id);
+            }
+            exit();
+            // dispatch(pullLatestPreviews(usersApi));
+            // pullUserSecrets();
+        }
+    }, [exit, currentConvo, silent, settingsMenuOpen, expandedSettingsOpen, forgetConversationKeys, silentKeyMap]);
 
     return <View flex='1' backgroundColor='#111'>
         <Box backgroundColor='#fefefe' h='90px' overflow='hidden' zIndex='1001'>
@@ -66,19 +84,7 @@ export default function ChatController({
                     closeOverlays();
                     toggleProfileOpen();
                 }}
-                onConvoExit={() => {
-                    if (settingsMenuOpen) {
-                        if (expandedSettingsOpen) {
-                            setExpandedSettingsOpen(false) 
-                        } else {
-                            setSettingsMenuOpen(false) 
-                        }
-                    } else {
-                        exit();
-                        dispatch(pullLatestPreviews(usersApi));
-                        pullUserSecrets();
-                    }
-                }} 
+                onConvoExit={handleExit} 
             />
         </Box>
         <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor='#fefefe' borderTopLeftRadius='24px' shadow='9' zIndex='1000'>

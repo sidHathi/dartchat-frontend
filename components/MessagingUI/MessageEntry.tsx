@@ -8,7 +8,7 @@ import uuid from 'react-native-uuid';
 import SocketContext from "../../contexts/SocketContext";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
-import { handleNewMessage } from "../../redux/slices/userDataSlice";
+import { addConversation, handleNewMessage, pullLatestPreviews, userDataSelector } from "../../redux/slices/userDataSlice";
 import NetworkContext from "../../contexts/NetworkContext";
 import { useKeyboard } from "@react-native-community/hooks";
 import MediaBufferDisplay from "./MessageMediaControllers/MediaBufferDisplay";
@@ -19,6 +19,7 @@ import { encryptMessageForConvo, getMentionsFromMessage } from "../../utils/mess
 import PollBuilder from "../Polls/PollBuilder";
 import EventBuilder from "../EventsUI/EventBuilder";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
+import useRequest from "../../requests/useRequest";
 
 export default function MessageEntry({
     replyMessage, 
@@ -47,9 +48,11 @@ export default function MessageEntry({
 
     const { user } = useContext(AuthIdentityContext);
     const { socket, disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
-    const { currentConvo } = useAppSelector(chatSelector);
+    const { currentConvo, secretKey: ccSecretKey, silent } = useAppSelector(chatSelector);
+    const { userConversations } = useAppSelector(userDataSelector);
     const { networkConnected } = useContext(NetworkContext);
     const { secrets } = useContext(UserSecretsContext);
+    const { usersApi } = useRequest();
 
     const [messageText, setMessageText] = useState<string | undefined>(undefined);
     const [mediaProgress, setMediaProgress] = useState<{[id: string]: number}>({});
@@ -144,9 +147,19 @@ export default function MessageEntry({
             encryptionLevel: 'none'
         }
         if (socket && currentConvo) {
+            // console.log(secrets);
             const userSecretKey = secrets ? secrets.userSecretKey : undefined;
             const encryptedMessage = encryptMessageForConvo(message, currentConvo, userSecretKey);
+            const createPreview = !userConversations.find(c => c.cid === currentConvo.id) || silent;
             dispatch(sendNewMessage({socket, message: encryptedMessage}));
+            if (createPreview) {
+                dispatch(addConversation({
+                    newConvo: currentConvo,
+                    uid: user.id,
+                    secretKey: ccSecretKey
+                }));
+                // dispatch(pullLatestPreviews(usersApi))
+            }
             dispatch(handleNewMessage({cid: currentConvo.id, message: encryptedMessage, messageForCurrent: true}));
             setMessageText(undefined);
             onSend && onSend();
@@ -154,7 +167,7 @@ export default function MessageEntry({
             console.log('socket disconnected');
         }
         return;
-    }, [selectedMediaBuffer, messageText, user, networkConnected, currentConvo, socket, secrets]);
+    }, [selectedMediaBuffer, messageText, user, networkConnected, currentConvo, socket, secrets, userConversations, silent]);
 
     const checkSocketReconnect = useCallback(async () => {
         if (!socketReconnectSent && (!socket || socketDisconnected)) {

@@ -88,7 +88,7 @@ export default function PrivilegedUsersList({
             keyMap = getNewMemberKeys([cProfileForUser], secretKey);
         }
 
-        dispatch(addUsers([cProfileForUser], conversationsApi, () => {
+        dispatch(addUsers([cProfileForUser], conversationsApi, keyMap, () => {
             socket && socket.emit('newConversationUsers', currentConvo.id, [cProfileForUser], keyMap);
         }));
     }, [currentConvo, socket]);

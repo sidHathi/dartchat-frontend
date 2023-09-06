@@ -546,6 +546,21 @@ export const chatSlice = createSlice({
                 ...state,
                 notificationSelection: action.payload
             }
+        },
+        updatePrivUsersForNewKey: (state) => {
+            if (!state.currentConvo || !state.currentConvo.keyInfo) return;
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    keyInfo: {
+                        ...state.currentConvo.keyInfo,
+                        privilegedUsers: state.currentConvo.participants.map((p) => p.id),
+                        numberOfMessages: state.currentConvo.messages.length,
+                        createdAt: new Date()
+                    }
+                }
+            }
         }
     }
 });
@@ -586,7 +601,8 @@ export const {
     setConversationLoading,
     setPageLoading,
     setNotificationLoading,
-    setNotificationSelection
+    setNotificationSelection,
+    updatePrivUsersForNewKey
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
@@ -751,7 +767,7 @@ export const removeUser = (uid: string, api: ConversationsApi, onComplete?: () =
     }
 };
 
-export const addUsers = (userProfiles: UserConversationProfile[], api: ConversationsApi, onComplete?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+export const addUsers = (userProfiles: UserConversationProfile[], api: ConversationsApi, userKeyMap?: { [id: string]: string }, onComplete?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
     const { currentConvo } = getState().chatReducer;
     if (!currentConvo) return;
     const newUsers = userProfiles.filter((profile) => {
@@ -761,7 +777,7 @@ export const addUsers = (userProfiles: UserConversationProfile[], api: Conversat
 
     dispatch(setRequestLoading(true));
     try {
-        await api.addConversationUsers(currentConvo.id, userProfiles);
+        await api.addConversationUsers(currentConvo.id, userProfiles, userKeyMap);
         dispatch(handleAddUsers(userProfiles));
         dispatch(setRequestLoading(false));
         onComplete && onComplete();

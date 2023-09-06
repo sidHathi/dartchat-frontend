@@ -83,12 +83,14 @@ export default function UserPinController(): JSX.Element {
             const constructedPinKey = await buildEncryptionKeyFromPIN(pin, keySalt as string);
             if (!constructedPinKey) return false;
             const decodedSecrets = decryptUserKeys(constructedPinKey, keySalt as string, encryptedSecrets as string);
-            console.log(decodedSecrets);
             if ('userSecretKey' in decodedSecrets) {
                 await secureStore.setUserPINEncryptionKey(user.id, constructedPinKey);
                 initPinKey(constructedPinKey);
                 handleNewDBSecrets(decodedSecrets);
                 return true;
+            } else {
+                console.log('bad decrypted secrets:');
+                console.log(decodedSecrets);
             }
             return false;
         } catch (err) {

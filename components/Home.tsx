@@ -20,15 +20,12 @@ export default function Home(): JSX.Element {
     const { uiState, navSwitch } = useContext(UIContext);
     const { forgetConversationKeys } = useContext(UserSecretsContext);
     const { disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
-    const { silent, currentConvo, conversationLoading, conversationSet } = useAppSelector(chatSelector);
+    const { silent, silentKeyMap, currentConvo, conversationLoading, conversationSet } = useAppSelector(chatSelector);
 
     const handleConversationExit = useCallback(() => {
-        if (silent && currentConvo && currentConvo.messages.length < 1) {
-            forgetConversationKeys(currentConvo.id);
-        }
         dispatch(exitConvo());
         navSwitch('conversations');
-    }, [silent, currentConvo]);
+    }, [silent, currentConvo, forgetConversationKeys]);
 
     const Main = (): JSX.Element => <>
         <NavContainer>

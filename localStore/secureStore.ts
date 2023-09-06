@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { decodeKey } from "../utils/encryptionUtils";
+import storeData from "./store";
 
 const getUserPINEncryptionKey = async (uid: string) => {
     try {
@@ -55,9 +56,7 @@ const getUserSecretKey = async (uid: string): Promise<Uint8Array | undefined> =>
 
 const initUserSecretKeyStore = async (uid: string, keys: { [id: string]: string }) => {
     try {
-        // console.log('setting store:')
-        // console.log(keys);
-        await AsyncStorage.setItem(`user-${uid}-secrets`, JSON.stringify(keys));
+        await storeData(`user-${uid}-secrets`, JSON.stringify(keys));
         return true;
     } catch (err) {
         console.log(err);
@@ -86,7 +85,7 @@ const removeKey = async (uid: string, key: string) => {
     try {
         const currStore = await getUserSecretKeyStore(uid) || {};
         const updatedStore = Object.keys(currStore).filter((k) => k !== key);
-        await AsyncStorage.setItem(`user-${uid}-secrets`, JSON.stringify(updatedStore));
+        await storeData(`user-${uid}-secrets`, JSON.stringify(updatedStore))
         return true;
     } catch (err) {
         console.log(err);

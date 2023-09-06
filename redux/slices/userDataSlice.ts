@@ -6,7 +6,7 @@ import { UsersApi } from '../../requests/usersApi';
 import { ConversationsApi } from '../../requests/conversationsApi';
 import { getNewContacts, handlePossiblyEncryptedMessage } from '../../utils/messagingUtils';
 import secureStore from '../../localStore/secureStore';
-import { storeUpdatedUserConversations } from '../../localStore/store';
+import { storeUpdatedUserConversations } from '../../localStore/localStore';
 
 const initialState: {
     id: string;
@@ -73,7 +73,7 @@ export const userDataSlice = createSlice({
                     unSeenMessages: messageForCurrent ? 0 : convoToUpdate.unSeenMessages + 1,
                     lastMessageContent: decrypted.content,
                     lastMessageTime: decrypted.timestamp,
-                    lastMessage: message,
+                    lastMessage: decrypted,
                 };
                 return ({
                     ...state,
