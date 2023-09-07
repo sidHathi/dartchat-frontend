@@ -77,6 +77,9 @@ export const requestUserPermission = async () => {
 
 export const setBackgroundNotifications = () => messaging().setBackgroundMessageHandler(async remoteMessage => {
     await setBackgroundUpdateFlag(true);
+    if (remoteMessage.notification) {
+        notifee.incrementBadgeCount();
+    }
     if (!remoteMessage.data) return;
     try {
         if (remoteMessage.data.type === 'secrets') {
