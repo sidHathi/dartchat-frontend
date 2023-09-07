@@ -8,14 +8,14 @@ import { constructPreviewForConversation, handlePossiblyEncryptedMessage } from 
 
 export const parsePNMessage = (stringifiedBody: string): {
     cid: string;
-    message: Message
+    mid: string;
 } | undefined => {
     try {
         const parsedBody = JSON.parse(stringifiedBody);
-        if (!('cid' in parsedBody) || !('message' in parsedBody)) return undefined;
+        if (!('cid' in parsedBody) || !('mid' in parsedBody)) return undefined;
         return {
             cid: parsedBody['cid'],
-            message: parseSocketMessage(parsedBody.message)
+            mid: parsedBody['mid']
         };
     } catch (err) {
         console.log(err);
@@ -43,13 +43,13 @@ export const parsePNLikeEvent = (stringifiedBody: string): {
 };
 
 export const parsePNNewConvo = (stringifiedBody: string): {
-    convo: Conversation,
+    cid: string,
     keyMap?: any;
 } | undefined => {
     const parsedBody = JSON.parse(stringifiedBody);
-    if (!('convo' in parsedBody)) return;
+    if (!('cid' in parsedBody)) return;
     return {
-        convo: parseConversation(parsedBody.convo),
+        cid: parsedBody['cid'],
         keyMap: parsedBody.userKeyMap || undefined
     };
 };
@@ -199,6 +199,7 @@ export const getPossiblyDecryptedMessageContents = (decryptedMessage: DecryptedM
     }
 };
 
+// deprecated after notifications switched to remote triggers
 export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uint8Array, rmId?: string): Promise<{
     title: string;
     body: string;
@@ -212,7 +213,8 @@ export const getEncryptedDisplayFields = async (notif: PNPacket, secretKey?: Uin
                 // console.log('mesage notif received');
                 const messageData = parsePNMessage(notif.stringifiedBody);
                 if (!messageData) return undefined;
-                const encryptedMessage = messageData.message || undefined;
+                // const encryptedMessage = messageData.message || undefined;
+                const encryptedMessage: Message | undefined = undefined;
                 if (!encryptedMessage) return undefined;
                 const decrypted = handlePossiblyEncryptedMessage(encryptedMessage, secretKey);
                 if (decrypted?.messageType === 'system') return;

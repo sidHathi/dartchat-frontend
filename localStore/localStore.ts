@@ -2,11 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ConversationPreview, UserData } from '../types/types';
 import { parseUserData } from '../utils/requestUtils';
 import { NativeModules } from 'react-native';
-import storeData from './store';
+import universalStore from './universalStore';
 
 export const storeUserData = async (user: UserData) => {
     try {
-        await storeData('userData', JSON.stringify(user));
+        await universalStore.storeData('userData', JSON.stringify(user));
     } catch (err) {
         console.error(err);
     }
@@ -26,7 +26,7 @@ export const getStoredUserData = async () => {
 
 export const deleteStoredUserData = async () => {
     try {
-        await AsyncStorage.removeItem('userData');
+        await universalStore.removeData(['userData']);
     } catch (err) {
         console.error(err);
     }
@@ -34,7 +34,7 @@ export const deleteStoredUserData = async () => {
 
 export const setBackgroundUpdateFlag = async (needsUpdate: boolean) => {
     try {
-        await storeData('backgroundUpdateFlag', needsUpdate.toString());
+        await AsyncStorage.setItem('backgroundUpdateFlag', needsUpdate.toString());
     } catch (err) {
         console.error(err);
     }

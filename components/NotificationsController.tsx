@@ -33,6 +33,7 @@ export default function NotificationsController(): JSX.Element {
         const eventListener = AppState.addEventListener('change', async (nextState) => {
             if (nextState === 'active' && (await getBackgroundUpdateFlag())) {
                 try {
+                    // dispatch(setNotificationLoading(true));
                     await pullUserSecrets();
                     if (currentConvo) {
                         const secretKey = (secrets && currentConvo.id in secrets) ? secrets[currentConvo.id] : undefined;
@@ -43,7 +44,9 @@ export default function NotificationsController(): JSX.Element {
                         dispatch(setConversations(userData?.conversations));
                     }
                     await setBackgroundUpdateFlag(false);
+                    // dispatch(setNotificationLoading(false));
                 } catch (err) {
+                    // dispatch(setNotificationLoading(false));
                     console.log(err);
                 }
             }
@@ -59,12 +62,12 @@ export default function NotificationsController(): JSX.Element {
             if (!socket || socketDisconnected) {
                 resetSocket();
                 const messageData = message.data ? message.data as PNPacket : undefined;
-                if (messageData) {
+                if (messageData?.stringifiedBody) {
                     switch (messageData.type) {
                         case 'message':
                             const parsedPNM = parsePNMessage(messageData.stringifiedBody);
                             if(!parsedPNM) return;
-                            const dbMessage = await conversationsApi.getMessage(parsedPNM?.cid, parsedPNM.message.id);
+                            const dbMessage = await conversationsApi.getMessage(parsedPNM?.cid, parsedPNM.mid);
                             if (parsedPNM && parsedPNM.cid === currentConvo?.id) {
                                 dispatch(receiveNewMessage({message: dbMessage, cid: parsedPNM.cid}));
                             }
@@ -88,11 +91,11 @@ export default function NotificationsController(): JSX.Element {
                                 }));
                             }
                             break;
-                        case 'newConvo':
+                        case 'newConvo' :
                             const parsedPNC = parsePNNewConvo(messageData.stringifiedBody);
                             if (parsedPNC && user) {
-                                if (userConversations.map(c => c.cid).includes(parsedPNC.convo.id)) return;
-                                const dbConvo = await conversationsApi.getConversationInfo(parsedPNC.convo.id);
+                                if (userConversations.map(c => c.cid).includes(parsedPNC.cid)) return;
+                                const dbConvo = await conversationsApi.getConversationInfo(parsedPNC.cid);
                                 if (!dbConvo) return;
                                 const completedConvo = await constructNewConvo(dbConvo, user);
                                 let secretKey: Uint8Array | undefined = undefined;
@@ -155,8 +158,8 @@ export default function NotificationsController(): JSX.Element {
                         case 'addedToConvo':
                             const parsedPNAC = parsePNNewConvo(messageData.stringifiedBody);
                             if (parsedPNAC && user) {
-                                if (userConversations.map(c => c.cid).includes(parsedPNAC.convo.id)) return; 
-                                const dbConvo = await conversationsApi.getConversationInfo(parsedPNAC.convo.id);
+                                if (userConversations.map(c => c.cid).includes(parsedPNAC.cid)) return;
+                                const dbConvo = await conversationsApi.getConversationInfo(parsedPNAC.cid);
                                 if (!dbConvo) return;
                                 const completedConvo = await constructNewConvo(dbConvo, user);
                                 let secretKey: Uint8Array | undefined = undefined;
@@ -164,7 +167,11 @@ export default function NotificationsController(): JSX.Element {
                                     secretKey = await handleNewEncryptedConversation(completedConvo.id, parsedPNAC.keyMap[user.id], completedConvo.publicKey);
                                 }
                                 await pullUserSecrets();
-                                dispatch(pullLatestPreviews(usersApi));
+                                dispatch(addConversation({
+                                    newConvo: completedConvo,
+                                    uid: user.id,
+                                    secretKey
+                                }));
                                 socket?.emit('joinRoom', userConversations.map((c: ConversationPreview) => c.cid));
                             }
                             break;
@@ -239,6 +246,8 @@ export default function NotificationsController(): JSX.Element {
                 case EventType.DISMISSED:
                     break;
                 case EventType.PRESS:
+                    console.log('NOTIFEE PRESS TRIGGER:')
+                    console.log(detail.notification?.data);
                     if (detail?.notification?.data) {
                         dispatch(setNotificationLoading(true));
                         await pullUserSecrets();

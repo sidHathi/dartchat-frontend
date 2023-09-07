@@ -23,9 +23,15 @@ RCT_EXPORT_METHOD(sayHello: (RCTResponseSenderBlock)callback{
 RCT_EXPORT_METHOD(storeData: (NSString*)key val:(NSString*)val {
   NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName: @"group.dartchat"];
   [defaults setObject: val forKey: key];
-  NSLog(@"%@", key);
+  NSLog(@"data stored for key %@", key);
   NSLog(@"%@", val);
-  NSLog(@"user data stored to defaults");
+});
+
+RCT_EXPORT_METHOD(removeData: (NSString*)key {
+  NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName: @"group.dartchat"];
+  [defaults removeObjectForKey: key];
+  NSLog(@"KEY REMOVED");
+  NSLog(@"%@", key);
 });
 
 @end

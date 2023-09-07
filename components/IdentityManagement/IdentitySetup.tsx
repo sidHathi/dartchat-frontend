@@ -15,7 +15,7 @@ import Spinner from 'react-native-spinkit';
 import { useKeyboard } from "@react-native-community/hooks";
 
 export default function IdentitySetup(): JSX.Element {
-    const { isAuthenticated, user, createUser } = useContext(AuthIdentityContext);
+    const { isAuthenticated, user, createUser, logOut } = useContext(AuthIdentityContext);
 
     const [handle, setHandle] = useState<string | undefined>(undefined);
     const [displayName, setDisplayName] = useState<string | undefined>(undefined);
@@ -169,9 +169,12 @@ export default function IdentitySetup(): JSX.Element {
                 </Center>
                 }
                 </FormControl>
-                <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' marginY='12px' disabled={!handle}
+                <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' mt='12px' disabled={!handle}
                 opacity={(!handle) ? 0.5 : 1}>
                     Continue
+                </Button>
+                <Button w='100%' colorScheme='light' borderRadius='30px' onPress={() => logOut()} variant='subtle' color='white' mt='6px' mb='12px'>
+                    Cancel
                 </Button>
                 {error &&
                 <Center w='100%'>

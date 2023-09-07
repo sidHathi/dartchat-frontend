@@ -23,27 +23,33 @@ extension Data {
 public class Decryptor {
   public static func decryptMessage(cid: String, message: EncryptedMessage, storedUserData: UserData) -> DecryptedFields? {
     if (message.encryptedFields == nil) {
+//      return DecryptedFields(content: "Encrypted fields not found");
       return nil;
     }
     
     let senderProfile = message.senderProfile;
-    if (senderProfile == nil || senderProfile?.publicKey == nil) { return DecryptedFields(content: "Encrypted fields not found");
+    if (senderProfile == nil || senderProfile?.publicKey == nil) {
+//      return DecryptedFields(content: "Sender profile not found");
+      return nil;
     }
     let decodedPublicKey = decodeKey(senderProfile!.publicKey!);
     
     let secretKey = getSecretKeyForConvo(cid: cid, uid: storedUserData.id);
     if (secretKey == nil) {
-      return DecryptedFields(content: "Public Key " + decodedPublicKey!.base64EncodedString());
+//      return DecryptedFields(content: "Public Key " + decodedPublicKey!.base64EncodedString());
+      return nil;
     }
     
     let decryptedString = decryptString(secretKey: secretKey!, stringVal: message.encryptedFields!, publicKey: decodedPublicKey!);
     if (decryptedString == nil) {
-      return DecryptedFields(content: "Secret key " + secretKey!.base64EncodedString());
+//      return DecryptedFields(content: "Secret key " + secretKey!.base64EncodedString());
+//      return nil;
     }
     do {
       let parsedJSON = try JSONDecoder().decode(DecryptedFields.self, from: decryptedString!.data(using: .utf8)!);
       return parsedJSON;
     } catch {
+//      return DecryptedFields(content: "Final JSON parse failed");
       return nil;
     }
   }

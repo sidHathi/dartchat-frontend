@@ -40,28 +40,37 @@ export default function ChatPreview({
     }, [chat, secrets]);
 
     return <TouchableOpacity onPress={onSelect}>
-        <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='7' style={{shadowOpacity: 0.07}} mx='12px'>
+        <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='9' style={{shadowOpacity: 0.06}} mx='12px'>
             <HStack w='100%'>
                 <Box bgColor='transparent' borderRadius='25px' shadow='7' mr='12px'>
                     {
                         chat.avatar ? 
                         <IconImage 
                             imageUri={chat.avatar.mainUri} 
-                            size={50}
-                            shadow='9' /> :
+                            // UI is all multiples of 3
+                            size={51}
+                            shadow='9'
+                            nbProps={{
+                                style: {
+                                    shadowOpacity: 0.12
+                                },
+                                my: 'auto'
+                            }}
+                            /> :
                         <Image 
                             source={require('../../assets/profile-01.png')}
                             style={{
-                                width: 50,
-                                height: 50,
+                                width: 51,
+                                height: 51,
                                 shadowColor: "black",
-                                borderRadius: 25
+                                borderRadius: 25,
+                                marginVertical: "auto"
                             }} />
                     }
                 </Box>
                 <VStack h='100%'>
                     <Spacer />
-                    <Heading fontSize='md' mb='2px' fontWeight='bold'>
+                    <Heading fontSize='sm' mb='2px' fontWeight='bold'>
                         {chat.name}
                     </Heading>
                     <MentionsTextDisplay

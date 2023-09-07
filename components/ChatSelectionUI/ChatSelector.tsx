@@ -96,8 +96,8 @@ export default function ChatSelector({
         openChat();
     }, [secrets, socket, resetSocket, socketDisconnected]);
 
-    const handleDelete = async (chat: ConversationPreview | undefined) => {
-        if (!chat || !user || !user.conversations) return;
+    const handleDelete = useCallback(async (chat: ConversationPreview | undefined) => {
+        if (!chat || !user || !userConversations) return;
         try {
             setDeleteLoadingId(chat.cid);
             // await conversationsApi.deleteConversation(chat.cid);
@@ -110,7 +110,7 @@ export default function ChatSelector({
             setDeleteLoadingId(undefined);
             console.log(err);
         }
-    };
+    }, [user, userConversations, socket]);
 
     const closeModal = () => {
         setDcModalOpen(false);

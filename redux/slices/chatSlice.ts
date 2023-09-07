@@ -53,6 +53,7 @@ export const chatSlice = createSlice({
             secretKey: action.payload.secretKey,
             galleryMessages: undefined,
             galleryCursor: undefined,
+            conversationLoading: false
         }),
         setConvoSilently: (state, action: PayloadAction<{
             convo: Conversation,
@@ -770,10 +771,6 @@ export const removeUser = (uid: string, api: ConversationsApi, onComplete?: () =
 export const addUsers = (userProfiles: UserConversationProfile[], api: ConversationsApi, userKeyMap?: { [id: string]: string }, onComplete?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
     const { currentConvo } = getState().chatReducer;
     if (!currentConvo) return;
-    const newUsers = userProfiles.filter((profile) => {
-       return !currentConvo.participants.includes(profile);
-    });
-    if (newUsers.length < 1) return;
 
     dispatch(setRequestLoading(true));
     try {

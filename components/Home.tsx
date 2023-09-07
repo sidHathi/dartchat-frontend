@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
+import React, { useState, useContext, useRef, useEffect, useCallback, useMemo } from "react";
 import { UIState, UIScreen, Conversation } from "../types/types";
 import UIContext from "../contexts/UIContext";
 import NavContainer from "./NavContainer";
@@ -55,7 +55,7 @@ export default function Home(): JSX.Element {
         }
     }, [conversationSet, conversationLoading]);
 
-    const getScreen = () => {
+    const getScreen = useMemo(() => {
         switch (uiState.screen) {
             case 'conversations':
                 return <Main />
@@ -68,11 +68,11 @@ export default function Home(): JSX.Element {
             default:
                 return <></>
         }
-    }
+    }, [uiState, Messaging]);
 
     return <View style={{flex: 1}}>
         <UserConversationsController>
-            {getScreen()}
+            {getScreen}
         </UserConversationsController>
     </View>;
 }

@@ -1,4 +1,4 @@
-import React, {PropsWithChildren, ReactNode, useEffect, useState, useContext} from "react";
+import React, {PropsWithChildren, ReactNode, useEffect, useState, useContext, useCallback} from "react";
 import { View, Box, Text, HStack, Button, Pressable, VStack, Center, Spacer } from 'native-base';
 import { Dimensions, Image } from "react-native";
 import { SvgXml } from "react-native-svg";
@@ -29,11 +29,11 @@ export default function NavContainer({ children }:
     const { networkConnected, apiReachable } = useContext(NetworkContext);
     const { disconnected: socketDisconnected } = useContext(SocketContext); 
 
-    const handleNewMessage = () => {
+    const handleNewMessage = useCallback(() => {
         if (!networkConnected) return;
         dispatch(reduxExit());
         navSwitch('messaging');
-    }
+    }, [navSwitch, networkConnected]);
 
     return <View w='100%' h={screenHeight} backgroundColor='#111'>
         <Box backgroundColor='#fefefe' h='100px' overflow='hidden' zIndex='1001'>

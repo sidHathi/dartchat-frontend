@@ -7,6 +7,8 @@
 
 import React
 
+// THIS CODE BREAKS WHEN CALLED BY REACT NATIVE -> REASON UNKNOWN
+
 @objc(RNUserDefaults)
 public class RNUserDefaults: NSObject {
   @objc(: val:) func storeData(_ key: String, val: String) -> Void {

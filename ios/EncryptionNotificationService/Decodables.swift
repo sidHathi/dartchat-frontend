@@ -68,7 +68,7 @@ public struct EncryptedMessage: Decodable {
   let id: String;
   let timestamp: String;
   let messageType: MessageType;
-  let encryptionLevel: EncryptionLevel;
+  let encryptionLevel: EncryptionLevel?;
   let senderId: String;
   let likes: [String];
   let inGallery: Bool?;
@@ -97,9 +97,9 @@ public struct ConversationPreview: Decodable {
   let lastMessage: EncryptedMessage?;
   let unSeenMessages: Int;
   let avatar: AvatarImage?;
-  let lastMessageTime: String;
+  let lastMessageTime: String?;
   let recipientId: String?;
-  let group: Bool;
+  let group: Bool?;
   let keyUpdate: String?;
   let publicKey: String?;
   let userRole: ChatRole?;
@@ -119,4 +119,5 @@ public struct UserData: Decodable {
   let publicKey: String?;
   let keySalt: String?; // base64 encoded random prime number
   let secrets: String?;
+  let pushTokens: [String]?;
 }

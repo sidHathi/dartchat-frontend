@@ -105,7 +105,7 @@ export default function ReencryptionModal({
             await stateReencryptor.commit();
             // console.log(newKeys);
             // console.log(secrets);
-            await handleNewConversationKey(currentConvo.id, newKeys.secretKey, encodeKey(newKeys.secretKey));
+            await handleNewConversationKey(currentConvo.id, newKeys.secretKey);
             if (userKeyMap && socket && newKeys) {
                 socket.emit('keyChange', currentConvo.id, encodeKey(newKeys.publicKey), userKeyMap);
             }
@@ -113,7 +113,7 @@ export default function ReencryptionModal({
             setReencryptionComplete(true);
         }
         completeReencryption();
-    }, [reencryptionComplete, dataPulled, dataReencrypted, newKeys, socket, userKeyMap, secrets]);
+    }, [reencryptionComplete, dataPulled, dataReencrypted, newKeys, userKeyMap, secrets, handleNewConversationKey]);
 
     const statusText = useMemo(() => {
         if (!dataPulled) {

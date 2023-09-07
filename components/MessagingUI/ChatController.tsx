@@ -1,8 +1,8 @@
-import React, { useState, useContext, useCallback } from 'react';
+import React, { useState, useContext, useCallback, useEffect } from 'react';
 import { View, Box, Pressable } from 'native-base';
 import ChatHeader from './ChatHeader';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { chatSelector } from '../../redux/slices/chatSlice';
+import { chatSelector, setSecretKey } from '../../redux/slices/chatSlice';
 import ConversationProfileManager from '../IdentityManagement/ConversationProfileManager';
 import { Dimensions } from 'react-native';
 import SocketContext from '../../contexts/SocketContext';
@@ -24,8 +24,8 @@ export default function ChatController({
     const dispatch = useAppDispatch();
     const { usersApi } = useRequest();
     const screenHeight = Dimensions.get('window').height;
-    const { pullUserSecrets, forgetConversationKeys } = useContext(UserSecretsContext);
-    const { currentConvo, silent, silentKeyMap } = useAppSelector(chatSelector);
+    const { secrets, pullUserSecrets, forgetConversationKeys } = useContext(UserSecretsContext);
+    const { currentConvo, silent, silentKeyMap, secretKey: ccSecretKey } = useAppSelector(chatSelector);
     const { disconnected: socketDisconnected } = useContext(SocketContext);
     const { networkConnected, apiReachable } = useContext(NetworkContext);
 
@@ -33,6 +33,12 @@ export default function ChatController({
     const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
     const [expandedSettingsOpen, setExpandedSettingsOpen] = useState(false);
     const [expandedSettingsPage, setExpandedSettingsPage] = useState<MenuPage | undefined>();
+
+    useEffect(() => {
+        if (currentConvo && !ccSecretKey && secrets && secrets[currentConvo.id]) {
+            dispatch(setSecretKey(secrets[currentConvo.id]));
+        }
+    }, [secrets])
 
     const toggleProfileOpen = useCallback(() => {
         setExpandedSettingsOpen(false);

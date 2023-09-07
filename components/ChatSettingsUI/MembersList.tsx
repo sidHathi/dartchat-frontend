@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useContext } from 'react';
+import React, { useCallback, useMemo, useState, useContext, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { Heading, ScrollView, View, VStack, Box, Button, Modal, Center, Text, Icon, FlatList, SectionList } from 'native-base';
 import { addUsers, chatSelector, openPrivateMessage, removeUser } from '../../redux/slices/chatSlice';
@@ -14,8 +14,9 @@ import { userDataSelector } from '../../redux/slices/userDataSlice';
 import RemoveUserModal from './RemoveUserModal';
 import UserDetailsModal from './UserDetailsModal';
 import UserSecretsContext from '../../contexts/UserSecretsContext';
-import { getNewMemberKeys } from '../../utils/encryptionUtils';
+import { decodeKey, getNewMemberKeys } from '../../utils/encryptionUtils';
 import { useKeyboard } from '@react-native-community/hooks';
+import secureStore from '../../localStore/secureStore';
 
 export default function MembersList({
     exit
@@ -37,11 +38,18 @@ export default function MembersList({
     const [selectedNewMembers, setSelectedNewMembers] = useState<UserConversationProfile[] | undefined>();
     const [confirmRemoveModalOpen, setConfirmRemoveModalOpen] = useState(false);
 
-    const handleOpenButton = useCallback(() => {
-        if (currentConvo && socket && socket.connected && addMenuOpen && selectedNewMembers && selectedNewMembers.length > 0) {
+    const upToDateSecretsRef = useRef(secrets);
+
+    useEffect(() => {
+        upToDateSecretsRef.current = secrets;
+    }, [secrets])
+
+    const handleOpenButton = useCallback(async () => {
+        if (user && currentConvo && socket && socket.connected && addMenuOpen && selectedNewMembers && selectedNewMembers.length > 0) {
             let keyMap: { [id: string]: string } | undefined = undefined;
-            if (currentConvo.publicKey && secrets && secrets[currentConvo.id]) {
-                const secretKey = secrets[currentConvo.id];
+            if (currentConvo.publicKey && upToDateSecretsRef.current && upToDateSecretsRef.current[currentConvo.id]) {
+                const storedSecretKey = await secureStore.getSecretKeyForKey(user.id, currentConvo.id);
+                const secretKey = upToDateSecretsRef.current[currentConvo.id] || storedSecretKey;
                 keyMap = getNewMemberKeys(selectedNewMembers, secretKey);
             }
 
@@ -51,7 +59,7 @@ export default function MembersList({
             }));
         }
         setAddMenuOpen(!addMenuOpen);
-    }, [addMenuOpen, currentConvo, selectedNewMembers, secrets]);
+    }, [addMenuOpen, currentConvo, selectedNewMembers, secrets, socket]);
 
     const handleSelect = (profile: UserConversationProfile) => {
         if (user && profile.id === user.id) return;

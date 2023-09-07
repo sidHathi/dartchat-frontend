@@ -79,52 +79,8 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
     await setBackgroundUpdateFlag(true);
     if (!remoteMessage.data) return;
     try {
-        if ((remoteMessage.data.type === 'newConvo' || remoteMessage.data.type === 'addedToConvo') && remoteMessage.data.stringifiedBody) {
-            const parsedConvo = parsePNNewConvo(remoteMessage.data.stringifiedBody as string);
-            parsedConvo && await handleBackgroundConversationInfo(parsedConvo.convo);
-            if (!parsedConvo) {
-                console.log('conversation parsing failure');
-                return;
-            }
-            if (parsedConvo?.keyMap) {
-                handleBackgroundConversationKey(parsedConvo.keyMap, parsedConvo.convo);
-            }
-            if (!parsedConvo) return;
-            const displayFields = getUnencryptedDisplayFields(remoteMessage.data as PNPacket);
-            const data = {
-                type: 'newConvo',
-                cid: parsedConvo.convo.id || '',
-            };
-            displayNotification({
-                ...displayFields,
-                data,
-                id: remoteMessage.messageId || parsedConvo.convo.id
-            }, remoteMessage.data.type);
-        } else if (remoteMessage.data.type === 'message') {
-            const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
-            const displayFields = await getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey);
-            if (displayFields) {
-                displayNotification(displayFields, remoteMessage.data.type);
-            }
-        } else if (remoteMessage.data.type === 'like') {
-            const parsedLike = parsePNLikeEvent((remoteMessage.data.stringifiedBody as string));
-            const displayFields = getUnencryptedDisplayFields(remoteMessage.data as PNPacket);
-            if (!displayFields) {
-                console.log('NOTIFICATION MESSAGE DECRYPTION FAILURE');
-                console.log(remoteMessage.data);
-            }
-            const data = {
-                type: 'like',
-                cid: parsedLike?.cid || '',
-                mid: parsedLike?.mid
-            }
-            displayNotification({
-                ...displayFields,
-                data,
-                id: remoteMessage.messageId || parsedLike?.mid
-            }, remoteMessage.data.type);
-        } else if (remoteMessage.data.type === 'secrets') {
-            const parsedPNS = parsePNSecrets(remoteMessage.data.stringifiedBody);
+        if (remoteMessage.data.type === 'secrets') {
+            const parsedPNS: any = parsePNSecrets(remoteMessage.data.stringifiedBody);
             try {
                 const user = await getStoredUserData();
                 if (!user) return;
@@ -136,6 +92,51 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
                 console.log(err);
             }
         }   
+        // if ((remoteMessage.data.type === 'newConvo' || remoteMessage.data.type === 'addedToConvo') && remoteMessage.data.stringifiedBody) {
+        //     const parsedConvo = parsePNNewConvo(remoteMessage.data.stringifiedBody as string);
+        //     parsedConvo && await handleBackgroundConversationInfo(parsedConvo.convo);
+        //     if (!parsedConvo) {
+        //         console.log('conversation parsing failure');
+        //         return;
+        //     }
+        //     if (parsedConvo?.keyMap) {
+        //         handleBackgroundConversationKey(parsedConvo.keyMap, parsedConvo.convo);
+        //     }
+        //     if (!parsedConvo) return;
+        //     const displayFields = getUnencryptedDisplayFields(remoteMessage.data as PNPacket);
+        //     const data = {
+        //         type: 'newConvo',
+        //         cid: parsedConvo.convo.id || '',
+        //     };
+        //     // displayNotification({
+        //     //     ...displayFields,
+        //     //     data,
+        //     //     id: remoteMessage.messageId || parsedConvo.convo.id
+        //     // }, remoteMessage.data.type);
+        // } else if (remoteMessage.data.type === 'message') {
+        //     const secretKey = await getSecureKeyForMessage(remoteMessage.data as PNPacket);
+        //     const displayFields = await getEncryptedDisplayFields(remoteMessage.data as PNPacket, secretKey);
+        //     if (displayFields) {
+        //         // displayNotification(displayFields, remoteMessage.data.type);
+        //     }
+        // } else if (remoteMessage.data.type === 'like') {
+        //     const parsedLike = parsePNLikeEvent((remoteMessage.data.stringifiedBody as string));
+        //     const displayFields = getUnencryptedDisplayFields(remoteMessage.data as PNPacket);
+        //     if (!displayFields) {
+        //         console.log('NOTIFICATION MESSAGE DECRYPTION FAILURE');
+        //         console.log(remoteMessage.data);
+        //     }
+        //     const data = {
+        //         type: 'like',
+        //         cid: parsedLike?.cid || '',
+        //         mid: parsedLike?.mid
+        //     }
+        //     displayNotification({
+        //         ...displayFields,
+        //         data,
+        //         id: remoteMessage.messageId || parsedLike?.mid
+        //     }, remoteMessage.data.type);
+        // } else 
     } catch (err) {
         console.log('NOTIFICATION ERROR');
         console.log(remoteMessage);

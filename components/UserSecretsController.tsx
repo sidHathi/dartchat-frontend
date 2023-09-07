@@ -28,6 +28,7 @@ export default function UserSecretsController({
         [key: string]: Uint8Array;
     } | undefined>(undefined);
     const [secretsLoading, setSecretsLoading] = useState(true);
+    const [secretsUpdating, setSecretsUpdating] = useState(false);
 
     const validateUserKeys = useCallback(async (dbUser: UserData, currSecrets?: { [key: string]: Uint8Array }) => {
         if (!networkConnected || !userPinKey || !dbUser.keySalt || !dbUser.secrets) {
@@ -112,7 +113,8 @@ export default function UserSecretsController({
 
     const pullUserSecrets = useCallback(async () => {
         if (!user) return;
-        setSecretsLoading(true);
+        // setSecretsLoading(true);
+        setSecretsUpdating(true);
         try {
             const latestUser = await usersApi.getCurrentUser();
             if (!await validateUserKeys(latestUser)) return;
@@ -154,10 +156,12 @@ export default function UserSecretsController({
                 // console.log(encodedSecrets);
                 await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
             }
-            setSecretsLoading(false);
+            // setSecretsLoading(false);
+            setSecretsUpdating(false);
         } catch (err) {
             console.log(err);
-            setSecretsLoading(false);
+            // setSecretsLoading(false);
+            setSecretsUpdating(false);
         }
     }, [usersApi, secrets, user, validateUserKeys]);
     
@@ -348,9 +352,6 @@ export default function UserSecretsController({
                 if (currentConvo?.id === cid) {
                     dispatch(setSecretKey(key));
                 }
-            }
-            if (newSecrets.userSecretKey) {
-                setSecrets(newSecrets);
                 return true;
             }
             return false;
@@ -413,7 +414,7 @@ export default function UserSecretsController({
                 console.log(err);
                 setSecretsLoading(false);
             });
-    }, [secrets, userPinKey, user]);
+    }, [userPinKey, user]);
 
     return <UserSecretsContext.Provider value={{
         secrets,

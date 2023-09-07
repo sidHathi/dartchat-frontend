@@ -6,20 +6,26 @@
 //
 
 import UserNotifications
-//import RNCAsyncStorage
+import RNNotifeeCore
 
 class NotificationService: UNNotificationServiceExtension {
 
     var contentHandler: ((UNNotificationContent) -> Void)?
     var bestAttemptContent: UNMutableNotificationContent?
   
-    func getNotifBodyFromDecryptedFields(fields: DecryptedFields) -> String {
-      if !fields.content.isEmpty {
-        return fields.content;
-      } else if fields.media != nil {
-        return "Media:"
+  func getNotifBodyFromDecryptedFields(fields: DecryptedFields, cid: String, user: UserData, message: EncryptedMessage) -> String {
+    var prefix = "";
+    if let matchingPreview = user.conversations?.first(where: { $0.cid == cid }) {
+      if ((matchingPreview.group ?? true) && message.senderProfile != nil) {
+        prefix = message.senderProfile!.displayName + ": "
       }
-      return "Encrypted message";
+    }
+      if !fields.content.isEmpty {
+        return prefix + fields.content;
+      } else if fields.media != nil {
+        return prefix + "Media:"
+      }
+      return prefix + "Encrypted message";
     };
   
     func shouldNotify(user: UserData, cid: String, message: EncryptedMessage) -> Bool {
@@ -56,45 +62,67 @@ class NotificationService: UNNotificationServiceExtension {
       if let bestAttemptContent = bestAttemptContent {
           // Modify the notification content here...
 //            bestAttemptContent.title = "Intercepted title [modified]"
-          let notifee_options: [AnyHashable: Any] = bestAttemptContent.userInfo["notifee_options"] as! [AnyHashable : Any];
-          if let body = notifee_options["stringifiedBody"], let messageType = notifee_options["type"]  {
+//        bestAttemptContent.body = "Handler running";
+        let notifee_options: [AnyHashable: Any]? = bestAttemptContent.userInfo["notifee_options"] as? [AnyHashable : Any];
+        let stringifiedOptions = notifee_options?.description;
+        if (stringifiedOptions != nil) {
+//          bestAttemptContent.body = stringifiedOptions!;
+        } else {
+//          bestAttemptContent.body = "Pre parse";
+          NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
+          return;
+        }
+        if let body = notifee_options!["stringifiedBody"], let messageType = notifee_options!["type"]  {
+//            bestAttemptContent.body = "Pre type check";
             if (messageType as! String == "message") {
-              let jsonBody = (body as! String).data(using: .utf8) ?? nil;
+              let jsonBody = (body as? String)?.data(using: .utf8) ?? nil;
               if jsonBody != nil {
-                do {
-                  let messagePacket: EncryptedMessagePacket = try JSONDecoder().decode(EncryptedMessagePacket.self, from: jsonBody!);
-                  let cid: String = messagePacket.cid;
-                  let message: EncryptedMessage = messagePacket.message;
-                  bestAttemptContent.body = message.encryptedFields!;
-                  let userDefaults = UserDefaults(suiteName: "group.dartchat");
-                  let stringifiedUserData = userDefaults!.string(forKey: "userData");
-                  let parsedUserData = try JSONDecoder().decode(UserData.self, from: (stringifiedUserData?.data(using: .utf8))!);
-                  
-                  if !shouldNotify(user: parsedUserData, cid: cid, message: message) {
-                    contentHandler(bestAttemptContent);
-                    return;
+                let messagePacket: EncryptedMessagePacket? = try? JSONDecoder().decode(EncryptedMessagePacket.self, from: jsonBody!);
+                if (messagePacket == nil) {
+                  NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
+                  return;
+//                  bestAttemptContent.body = "Message packet invalid";
+                }
+                // last working spot
+
+                let cid: String = messagePacket!.cid;
+                let message: EncryptedMessage = messagePacket!.message;
+                let userDefaults = UserDefaults(suiteName: "group.dartchat");
+
+                if (userDefaults == nil) {
+                  NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
+                  return;
+//                  bestAttemptContent.body = "user defaults not found";
+                }
+                let stringifiedUserData = userDefaults!.string(forKey: "userData");
+                if (stringifiedUserData == nil) {
+                  NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
+                  return;
+//                  bestAttemptContent.body = "No key stored for user";
+                }
+
+                let parsedUserData: UserData? = try? JSONDecoder().decode(UserData.self, from: (stringifiedUserData!.data(using: .utf8))!);
+                if (parsedUserData == nil) {
+                  bestAttemptContent.body = stringifiedUserData!;
+                }
+
+                if let mentionNotif = getMentionNotif(user: parsedUserData!, cid: cid, message: message) {
+                  bestAttemptContent.body = mentionNotif;
+                  NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
+                  return;
+                }
+
+                if message.encryptedFields != nil {
+                  let decryptedMessageFields = Decryptor.decryptMessage(cid: cid, message: message, storedUserData: parsedUserData!);
+                  if (decryptedMessageFields != nil) {
+                    bestAttemptContent.body = getNotifBodyFromDecryptedFields(fields: decryptedMessageFields!, cid: cid, user: parsedUserData!, message: message);
                   }
-                  
-                  if let mentionNotif = getMentionNotif(user: parsedUserData, cid: cid, message: message) {
-                    bestAttemptContent.body = mentionNotif;
-                    contentHandler(bestAttemptContent);
-                    return;
-                  }
-                  
-                  if message.encryptedFields != nil {
-                    bestAttemptContent.body = parsedUserData.handle!;
-                    let decryptedMessageFields = Decryptor.decryptMessage(cid: cid, message: message, storedUserData: parsedUserData);
-                    if (decryptedMessageFields != nil) {
-                      bestAttemptContent.body = getNotifBodyFromDecryptedFields(fields: decryptedMessageFields!);
-                    }
-                  }
-                } catch {
-                  print("Message decode failed");
                 }
               }
             }
           }
-        contentHandler(bestAttemptContent)
+////        contentHandler(bestAttemptContent)
+        NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
       }
     }
     
@@ -102,6 +130,7 @@ class NotificationService: UNNotificationServiceExtension {
         // Called just before the extension will be terminated by the system.
         // Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.
         if let contentHandler = contentHandler, let bestAttemptContent =  bestAttemptContent {
+          bestAttemptContent.body = "timeout"
             contentHandler(bestAttemptContent)
         }
     }

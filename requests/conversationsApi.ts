@@ -209,7 +209,7 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
             url: `/conversations/${cid}/addUsers`,
             data: {
                 profiles: newUsers,
-                userKeyMap: userKeyMap
+                userKeyMap
             }
         }).then((res) => {
             if (res && res.data) {
