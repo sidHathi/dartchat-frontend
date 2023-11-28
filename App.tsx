@@ -32,16 +32,16 @@ export default function App(): JSX.Element {
         <NativeBaseProvider>
           <NetworkContextProvider>
             <SocketContextProvider>
-              <AuthIdentityController>
-                <UserSecretsController>
-                  <UIContextProvider>
+              <UIContextProvider>
+                <AuthIdentityController>
+                  <UserSecretsController>
                     <NotificationsController />
                       <Box flex='1'>
                         <Home />
                       </Box>
-                  </UIContextProvider>
-                </UserSecretsController>
-              </AuthIdentityController>
+                  </UserSecretsController>
+                </AuthIdentityController>
+              </UIContextProvider>
             </SocketContextProvider>
           </NetworkContextProvider>
         </NativeBaseProvider>

@@ -12,7 +12,7 @@ export default function LoginForm(): JSX.Element {
     const handlePasswordChange = (newPass: NativeSyntheticEvent<TextInputChangeEventData>) => setPassword(newPass.nativeEvent.text);
 
     const handleSubmit = () => {
-        console.log('login pressed');
+        // console.log('login pressed');
         signInUser(email, password)
             .catch((err) => setError(err.message));
     }

@@ -9,6 +9,9 @@ import { NotificationStatus } from '../../types/types';
 import { MaterialIcons } from '@expo/vector-icons';
 import useRequest from '../../requests/useRequest';
 import Spinner from 'react-native-spinkit';
+import colors from '../colors';
+import UIContext from '../../contexts/UIContext';
+import UIButton from '../generics/UIButton';
 
 export default function NotificationsSettings({
     exit
@@ -18,6 +21,7 @@ export default function NotificationsSettings({
     const { currentConvo } = useAppSelector(chatSelector);
     const { user } = useContext(AuthIdentityContext);
     const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext);
     
     const selectedButton = useMemo((): NotificationStatus | undefined => {
         if (!currentConvo || !user) return undefined;
@@ -46,24 +50,36 @@ export default function NotificationsSettings({
         }
     }, [selectedButton]);
 
-    return <Box w='96%' mx='auto' bgColor='white' borderRadius='24px' shadow='9' p='24px' mt='6px' style={{shadowOpacity: 0.18}}>
+    return <Box w='96%' mx='auto' bgColor={colors.solid[theme]} borderRadius='24px' shadow='9' p='24px' mt='6px' style={{shadowOpacity: 0.18}}>
         <HStack space={2}>
-            <IconButton label='back' color='black' size={18} shadow='none' additionalProps={{mt: '2px'}} onPress={exit}/>
-            <Heading fontSize='lg'>Notifications</Heading>
+            <IconButton label='back' color={colors.textMainNB[theme]} size={18} shadow='none' additionalProps={{mt: '2px'}} onPress={exit}/>
+            <Heading fontSize='lg' color={colors.textMainNB[theme]}>Notifications</Heading>
         </HStack>
         <Button.Group isAttached borderRadius='24px' w='100%' mt='12px'>
-            <Button colorScheme='dark' w='33%' variant={!selectedButton || selectedButton === 'all' ? 'subtle' : 'solid'}
-            leftIcon={<Icon as={MaterialIcons} name="notifications-active" size="sm" />} onPress={() => onSelect('all')}>
+            <UIButton colorScheme='dark' w='33%' context={!selectedButton || selectedButton === 'all' ? 'secondary' : 'primary'}
+            leftIconProps={{
+                as: MaterialIcons,
+                name: 'notifications-active',
+                size: 'sm'
+            }} onPress={() => onSelect('all')}>
                 All
-            </Button>
-            <Button colorScheme='dark' w='33%'  variant={selectedButton === 'mentions' ? 'subtle' : 'solid'}
-            leftIcon={<Icon as={MaterialIcons} name="notification-important" size="sm" />} onPress={() => onSelect('mentions')}>
+            </UIButton>
+            <UIButton colorScheme='dark' w='33%'  context={selectedButton === 'mentions' ? 'secondary' : 'primary'}
+            leftIconProps={{
+                as: MaterialIcons,
+                name: 'notifications-important',
+                size: 'sm'
+            }} onPress={() => onSelect('mentions')}>
                 Mentions
-            </Button>
-            <Button colorScheme='dark' w='33%' variant={selectedButton === 'none' ? 'subtle' : 'solid'}
-            leftIcon={<Icon as={MaterialIcons} name="notifications-off" size="sm" />} onPress={() => onSelect('none')}>
+            </UIButton>
+            <UIButton colorScheme='dark' w='33%' context={selectedButton === 'none' ? 'secondary' : 'primary'}
+            leftIconProps={{
+                as: MaterialIcons,
+                name: 'notifications-off',
+                size: 'sm'
+            }} onPress={() => onSelect('none')}>
                 None
-            </Button>
+            </UIButton>
         </Button.Group>
         <Text fontSize='xs' mt='6px' mx='auto'>
             You will be notified about <Text fontWeight='bold' fontSize='xs'>{descriptorText}</Text>

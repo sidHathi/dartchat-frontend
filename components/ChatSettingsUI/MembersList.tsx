@@ -17,6 +17,9 @@ import UserSecretsContext from '../../contexts/UserSecretsContext';
 import { decodeKey, getNewMemberKeys } from '../../utils/encryptionUtils';
 import { useKeyboard } from '@react-native-community/hooks';
 import secureStore from '../../localStore/secureStore';
+import UIContext from '../../contexts/UIContext';
+import colors from '../colors';
+import UIButton from '../generics/UIButton';
 
 export default function MembersList({
     exit
@@ -26,11 +29,12 @@ export default function MembersList({
     const dispatch = useAppDispatch();
     const { user } = useContext(AuthIdentityContext);
     const { socket } = useContext(SocketContext);
-    const { currentConvo } = useAppSelector(chatSelector);
+    const { currentConvo, secretKey: ccSecretKey } = useAppSelector(chatSelector);
     const { userConversations } = useAppSelector(userDataSelector);
     const { conversationsApi } = useRequest();
     const { secrets } = useContext(UserSecretsContext);
     const { keyboardShown, keyboardHeight } = useKeyboard();
+    const { theme } = useContext(UIContext);
 
     const [addMenuOpen, setAddMenuOpen] = useState(false);
     const [userDetailModal, setUserDetailModalOpen] = useState(false);
@@ -49,7 +53,7 @@ export default function MembersList({
             let keyMap: { [id: string]: string } | undefined = undefined;
             if (currentConvo.publicKey && upToDateSecretsRef.current && upToDateSecretsRef.current[currentConvo.id]) {
                 const storedSecretKey = await secureStore.getSecretKeyForKey(user.id, currentConvo.id);
-                const secretKey = upToDateSecretsRef.current[currentConvo.id] || storedSecretKey;
+                const secretKey = ccSecretKey || upToDateSecretsRef.current[currentConvo.id] || storedSecretKey;
                 keyMap = getNewMemberKeys(selectedNewMembers, secretKey);
             }
 
@@ -138,14 +142,14 @@ export default function MembersList({
     }, [currentConvo, admins, plebians])
 
     return <View flex='1'>
-        <Heading px='24px' mt='24px' fontSize='lg'>
+        <Heading px='24px' mt='24px' fontSize='lg' color={colors.textMainNB[theme]}>
             Members
         </Heading>
 
         <SectionList
             mx='12px'
             renderSectionHeader={({ section: { title }}) => (
-                <Text fontWeight='bold' fontSize='sm' color='gray.500' mt='12px' mb='6px' mx='6px'>
+                <Text fontWeight='bold' fontSize='sm' color={colors.textLightNB[theme]} mt='12px' mb='6px' mx='6px'>
                     {title}
                 </Text>
             )}
@@ -154,18 +158,18 @@ export default function MembersList({
             />
         
         <View flexGrow='0' flexShrink='0' bgColor='transparent' overflow='visible'>
-            <Box m='6px' shadow='9' borderRadius='24px' bgColor='white' w='100%' p='24px' style={{shadowOpacity: 0.12}} mb='-6px' pb={keyboardShown ? `${keyboardHeight + 12}px`: '24px'}>
+            <Box m='6px' shadow='9' borderRadius='24px' bgColor={colors.solid[theme]} w='100%' p='24px' style={{shadowOpacity: 0.12}} mb='-6px' pb={keyboardShown ? `${keyboardHeight + 12}px`: '24px'} overflow='hidden'>
             <ScrollView overflow='visible'>
                 {
                     addMenuOpen &&
                     <NewMemberSearch selectedNewMembers={selectedNewMembers} setSelectedNewMembers={setSelectedNewMembers} />
                 }
-                <Button colorScheme='dark' variant='subtle' borderRadius='24px' w='100%' onPress={handleOpenButton} mb='6px'>
+                <UIButton context='primary' borderRadius='24px' w='100%' onPress={handleOpenButton} mb='6px'>
                     {
                         !addMenuOpen ? 'Add members' : 
                             selectedNewMembers && selectedNewMembers.length > 0 ? 'Confirm' : 'Cancel'
                     }
-                </Button>
+                </UIButton>
             </ScrollView>
             </Box>
         </View>

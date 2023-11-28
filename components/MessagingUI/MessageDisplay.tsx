@@ -23,6 +23,8 @@ import ReplyMessageDisplay from "./ReplyMessageDisplay";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { LinkPreview as FlyerLinkPreview } from "@flyerhq/react-native-link-preview";
 import LinkPreview from "../generics/LinkPreview";
+import UIContext from "../../contexts/UIContext";
+import colors from "../colors";
 
 export default function MessageDisplay({ 
         message,
@@ -55,6 +57,7 @@ export default function MessageDisplay({
     const { user } = useContext(AuthIdentityContext);
     const { socket, resetSocket } = useContext(SocketContext);
     const { secrets } = useContext(UserSecretsContext);
+    const { theme } = useContext(UIContext)
 
     const [sendFailed, setSendFailed] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -147,7 +150,7 @@ export default function MessageDisplay({
         <HStack space={1} w='100%'>
             {
                 message.senderId === user?.id &&
-                <Box w='2px' bgColor='gray.700' h='21px' mt='10px' ml='-12px' mr='5px' borderRadius='full' />
+                <Box w='2px' bgColor={colors.userBarNB[theme]} h='21px' mt='10px' ml='-12px' mr='5px' borderRadius='full' />
             }
             <VStack space='3'>
             {
@@ -198,13 +201,13 @@ export default function MessageDisplay({
                             </Box> :
                             <></>
                         :
-                    <Box paddingX='18px' paddingY='4px' borderRadius='12px' backgroundColor={(isSystemMessage || message.messageType === 'deletion') ? 'transparent' : '#f5f5f5'} w='100%' margin='0px' shadow={
+                    <Box paddingX='12px' paddingY='6px' borderRadius='24px' backgroundColor={(isSystemMessage || message.messageType === 'deletion') ? 'transparent' : colors.message[theme]} w='100%' margin='0px' shadow={
                         (selected && !(isSystemMessage || message.messageType === 'deletion')) ? '3' : 'none'
                     } overflowX='visible' opacity={(sendFailed && !isSystemMessage) ? '0.5' : '1'}>
                         <VStack overflowX='visible'>
                             {
                                 !isSystemMessage &&
-                                <Text color='coolGray.600' fontSize='xs'>{senderName}</Text>
+                                <Text color={colors.textLightNB[theme]} fontSize='xs' mb='-3px' p='0'>{senderName}</Text>
                             }
                             {
                                 message.media &&
@@ -216,8 +219,8 @@ export default function MessageDisplay({
                             <MentionsTextDisplay 
                                 message={message} 
                                 linkHighlight={true}
-                                fontSize='sm' 
-                                color={(isSystemMessage || message.messageType === 'deletion') ? 'gray.500' : 'black'} 
+                                fontSize='sm'
+                                color={(isSystemMessage || message.messageType === 'deletion') ? colors.textLightNB[theme] : colors.textMainNB[theme]} 
                                 mt={message.media && message.content ? '12px' : '0px'} 
                                 textAlign={isSystemMessage ? 'center' : 'left'} />
                             {copied && <Text fontSize='xs' color='gray.400' mx='auto'>Copied to clipboard</Text>}

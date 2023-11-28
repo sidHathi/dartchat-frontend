@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Heading, Box, FlatList } from 'native-base';
 import { Poll } from "../../types/types";
 import PollDisplay from "../Polls/PollDisplay";
 import { useAppSelector } from "../../redux/hooks";
 import { chatSelector } from "../../redux/slices/chatSlice";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function PollGallery(): JSX.Element {
+    const { theme } = useContext(UIContext);
     const { currentConvo } = useAppSelector(chatSelector);
 
     const renderItem = ({item}: {item?: Poll}) => {
@@ -16,7 +19,7 @@ export default function PollGallery(): JSX.Element {
     }
 
     return <View flex='1'>
-        <Heading px='24px' pt='24px'>
+        <Heading px='24px' pt='24px' color={colors.textMainNB[theme]} fontSize='lg'>
             Polls
         </Heading>
         <FlatList 

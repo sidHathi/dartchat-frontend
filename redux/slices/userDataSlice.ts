@@ -17,12 +17,14 @@ const initialState: {
     contacts?: string[];
     archivedConvos?: string[];
     publicKey?: string;
+    uiTheme?: 'light' | 'dark';
 } = {
     id: '',
     userConversations: [],
     lastReceivedMessageId: '',
     needsServerSync: false,
     requestLoading: false,
+    uiTheme: 'light'
 };
 
 export const userDataSlice = createSlice({
@@ -35,7 +37,8 @@ export const userDataSlice = createSlice({
             userConversations: action.payload.conversations || [],
             contacts: action.payload.contacts || [],
             archivedConvos: action.payload.archivedConvos || [],
-            publicKey: action.payload.publicKey
+            publicKey: action.payload.publicKey,
+            uiTheme: action.payload.uiTheme
         }),
         setConversations: (state, action: PayloadAction<ConversationPreview[]>) => {
             return ({
@@ -226,6 +229,7 @@ export const userDataSlice = createSlice({
                 lastReceivedMessageId: '',
                 needsServerSync: false,
                 requestLoading: false,
+                uiTheme: state?.uiTheme
             }
         },
         updatePreviewNotifStatus: (state, action: PayloadAction<{
@@ -246,6 +250,12 @@ export const userDataSlice = createSlice({
             return {
                 ...state,
                 userConversations: updatedUserConvos
+            }
+        },
+        setUiTheme: (state, action: PayloadAction<'light' | 'dark'>) => {
+            return {
+                ...state,
+                uiTheme: action.payload
             }
         }
     }
@@ -270,7 +280,8 @@ export const {
     setPublicKey,
     handleRoleUpdate,
     logOutUser,
-    updatePreviewNotifStatus
+    updatePreviewNotifStatus,
+    setUiTheme
 } = userDataSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {

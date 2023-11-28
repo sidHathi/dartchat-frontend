@@ -1,12 +1,15 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useContext } from "react";
 import { View, Box, Heading } from 'native-base'
 import SpacedTabs from "../generics/SpacedTabs";
 import ContactsView from "./ContactsView";
 import ArchivedChats from "./ArchivedChats";
+import UIContext from "../../contexts/UIContext";
+import colors from "../colors";
 
 type Panel = 'Contacts' | 'Archived groups'
 
 export default function People(): JSX.Element {
+    const { theme } = useContext(UIContext);
     const [selectedPanel, setSelectedPanel] = useState<Panel>('Contacts');
 
     const mainElem = useMemo(() => {
@@ -21,7 +24,7 @@ export default function People(): JSX.Element {
     }, [selectedPanel]);
 
     return <View flex='1'>
-        <Heading pt='24px' px='24px'>People and groups</Heading>
+        <Heading pt='24px' px='24px' color={colors.textMainNB[theme]}>People and groups</Heading>
         <Box my='12px' px='12px'>
             <SpacedTabs
                 options={[

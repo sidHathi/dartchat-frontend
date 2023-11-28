@@ -15,8 +15,11 @@ import { Center } from 'native-base';
 import NetworkContext from '../contexts/NetworkContext';
 import secureStore from '../localStore/secureStore';
 import { encodeKey } from '../utils/encryptionUtils';
+import colors from './colors';
+import UIContext from '../contexts/UIContext';
 
 export default function AuthIdentityController(props: PropsWithChildren<{children: ReactNode}>): JSX.Element {
+    const { theme } = useContext(UIContext);
     const { children } = props;
     const { usersApi } = useRequest();
     const { socket, disconnected: socketDisconnected } = useContext(SocketContext);
@@ -190,8 +193,8 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
         return false;
     }, [needsSetup, user]);
 
-    const getLoadingScreen = () => <Center flex='1' bgColor='#f5f5f5'>
-        <Spinner type='ThreeBounce' color='black' />
+    const getLoadingScreen = () => <Center flex='1' bgColor={colors.loading[theme]}>
+        <Spinner type='ThreeBounce' color={colors.spinner[theme]} />
     </Center>
 
     return <AuthIdentityContext.Provider value={{

@@ -1,9 +1,12 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useContext } from 'react';
 import { UserProfile } from '../../types/types';
 import { Box, HStack, VStack, Spacer, Text, Center, View, FlatList, Heading } from 'native-base';
 import IconImage from '../generics/IconImage';
 import IconButton from '../generics/IconButton';
+import colors from '../colors';
 import { AlphabetList, IData } from "react-native-section-alphabet-list";
+import UIContext from '../../contexts/UIContext';
+import { themeTools } from 'native-base/lib/typescript/theme/v33x-theme';
 
 export default function ContactsList({
     contacts,
@@ -12,6 +15,8 @@ export default function ContactsList({
     contacts?: UserProfile[]
     handleMessage?: (profile: UserProfile) => void;
 }): JSX.Element {
+    const { theme } = useContext(UIContext);
+
     const contactMap = useMemo(() => {
         if (!contacts) return {};
         return Object.fromEntries(
@@ -38,20 +43,20 @@ export default function ContactsList({
 
         return <View>
             {
-            isAlpha && <Heading fontSize='md' px='18px' pb='3px' pt='12px' color='gray.500'>
+            isAlpha && <Heading fontSize='md' px='18px' pb='3px' pt='12px' color={colors.textLightNB[theme]}>
                 {item.displayName.charAt(0).toLocaleUpperCase()}
             </Heading>
             }
             <Box borderRadius='24px' bgColor={
-            index % 2 === 0 ? '#f5f5f5' : 'transparent'} mx='12px'>
+            index % 2 === 0 ? colors.message[theme] : 'transparent'} mx='12px'>
                 <HStack pl='12px' pr='6px' space={3} py='9px'>
                     {getContactAvatarElem(item)}
                     <VStack>
                         <Spacer />
-                        <Text fontSize='sm' fontWeight='bold'>
+                        <Text fontSize='sm' fontWeight='bold' color={colors.textMainNB[theme]}>
                             {item.displayName}
                         </Text>
-                        <Text fontSize='9px' color='gray.500'>
+                        <Text fontSize='9px' color={colors.textLightNB[theme]}>
                             {item.handle}
                         </Text>
                         <Spacer />

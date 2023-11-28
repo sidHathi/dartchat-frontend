@@ -14,6 +14,9 @@ import Spinner from "react-native-spinkit";
 import { useKeyboard } from "@react-native-community/hooks";
 import { encryptMessageForConvo } from "../../utils/messagingUtils";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
+import UIButton from "../generics/UIButton";
 
 type Timeframe = 'hr' | 'day' | 'week';
 
@@ -31,6 +34,7 @@ export default function PollBuilder({
     const { conversationsApi } = useRequest();
     const { keyboardShown, keyboardHeight } = useKeyboard();
     const { secrets } = useContext(UserSecretsContext);
+    const { theme } = useContext(UIContext);
 
     const [question, setQuestion] = useState<string | undefined>();
     const [options, setOptions] = useState<string[]>([
@@ -134,7 +138,7 @@ export default function PollBuilder({
         prompt: string;
     }): JSX.Element => {
         return <Box w='100%'>
-            <Text fontSize='11px' color='coolGray.600'>
+            <Text fontSize='11px' color={colors.subTextNB[theme]}>
                 {prompt}
             </Text>
             <Input
@@ -148,7 +152,7 @@ export default function PollBuilder({
                 variant="underlined"
                 fontWeight='bold'
                 fontSize='md'
-                bgColor='#fefefe'
+                bgColor={colors.bgLight[theme]}
                 my='6px'
                 multiline
                 numberOfLines={3}
@@ -178,22 +182,22 @@ export default function PollBuilder({
 
     return <View h={keyboardShown ? `${0.85*screenHeight - 90}px`:`${0.8*screenHeight - 90}px`} flexShrink='0' w='100%'>
         <Box w='96%' m='auto' h='100%' flexShrink='0'>
-            <Heading fontSize='lg'>
+            <Heading fontSize='lg' color={colors.textMainNB[theme]}>
                 Create a Poll
             </Heading>
 
             <Button.Group isAttached my='12px' w='100%'>
-                <Button borderLeftRadius='30px' colorScheme={multiSelect ? 'light' : 'dark'} variant={multiSelect ? 'outline' : 'subtle'} onPress={() => setMultiSelect(false)} marginX='0' w='50%'>
+                <UIButton borderLeftRadius='30px' context={multiSelect ? 'secondary' : 'primary'} variant={multiSelect ? 'outline' : 'subtle'} onPress={() => setMultiSelect(false)} marginX='0' w='50%'>
                     Single response
-                </Button>
-                <Button borderRightRadius='30px' colorScheme={!multiSelect ? 'light' : 'dark'} variant={!multiSelect ? 'outline' : 'subtle'} onPress={() => setMultiSelect(true)} marginX='0' w='50%'>
+                </UIButton>
+                <UIButton borderRightRadius='30px' context={!multiSelect ? 'secondary' : 'primary'} variant={!multiSelect ? 'outline' : 'subtle'} onPress={() => setMultiSelect(true)} marginX='0' w='50%'>
                     Multiple response
-                </Button>
+                </UIButton>
             </Button.Group>
 
-            <Text fontSize='11px' color='coolGray.600' mb='4px'>Choose duration</Text>
+            <Text fontSize='11px' color={colors.subTextNB[theme]} mb='4px'>Choose duration</Text>
             <Select fontWeight='bold'
-            selectedValue={timeframe} w='100%' h='48px' borderRadius='24px' accessibilityLabel="Choose Poll Duration" placeholder="Choose Poll Duration" borderWidth='0px' bgColor='#f7f7f7' px='24px' mb='12px'
+            selectedValue={timeframe} w='100%' h='48px' borderRadius='24px' accessibilityLabel="Choose Poll Duration" placeholder="Choose Poll Duration" borderWidth='0px' bgColor={colors.select[theme]} px='24px' mb='12px' color={colors.textMainNB[theme]}
             _selectedItem={{
                 fontWeight: 'bold',
                 borderRadius: '30px',
@@ -232,11 +236,18 @@ export default function PollBuilder({
                     </HStack>
                 })
             }
-            <Button w='100%' colorScheme='light' variant='subtle' leftIcon={
-                <Icon as={AntDesign} name='pluscircle' size='md' />
-            } borderRadius='24px' onPress={addOption}>
+            <UIButton 
+                w='100%' 
+                context='secondary'
+                leftIconProps={{
+                    as: AntDesign,
+                    name: 'pluscircle',
+                    size:'md'
+                }}
+                borderRadius='24px' 
+                onPress={addOption}>
                 Add another option
-            </Button>
+            </UIButton>
             </VStack>
             {
                 !pollReqLoading && error &&
@@ -248,13 +259,30 @@ export default function PollBuilder({
                     <Spinner type='ThreeBounce' />
                 </Center>
             }
-            <Button colorScheme='dark' variant='subtle' w='100%' borderRadius='24px' onPress={handleSend} my='6px'
-            leftIcon={<Icon as={Ionicons} name='ios-send' size='sm'/>}>
+            <UIButton 
+                context='primary' 
+                w='100%' 
+                borderRadius='24px' 
+                onPress={handleSend} 
+                my='6px'
+                leftIconProps={{
+                    as: Ionicons,
+                    name: 'ios-send',
+                    size: 'sm'
+                }}
+            >
                 Send
-            </Button>
-            <Button colorScheme='light' variant='subtle' w='100%' borderRadius='24px' onPress={close} mt='3px' mb={keyboardShown ? '300px': '3px'}>
+            </UIButton>
+            <UIButton 
+                context='secondary' 
+                w='100%' 
+                borderRadius='24px' 
+                onPress={close} 
+                mt='3px' 
+                mb={keyboardShown ? '300px': '3px'}
+            >
                 Cancel
-            </Button>
+            </UIButton>
             </ScrollView>
         </Box>
     </View>

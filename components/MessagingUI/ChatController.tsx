@@ -2,7 +2,7 @@ import React, { useState, useContext, useCallback, useEffect } from 'react';
 import { View, Box, Pressable } from 'native-base';
 import ChatHeader from './ChatHeader';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { chatSelector, setSecretKey } from '../../redux/slices/chatSlice';
+import { chatSelector, pullRecentMessages, setSecretKey } from '../../redux/slices/chatSlice';
 import ConversationProfileManager from '../IdentityManagement/ConversationProfileManager';
 import { Dimensions } from 'react-native';
 import SocketContext from '../../contexts/SocketContext';
@@ -15,6 +15,9 @@ import { setEnabled } from 'react-native/Libraries/Performance/Systrace';
 import { pullLatestPreviews } from '../../redux/slices/userDataSlice';
 import useRequest from '../../requests/useRequest';
 import UserSecretsContext from '../../contexts/UserSecretsContext';
+import { AppState } from 'react-native';
+import colors from '../colors';
+import UIContext from '../../contexts/UIContext';
 
 export default function ChatController({
     exit
@@ -28,6 +31,8 @@ export default function ChatController({
     const { currentConvo, silent, silentKeyMap, secretKey: ccSecretKey } = useAppSelector(chatSelector);
     const { disconnected: socketDisconnected } = useContext(SocketContext);
     const { networkConnected, apiReachable } = useContext(NetworkContext);
+    const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext);
 
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
@@ -38,7 +43,19 @@ export default function ChatController({
         if (currentConvo && !ccSecretKey && secrets && secrets[currentConvo.id]) {
             dispatch(setSecretKey(secrets[currentConvo.id]));
         }
-    }, [secrets])
+    }, [secrets]);
+
+    useEffect(() => {
+        const eventListener = AppState.addEventListener('change', (nextState) => {
+            if (nextState === 'active') {
+                dispatch(pullRecentMessages(conversationsApi));
+            }
+        });
+
+        return () => {
+            eventListener.remove();
+        };
+    }, []);
 
     const toggleProfileOpen = useCallback(() => {
         setExpandedSettingsOpen(false);
@@ -78,8 +95,8 @@ export default function ChatController({
         }
     }, [exit, currentConvo, silent, settingsMenuOpen, expandedSettingsOpen, forgetConversationKeys, silentKeyMap]);
 
-    return <View flex='1' backgroundColor='#111'>
-        <Box backgroundColor='#fefefe' h='90px' overflow='hidden' zIndex='1001'>
+    return <View flex='1' backgroundColor={colors.navBG[theme]}>
+        <Box backgroundColor={colors.bgLight[theme]} h='90px' overflow='hidden' zIndex='1001'>
         <ChatHeader 
                 convoName={currentConvo?.name || 'Chat'}
                 onSettingsOpen={() => {
@@ -91,9 +108,11 @@ export default function ChatController({
                     toggleProfileOpen();
                 }}
                 onConvoExit={handleExit} 
+                settingsMenuOpen={settingsMenuOpen}
+                profileMenuOpen={profileMenuOpen}
             />
         </Box>
-        <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor='#fefefe' borderTopLeftRadius='24px' shadow='9' zIndex='1000'>
+        <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor={colors.bgLight[theme]} borderTopLeftRadius='24px' shadow='9' zIndex='1000'>
             {expandedSettingsOpen && expandedSettingsPage ? <ExpandedSettingsMenu currPage={expandedSettingsPage} exit={() => {
                 setExpandedSettingsOpen(false);
                 closeOverlays();

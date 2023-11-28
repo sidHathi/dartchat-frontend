@@ -20,7 +20,9 @@ class NotificationService: UNNotificationServiceExtension {
         prefix = message.senderProfile!.displayName + ": "
       }
     }
-      if !fields.content.isEmpty {
+    if fields.media != nil && !fields.content.isEmpty {
+      return prefix + "(Media) " + fields.content;
+    } else if !fields.content.isEmpty {
         return prefix + fields.content;
       } else if fields.media != nil {
         return prefix + "Media:"
@@ -79,31 +81,32 @@ class NotificationService: UNNotificationServiceExtension {
               if jsonBody != nil {
                 let messagePacket: EncryptedMessagePacket? = try? JSONDecoder().decode(EncryptedMessagePacket.self, from: jsonBody!);
                 if (messagePacket == nil) {
+//                  bestAttemptContent.body = "Message packet invalid";
                   NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
                   return;
-//                  bestAttemptContent.body = "Message packet invalid";
                 }
-                // last working spot
-
+                
                 let cid: String = messagePacket!.cid;
                 let message: EncryptedMessage = messagePacket!.message;
                 let userDefaults = UserDefaults(suiteName: "group.dartchat");
 
                 if (userDefaults == nil) {
+//                  bestAttemptContent.body = "user defaults not found";
                   NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
                   return;
-//                  bestAttemptContent.body = "user defaults not found";
                 }
                 let stringifiedUserData = userDefaults!.string(forKey: "userData");
                 if (stringifiedUserData == nil) {
+//                  bestAttemptContent.body = "No key stored for user";
                   NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
                   return;
-//                  bestAttemptContent.body = "No key stored for user";
                 }
 
                 let parsedUserData: UserData? = try? JSONDecoder().decode(UserData.self, from: (stringifiedUserData!.data(using: .utf8))!);
                 if (parsedUserData == nil) {
-                  bestAttemptContent.body = stringifiedUserData!;
+//                  bestAttemptContent.body = stringifiedUserData!;
+                  NotifeeExtensionHelper.populateNotificationContent(request, with: bestAttemptContent, withContentHandler: contentHandler);
+                  return;
                 }
 
                 if let mentionNotif = getMentionNotif(user: parsedUserData!, cid: cid, message: message) {

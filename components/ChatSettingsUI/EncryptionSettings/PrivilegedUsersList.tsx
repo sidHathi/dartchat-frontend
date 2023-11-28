@@ -13,6 +13,9 @@ import { getNewMemberKeys } from "../../../utils/encryptionUtils";
 import { buildCProfileForUserProfile, buildDefaultProfileForUser } from "../../../utils/identityUtils";
 import AuthIdentityContext from "../../../contexts/AuthIdentityContext";
 import { hasPermissionForAction } from "../../../utils/messagingUtils";
+import colors from "../../colors";
+import UIContext from "../../../contexts/UIContext";
+import UIButton from "../../generics/UIButton";
 
 export default function PrivilegedUsersList({
     currentMembers
@@ -25,6 +28,7 @@ export default function PrivilegedUsersList({
     const { secrets } = useContext(UserSecretsContext);
     const { conversationsApi, profilesApi } = useRequest();
     const { user } = useContext(AuthIdentityContext);
+    const { theme } = useContext(UIContext);
 
     const [privilegedUserProfiles, setPrivilegedUserProfiles] = useState<UserProfile[]>([]);
     const [removeUserModalOpen, setRemoveUserModalOpen] = useState(false);
@@ -103,15 +107,15 @@ export default function PrivilegedUsersList({
     const renderItem = ({item, index}: {item: UserProfile, index: number}) => {
         const permissionToRemove = hasPermissionForAction('removeUser', userProfile?.role, participantMap[item.id]?.role);
         const showButton = (!currentMembers || permissionToRemove) && currentConvo?.group;
-        return <Box w='100%' borderRadius='12px' bgColor={index % 2 === 0 ? 'transparent': '#f5f5f5'}>
+        return <Box w='100%' borderRadius='12px' bgColor={index % 2 === 0 ? 'transparent': colors.message[theme]}>
             <HStack px='6px' space={3} py='6px'>
                 {getAvatarElem(item)}
                 <VStack>
                     <Spacer />
-                    <Text fontSize='sm' fontWeight='bold'>
+                    <Text fontSize='sm' fontWeight='bold' color={colors.textMainNB[theme]}>
                         {item.displayName}
                     </Text>
-                    <Text fontSize='9px' color='gray.500'>
+                    <Text fontSize='9px' color={colors.textLightNB[theme]}>
                         {item.handle}
                     </Text>
                     <Spacer />
@@ -120,13 +124,13 @@ export default function PrivilegedUsersList({
             {
                 (!(user?.id === item.id) && showButton) &&
                 <Center>
-                    <Button size='xs' colorScheme='dark' variant='subtle' borderRadius='full' onPress={
+                    <UIButton size='xs' context='primary' borderRadius='full' onPress={
                         currentMembers ? 
                         () => {handleRemoveUser(item)} :
                         () => {handleAddUser(item)}
-                    } px='24px'>
+                    } px='24px' textProps={{fontSize: '10px'}}>
                         {currentMembers ? 'Remove -' : 'Add +'}
-                    </Button>
+                    </UIButton>
                 </Center>
             }
             </HStack>

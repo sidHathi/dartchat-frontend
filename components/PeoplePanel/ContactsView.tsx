@@ -17,6 +17,7 @@ import UserSecretsContext from "../../contexts/UserSecretsContext";
 import { buildCProfileForUserProfile } from "../../utils/identityUtils";
 import { getNewConversationKeys } from "../../utils/encryptionUtils";
 import { findPrivateMessageIdForUser } from "../../utils/messagingUtils";
+import colors from "../colors";
 
 export default function ContactsView(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -26,6 +27,7 @@ export default function ContactsView(): JSX.Element {
     const { navSwitch } = useContext(UIContext);
     const { conversationsApi } = useRequest();
     const { handleNewConversationKey } = useContext(UserSecretsContext);
+    const { theme } = useContext(UIContext);
 
     const [pullRequestLoading, setPullRequestLoading] = useState(false);
     const [contactProfiles, setContactProfiles] = useState<UserProfile[] | undefined>();
@@ -87,18 +89,21 @@ export default function ContactsView(): JSX.Element {
         };
         dispatch(openPrivateMessage(seedConvo, user.id, userConversations, conversationsApi, recipientKeyMap, secretKey));
         if (secretKey && encodedSecretKey && !findPrivateMessageIdForUser(convoProfile, userConversations)) {
-            await handleNewConversationKey(seedConvo.id, secretKey, encodedSecretKey);
+            await handleNewConversationKey(seedConvo.id, secretKey);
         }
         navSwitch('messaging');
         return;
     }, [userConversations, user, conversationsApi, navSwitch]);
 
     return <View flex='1'>
-        <Text color='gray.500' fontWeight='bold' fontSize='xs' px='12px'>
+        <Text color={colors.textLightNB[theme]} fontWeight='bold' fontSize='xs' px='12px'>
             Contacts
         </Text>
         <Box w='100%' px='12px' py='6px'>
             <Input 
+                color={colors.textMainNB[theme]}
+                bgColor={colors.card[theme]}
+                borderWidth={0}
                 size='md'
                 placeholder="Search" 
                 variant="filled" 

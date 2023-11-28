@@ -8,21 +8,23 @@ import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered, setCCPublicKey, setSecretKey, handleMessageDelete, updateUserRole } from '../redux/slices/chatSlice';
-import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews, setPublicKey, handleRoleUpdate } from '../redux/slices/userDataSlice';
+import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews, setPublicKey, handleRoleUpdate, setConversations } from '../redux/slices/userDataSlice';
 import useRequest from '../requests/useRequest';
-import { updateUserConversations } from '../utils/identityUtils';
+import { getUserData, updateUserConversations } from '../utils/identityUtils';
 import { autoGenGroupAvatar, constructNewConvo } from '../utils/messagingUtils';
 import UserSecretsContext from '../contexts/UserSecretsContext';
+import NetworkContext from '../contexts/NetworkContext';
 
 export default function UserConversationsController({
     children
 }: PropsWithChildren<{children: ReactNode}>): JSX.Element {
-    const { socket } = useContext(SocketContext);
+    const { socket, disconnected: socketDisconnected } = useContext(SocketContext);
     const { navSwitch } = useContext(UIContext);
+    const { apiReachable } = useContext(NetworkContext);
     const { secrets, handleNewEncryptedConversation, forgetConversationKeys, pullUserSecrets } = useContext(UserSecretsContext);
     const { user } = useContext(AuthIdentityContext);
     const dispatch = useAppDispatch();
-    const { userConversations, needsServerSync }: {userConversations: ConversationPreview[], needsServerSync: boolean} = useAppSelector(userDataSelector);
+    const { userConversations, needsServerSync } = useAppSelector(userDataSelector);
     const { currentConvo }: {currentConvo?: Conversation} = useAppSelector(chatSelector);
     const { conversationsApi, usersApi } = useRequest();
 
@@ -32,6 +34,18 @@ export default function UserConversationsController({
     const convoDelete = useCallback((cid: string) => {
         dispatch(handleConversationDelete(cid, conversationsApi));
     }, [conversationsApi]);
+
+    useEffect(() => {
+        const pullUser = async () => {
+            if (apiReachable) {
+                const userData = await getUserData(usersApi);
+                if (userData && userData.conversations) {
+                    dispatch(setConversations(userData?.conversations));
+                }
+            }
+        }
+        pullUser();
+    }, [apiReachable, socketDisconnected]);
 
     useEffect(() => {
         if (currentConvo && currentConvo.id !== ccid) {

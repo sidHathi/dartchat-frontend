@@ -18,6 +18,8 @@ import { ChatSettingsPanel } from './ChatSettingsController';
 import { MenuPage } from './ExpandedSettingsMenu';
 import UIContext from '../../contexts/UIContext';
 import LeaveChatScreen from './LeaveChatScreen';
+import colors from '../colors';
+import UIButton from '../generics/UIButton';
 
 export default function ChatSettingsHome({
     setSettingsPanel,
@@ -31,7 +33,7 @@ export default function ChatSettingsHome({
     const { socket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
-    const { navSwitch } = useContext(UIContext)
+    const { navSwitch, theme } = useContext(UIContext);
 
     const [nameAvatarEditing, setNameAvatarEditing] = useState(false);
     const [newName, setNewName] = useState<string | undefined>();
@@ -105,6 +107,10 @@ export default function ChatSettingsHome({
                 break;
             case 'leave':
                 setConfirmLeaveModalOpen(true);
+                break;
+            case 'chat profile':
+                setSettingsPanel('chatProfile');
+                break;
             default:
                 return;
         }
@@ -157,7 +163,7 @@ export default function ChatSettingsHome({
 
     return <Box style={{
             shadowOpacity: 0.24
-        }} px='12px' py='24px' bgColor='white' shadow='9' w='96%' borderRadius='24px' mx='auto' mt='6px'>
+        }} px='12px' py='24px' bgColor={colors.solid[theme]} shadow='9' w='96%' borderRadius='24px' mx='auto' mt='6px'>
         <Center w='100%'>
             {
                 nameAvatarEditing &&
@@ -194,11 +200,12 @@ export default function ChatSettingsHome({
                         variant="underlined"
                         fontWeight='bold'
                         fontSize='md'
-                        bgColor='#fefefe'
+                        bgColor={colors.inputLight[theme]}
                         my='6px'
                         textAlign='center'
+                        color={colors.textMainNB[theme]}
                     /> :
-                    <Heading fontSize='xl'>
+                    <Heading fontSize='xl' color={colors.textMainNB[theme]}>
                         {convoName}
                     </Heading>
                 }
@@ -208,15 +215,25 @@ export default function ChatSettingsHome({
                 (
                     imageUploading ?
                     <Spinner type='ThreeBounce' /> :
-                    <Button py='3px' colorScheme={nameAvatarEditing ? 'dark' : 'light'} mx='auto' px='24px' borderRadius='24px' variant='subtle' mt='6px'
-                    onPress={() => {
-                        nameAvatarEditing ? onSaveNameAvatar() : setNameAvatarEditing(!nameAvatarEditing)
-                    }}>
-                        <Text fontSize='11px' color={nameAvatarEditing ? 'white': 'coolGray.600'} fontWeight={nameAvatarEditing ? 'bold': 'medium'}>
-                            {!nameAvatarEditing ? 'Edit profile and name' : 
+                    <UIButton 
+                        py='3px' 
+                        context={nameAvatarEditing ? 'primary' : 'secondary'} mx='auto' 
+                        px='24px' 
+                        borderRadius='24px' 
+                        mt='6px'
+                        onPress={() => {
+                            nameAvatarEditing ? onSaveNameAvatar() : setNameAvatarEditing(!nameAvatarEditing)
+                        }}
+                        textProps={{
+                            fontSize: '11px',
+                            fontWeight: nameAvatarEditing ? 'bold': 'medium'
+                        }}
+                    >
+                        {/* <Text fontSize='11px' color={nameAvatarEditing ? 'white': 'coolGray.600'} fontWeight={nameAvatarEditing ? 'bold': 'medium'}> */}
+                        {!nameAvatarEditing ? 'Edit profile and name' : 
                                 nameAvatarEdited ? 'Save' : 'Cancel'}
-                        </Text>
-                    </Button>
+                        {/* </Text> */}
+                    </UIButton>
                 )
             }
         </Center>

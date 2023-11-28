@@ -11,6 +11,7 @@ export type UserData = {
     publicKey?: string;
     keySalt?: string; // base64 encoded random prime number
     secrets?: string;
+    uiTheme?: 'dark' | 'light';
 };
 
 export type UIScreen = 'messaging' |
@@ -213,3 +214,8 @@ export type PNPacket = {
     stringifiedBody: string;
     stringifiedDisplay?: string;
 };
+
+export type AdaptingColor = {
+    light: string;
+    dark: string;
+}

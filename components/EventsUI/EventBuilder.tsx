@@ -13,6 +13,9 @@ import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import SocketContext from "../../contexts/SocketContext";
 import { useKeyboard } from "@react-native-community/hooks";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
+import UIContext from "../../contexts/UIContext";
+import colors from "../colors";
+import UIButton from "../generics/UIButton";
 
 type ReminderTime = '@' | '10min' | '30min' | '1hr' | '1day' | 'none';
 
@@ -30,6 +33,7 @@ export default function EventBuilder({
     const { conversationsApi } = useRequest();
     const { keyboardShown, keyboardHeight } = useKeyboard();
     const { secrets } = useContext(UserSecretsContext);
+    const { theme } = useContext(UIContext);
 
     const [eventName, setEventName] = useState<string | undefined>();
     const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -106,7 +110,7 @@ export default function EventBuilder({
         prompt: string;
     }): JSX.Element => {
         return <Box w='100%'>
-            <Text fontSize='11px' color='coolGray.600'>
+            <Text fontSize='11px' color={colors.subTextNB[theme]}>
                 {prompt}
             </Text>
             <Input
@@ -120,10 +124,11 @@ export default function EventBuilder({
                 variant="underlined"
                 fontWeight='bold'
                 fontSize='md'
-                bgColor='#fefefe'
+                bgColor={colors.bgLight[theme]}
                 my='6px'
                 multiline
                 numberOfLines={3}
+                color={colors.textMainNB[theme]}
             />
         </Box>
     };
@@ -210,7 +215,7 @@ export default function EventBuilder({
 
     return <View w='100%' minH={`${2*screenHeight/3}px`} maxH={`${3*screenHeight/4}px`}>
         <Box w='96%' minH='100%' flexShrink='0'>
-            <Heading fontSize='lg' mb='12px'>
+            <Heading fontSize='lg' mb='12px' color={colors.textMainNB[theme]}>
                 Create an Event
             </Heading>
             {
@@ -224,16 +229,18 @@ export default function EventBuilder({
                 eventDate &&
                 DateView
             }
-            <Button 
+            <UIButton 
                 w='100%'
                 my='12px'
-                variant='subtle'
-                colorScheme='light' 
+                context='secondary'
                 borderRadius='24px'
-                leftIcon={<Icon as={MaterialIcons} name='event' />} 
+                leftIconProps={{
+                    as: MaterialIcons,
+                    name: 'event'
+                }}
                 onPress={() => setDatePickerOpen(true)}>
                 {`${eventDate !== undefined ? 'Change': 'Select'} event date`}
-            </Button>
+            </UIButton>
 
             <Text fontSize='sm' fontWeight='bold' mt='12px'>
                 Remind me
@@ -246,7 +253,7 @@ export default function EventBuilder({
                     // @ts-ignore-next-line
                     optimized={false}
                     fontWeight='bold' key={idx}
-                    selectedValue={reminderTimes[idx]} w='100%' h='48px' borderRadius='24px' accessibilityLabel="Choose Poll Duration" placeholder="Choose Poll Duration" borderWidth='0px' bgColor='#f7f7f7' px='24px' mb='12px'
+                    selectedValue={reminderTimes[idx]} w='100%' h='48px' borderRadius='24px' accessibilityLabel="Choose Reminder Time" placeholder="Choose Poll Duration" borderWidth='0px' bgColor={colors.select[theme]} px='24px' mb='12px' color={colors.textMainNB[theme]}
                     _selectedItem={{
                         fontWeight: 'bold',
                         borderRadius: '30px',
@@ -269,36 +276,42 @@ export default function EventBuilder({
                 ))
             }
             </VStack>
-            <Button 
+            <UIButton 
                 w='100%'
                 mb='12px'
                 py='9px'
-                variant='ghost'
-                colorScheme='light' 
+                context='ghost'
                 borderRadius='24px'
                 onPress={addReminderTime}
-                leftIcon={<Icon as={AntDesign} name='pluscircle' />}>
+                leftIconProps={{
+                    as: AntDesign,
+                    name: 'pluscircle'
+                }}
+            >
                 Add reminder time
-            </Button>
+            </UIButton>
 
-            <Button 
+            <UIButton 
                 w='100%'
                 my='12px'
-                variant='subtle'
-                colorScheme='dark' 
+                context='primary' 
                 borderRadius='24px'
                 onPress={handleSubmit}
-                leftIcon={<Icon as={Ionicons} name='ios-send' size='sm'/>}>
+                leftIconProps={{
+                    as: Ionicons,
+                    name: 'ios-send',
+                    size: 'sm'
+                }}
+            >
                 Create
-            </Button>
-            <Button 
+            </UIButton>
+            <UIButton 
                 w='100%'
-                variant='subtle'
-                colorScheme='light' 
+                context='secondary'
                 borderRadius='24px'
                 onPress={close}>
                 Cancel
-            </Button>
+            </UIButton>
             </ScrollView>
         </Box>
 

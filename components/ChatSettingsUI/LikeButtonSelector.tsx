@@ -11,6 +11,8 @@ import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
 import { Asset } from "react-native-image-picker";
 import SocketContext from "../../contexts/SocketContext";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function LikeButtonSelector({
     exit
@@ -21,6 +23,7 @@ export default function LikeButtonSelector({
     const { currentConvo } = useAppSelector(chatSelector);
     const dispatch = useAppDispatch();
     const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext);
 
     const [likeImageEmpty, setLikeImageEmpty] = useState<Asset | undefined>();
     const [likeImagePartial, setLikeImagePartial] = useState<Asset | undefined>();
@@ -158,14 +161,14 @@ export default function LikeButtonSelector({
         setReset(true);
     };
 
-    return <Box w='96%' mx='auto' bgColor='white' borderRadius='12px' shadow='9' p='24px' mt='12px' style={{shadowOpacity: 0.18}} flexShrink='0'>
+    return <Box w='96%' mx='auto' bgColor={colors.card[theme]} borderRadius='12px' shadow='9' p='24px' mt='12px' style={{shadowOpacity: 0.18}} flexShrink='0'>
         <HStack space={2} w='100%' flexShrink='0'>
-            <IconButton label='back' color='black' size={18} shadow='none' additionalProps={{mt: '2px'}} onPress={exit}/>
-            <Heading fontSize='lg'>Like Button</Heading>
+            <IconButton label='back' color={colors.textMainNB[theme]} size={18} shadow='none' additionalProps={{mt: '2px'}} onPress={exit}/>
+            <Heading fontSize='lg' color={colors.textMainNB[theme]}>Like Button</Heading>
         </HStack>
         <HStack w='100%' mt='12px' flexShrink='0'>
             <VStack w='33%' space={2}>
-                <Text fontSize='xs' color='gray.500'>Default:</Text>
+                <Text fontSize='xs' color={colors.textLightNB[theme]}>Default:</Text>
                 <Center w='100%'>
                 <ButtonPreview variant='empty' image={likeImageEmpty} />
                 <Button colorScheme='dark' variant='subtle' opacity={0.8} borderRadius='24px' py='3px'onPress={() => newIconSelect('empty')} px='6px' mt='6px'>
@@ -176,7 +179,7 @@ export default function LikeButtonSelector({
                 </Center>
             </VStack>
             <VStack w='33%' space={2}>
-                <Text fontSize='xs' color='gray.500'>Liked:</Text>
+                <Text fontSize='xs' color={colors.textLightNB[theme]}>Liked:</Text>
                 <Center w='100%'>
                 <ButtonPreview variant='partial' image={likeImagePartial} />
                 <Button colorScheme='dark' variant='subtle' opacity={0.8}borderRadius='24px' py='3px' onPress={() => newIconSelect('partial')} px='6px' mt='6px'>
@@ -187,7 +190,7 @@ export default function LikeButtonSelector({
                 </Center>
             </VStack>
             <VStack w='33%' space={2}>
-                <Text fontSize='xs' color='gray.500'>Liked by you:</Text>
+                <Text fontSize='xs' color={colors.textLightNB[theme]}>Liked by you:</Text>
                 <Center w='100%'>
                 <ButtonPreview variant='active' image={likeImageActive} />
                 <Button colorScheme='dark' variant='subtle' opacity={0.8}borderRadius='24px' py='3px' onPress={() => newIconSelect('active')} px='6px' mt='6px'>

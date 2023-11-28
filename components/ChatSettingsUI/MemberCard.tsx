@@ -7,6 +7,8 @@ import { Ionicons, Feather } from "@expo/vector-icons";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { hasPermissionForAction } from "../../utils/messagingUtils";
+import UIContext from "../../contexts/UIContext";
+import colors from "../colors";
 
 export default function MemberCard({
     profile,
@@ -22,6 +24,7 @@ export default function MemberCard({
     userRole?: ChatRole;
 }): JSX.Element {
     const { user } = useContext(AuthIdentityContext);
+    const { theme } = useContext(UIContext);
 
     const isUser = useMemo(() => (user?.id === profile.id), [profile, user]);
 
@@ -63,19 +66,19 @@ export default function MemberCard({
 
     return <Box w='100%' h='72px'>
         <TouchableOpacity style={{overflow: 'visible'}} onPress={handleSelect}>
-        <Box w='100%' borderRadius='24px' px='12px' backgroundColor='#f5f5f5' maxHeight='60px' overflow='visible'>
+        <Box w='100%' borderRadius='24px' px='12px' backgroundColor={colors.message[theme]} maxHeight='60px' overflow='visible'>
             <HStack space={4}>
                 <Box overflow='visible'>
                 {avatarElem}
                 </Box>
                 <VStack h='60px'>
                 <Spacer/>
-                <Text fontWeight='bold' fontSize='sm' maxWidth='100px' numberOfLines={1}>
+                <Text fontWeight='bold' fontSize='sm' maxWidth='100px' numberOfLines={1} color={colors.textMainNB[theme]}>
                     {profile.displayName}
                 </Text>
                 {
                     profile.handle &&
-                    <Text fontSize='xs' color='gray.700'>
+                    <Text fontSize='xs' color={colors.subTextNB[theme]}>
                         {profile.handle}
                     </Text>
                 }
@@ -89,7 +92,7 @@ export default function MemberCard({
                         <ActionButton label='message' dark={true} onPress={handleMessage} />
                         {
                             permissionToRemove &&
-                            <ActionButton label='leave' onPress={handleRemove} />
+                            <ActionButton label='leave' onPress={handleRemove} dark={theme === 'dark'} />
                         }
                     </HStack>
                     <Spacer />

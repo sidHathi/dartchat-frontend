@@ -12,6 +12,8 @@ import { storeConversationProfileImage, getDownloadUrl } from '../../firebase/cl
 import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
 import { selectProfileImage } from "../../utils/identityUtils";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function ConversationProfileEditor({
     handleSave
@@ -22,6 +24,7 @@ export default function ConversationProfileEditor({
     const { currentConvo } = useAppSelector(chatSelector);
     const dispatch = useAppDispatch();
     const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext);
 
     const [selectedProfile, setSelectedProfile] = useState<Image | undefined>(undefined);
     const [newDisplayName, setNewDisplayName] = useState<string | undefined>();
@@ -94,7 +97,7 @@ export default function ConversationProfileEditor({
     }): JSX.Element => {
         
         return <Box w='100%'>
-            <Text fontSize='11px' color='coolGray.600'>
+            <Text fontSize='11px' color={colors.textLightNB[theme]}>
                 {prompt}
             </Text>
             <Input
@@ -111,8 +114,9 @@ export default function ConversationProfileEditor({
                 variant="underlined"
                 fontWeight='bold'
                 fontSize='sm'
-                bgColor='#fdfdfd'
+                bgColor={colors.inputLight[theme]}
                 my='6px'
+                color={colors.textMainNB[theme]}
             />
         </Box>
     };

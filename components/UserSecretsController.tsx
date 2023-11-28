@@ -53,7 +53,7 @@ export default function UserSecretsController({
             // console.log(encodeKey(workingSecrets?.userSecretKey || new Uint8Array()));
             if ((decryptedSecrets === undefined) || ((workingSecrets?.userSecretKey !== undefined && (encodeKey(decodedSecrets.userSecretKey) !== encodeKey(workingSecrets.userSecretKey))))) {
                 // this happens during environment switches when local and db keys are out of sync
-                console.log('logging out user')
+                // console.log('logging out user')
                 logOut();
                 return false;
             } else {

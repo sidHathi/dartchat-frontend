@@ -6,10 +6,13 @@ import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import IconButton from "../generics/IconButton";
 import { useAppSelector } from "../../redux/hooks";
 import { chatSelector } from "../../redux/slices/chatSlice";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function ConversationProfileDisplay(): JSX.Element {
     const { user } = useContext(AuthIdentityContext);
     const { currentConvo } = useAppSelector(chatSelector);
+    const { theme } = useContext(UIContext);
     
     const getAvatar = () => {
         if (!user || !currentConvo) {
@@ -36,10 +39,10 @@ export default function ConversationProfileDisplay(): JSX.Element {
             {getAvatar()}
             <VStack flex='1'>
                 <Spacer />
-                <Heading fontSize='lg'>
+                <Heading fontSize='lg' color={colors.textMainNB[theme]}>
                     {getDisplayName()}
                 </Heading>
-                <Text fontSize='xs'>
+                <Text fontSize='xs' color={colors.textMainNB[theme]}>
                     { user && (user.handle || user.email) }
                 </Text>
                 <Spacer />

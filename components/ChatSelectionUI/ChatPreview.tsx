@@ -9,6 +9,8 @@ import { getTimeString, handlePossiblyEncryptedMessage } from '../../utils/messa
 import UserSecretsContext from '../../contexts/UserSecretsContext';
 import { decryptJSON } from '../../utils/encryptionUtils';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import colors from '../colors';
+import UIContext from '../../contexts/UIContext';
 
 export default function ChatPreview({
     chat,
@@ -18,7 +20,7 @@ export default function ChatPreview({
     onSelect : () => void
 }) : JSX.Element {
     const screenWidth = Dimensions.get('window').width;
-
+    const { theme } = useContext(UIContext);
     const { secrets, pullUserSecrets } = useContext(UserSecretsContext);
     const lastMessageTimeStr = getTimeString(chat.lastMessageTime);
 
@@ -40,7 +42,7 @@ export default function ChatPreview({
     }, [chat, secrets]);
 
     return <TouchableOpacity onPress={onSelect}>
-        <Box p='18px' bgColor='#f5f5f5' borderRadius='24px' shadow='9' style={{shadowOpacity: 0.06}} mx='12px'>
+        <Box p='18px' bgColor={colors.card[theme]} borderRadius='24px' shadow='9' style={{shadowOpacity: 0.06}} mx='12px'>
             <HStack w='100%'>
                 <Box bgColor='transparent' borderRadius='25px' shadow='7' mr='12px'>
                     {
@@ -70,14 +72,14 @@ export default function ChatPreview({
                 </Box>
                 <VStack h='100%'>
                     <Spacer />
-                    <Heading fontSize='sm' mb='2px' fontWeight='bold'>
+                    <Heading fontSize='sm' mb='2px' fontWeight='bold' color={colors.textMainNB[theme]}>
                         {chat.name}
                     </Heading>
                     <MentionsTextDisplay
                         message={{
                             content: safeLastMessageContent,
                         }}
-                        color='gray.700' fontSize='sm' maxWidth={`${screenWidth - 200}px`} noOfLines={2} />
+                        color={colors.subTextNB[theme]} fontSize='sm' maxWidth={`${screenWidth - 200}px`} noOfLines={2} />
                     {/* <Text color='gray.700' fontSize='xs'  maxWidth={`${screenWidth - 200}px`} noOfLines={2}>
                         {chat.lastMessageContent || 'New conversation'}
                     </Text> */}
@@ -85,14 +87,14 @@ export default function ChatPreview({
                 </VStack>
                 <Spacer />
                 <VStack>
-                    <Text color='gray.700' fontSize='xs'>
+                    <Text color={colors.subTextNB[theme]} fontSize='xs'>
                         {lastMessageTimeStr}
                     </Text>
                     {chat.unSeenMessages > 0 &&
                     <HStack>
                         <Spacer />
-                        <Box bgColor='black' borderRadius='10px' h='18px' px='5px' py='0px' my='2px'>
-                            <Text fontSize='13px' color='white' mt='-1px' fontWeight='bold'>
+                        <Box bgColor={colors.textMainNB[theme]} borderRadius='10px' h='18px' px='5px' py='0px' my='2px'>
+                            <Text fontSize='13px' color={colors.invertedText[theme]} mt='-1px' fontWeight='bold'>
                                 {chat.unSeenMessages}
                             </Text>
                         </Box>

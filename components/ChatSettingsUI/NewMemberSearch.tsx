@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Box, Heading, HStack, Spacer, Text, VStack, ScrollView } from 'native-base';
+import React, { useContext, useMemo } from 'react';
+import { Box, Heading, HStack, Spacer, Text, VStack, ScrollView, useTheme } from 'native-base';
 import { UserConversationProfile } from '../../types/types';
 import ProfilesSearch from '../MessagingUI/ProfileSearch';
 import MemberCard from './MemberCard';
@@ -11,6 +11,8 @@ import { Touchable } from 'react-native';
 import { useAppSelector } from '../../redux/hooks';
 import { chatSelector } from '../../redux/slices/chatSlice';
 import { current } from '@reduxjs/toolkit';
+import colors from '../colors';
+import UIContext from '../../contexts/UIContext';
 
 export default function NewMemberSearch({
     selectedNewMembers,
@@ -20,6 +22,7 @@ export default function NewMemberSearch({
     setSelectedNewMembers: (newArr: UserConversationProfile[] | undefined) => void;
 }): JSX.Element {
     const { currentConvo } = useAppSelector(chatSelector);
+    const { theme } = useContext(UIContext);
 
     const handleRemovePnm = (id: string) => {
         if (selectedNewMembers) {
@@ -36,19 +39,19 @@ export default function NewMemberSearch({
     }: {profile: UserConversationProfile}): JSX.Element => {
         const avatarElem = profile.avatar ? <IconImage imageUri={profile.avatar.mainUri} size={60} shadow='9' /> : <IconButton label='profile' size={60} />;
 
-        return <Box h='70px'><Box w='100%' borderRadius='12px' px='12px' backgroundColor='#f5f5f5' maxHeight='60px' overflow='visible'>
+        return <Box h='70px'><Box w='100%' borderRadius='12px' px='12px' backgroundColor={colors.message[theme]} maxHeight='60px' overflow='visible'>
             <HStack space={4}>
                 <Box overflow='visible'>
                 {avatarElem}
                 </Box>
                 <VStack h='60px'>
                 <Spacer/>
-                <Text fontWeight='bold' fontSize='md'>
+                <Text fontWeight='bold' fontSize='md' color={colors.textMainNB[theme]}>
                     {profile.displayName}
                 </Text>
                 {
                     profile.handle &&
-                    <Text fontSize='xs' color='gray.700'>
+                    <Text fontSize='xs' color={colors.subTextNB[theme]}>
                         {profile.handle}
                     </Text>
                 }
@@ -58,7 +61,7 @@ export default function NewMemberSearch({
                 <VStack>
                     <Spacer />
                     <TouchableOpacity onPress={() => handleRemovePnm(profile.id)}>
-                        <Box bgColor='#f5f5f5' w='48px' borderRadius='24px' h='48px' my='auto'>
+                        <Box bgColor={colors.message[theme]} w='48px' borderRadius='24px' h='48px' my='auto'>
                             <Box m='auto'>
                                 <Ionicons name="remove-circle-outline" size={24} color="red" />
                             </Box>
@@ -71,7 +74,7 @@ export default function NewMemberSearch({
     }
 
     return <Box mb='12px'>
-        <Heading fontSize='lg' mb='12px'>Search</Heading>
+        <Heading fontSize='lg' mb='12px' color={colors.textMainNB[theme]}>Search</Heading>
         <ProfilesSearch 
             isGroup 
             encrypted={convoEncrypted}

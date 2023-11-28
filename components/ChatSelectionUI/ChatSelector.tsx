@@ -23,6 +23,8 @@ import notifee from '@notifee/react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { Keyboard } from "react-native";
 import { getBackgroundUpdateFlag, setBackgroundUpdateFlag } from "../../localStore/localStore";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function ChatSelector({
     openChat,
@@ -32,6 +34,7 @@ export default function ChatSelector({
     closeChat: () => void;
 }): JSX.Element {
     const { socket, resetSocket, disconnected: socketDisconnected } = useContext(SocketContext);
+    const { theme } = useContext(UIContext)
     const { user } = useContext(AuthIdentityContext);
     const { networkConnected } = useContext(NetworkContext);
     const { secrets, pullUserSecrets } = useContext(UserSecretsContext);
@@ -198,6 +201,9 @@ export default function ChatSelector({
     return <>
         <Box w='100%' px='12px' pt='12px' pb='6px' mt='3px' zIndex='0' borderRadius='full'>
             <Input 
+                color={colors.textMainNB[theme]}
+                borderWidth={0}
+                bgColor={colors.card[theme]}
                 value={searchString}
                 size='md'
                 placeholder="Search" 

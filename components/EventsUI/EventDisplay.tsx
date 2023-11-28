@@ -11,6 +11,9 @@ import IconButton from "../generics/IconButton";
 import IconImage from "../generics/IconImage";
 import { MaterialIcons } from "@expo/vector-icons";
 import { getDateTimeString, getTimeString } from "../../utils/messagingUtils";
+import UIContext from "../../contexts/UIContext";
+import colors from "../colors";
+import UIButton from "../generics/UIButton";
 
 export default function EventDisplay({
     eid,
@@ -23,6 +26,7 @@ export default function EventDisplay({
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { currentConvo } = useAppSelector(chatSelector);
+    const { theme } = useContext(UIContext)
 
     const [event, setEvent] = useState<CalendarEvent | undefined>();
 
@@ -174,32 +178,51 @@ export default function EventDisplay({
     };
 
     if (!event) {
-        return <Box borderRadius='24px' bgColor='#f5f5f5' p='24px'>
-            <Spinner type='ThreeBounce' />
+        return <Box borderRadius='24px' bgColor={colors.message[theme]} p='24px'>
+            <Spinner type='ThreeBounce' color={colors.spinner[theme]} />
         </Box>;
     }
 
-    return <Box w='100%' borderRadius='24px' bgColor='#f5f5f5' p='24px' flexGrow='0'>
-        <Text fontWeight='bold' color='#555' fontSize='xs' m='0'>
+    return <Box w='100%' borderRadius='24px' bgColor={colors.message[theme]} p='24px' flexGrow='0'>
+        <Text fontWeight='bold' color={colors.subTextNB[theme]} fontSize='xs' m='0'>
             Event
         </Text>
-        <Heading fontSize='md'>
+        <Heading fontSize='md' color={colors.textMainNB[theme]}>
             {event.name}
         </Heading>
-        <Text>
+        <Text color={colors.textMainNB[theme]}>
             {event.date && `${getDateTimeString(event.date)}`}
         </Text>
 
         <HStack space={1} mt='24px'>
-            <Button w='48%' borderRadius='24px' colorScheme={userEventState === 'going' ? 'dark' : 'light'} variant='subtle' borderWidth='1px' borderColor='#333'
-                leftIcon={<CheckIcon color={userEventState === 'going' ? 'white' : 'black'} />} onPress={handleEventGoing}>
+            <UIButton 
+                w='48%' 
+                borderRadius='24px' 
+                context={userEventState === 'going' ? 'primary' : 'outline'} borderWidth='1px' 
+                borderColor='#333' 
+                onPress={handleEventGoing}
+                leftIconProps={{
+                    as: undefined,
+                    name: 'check',
+                    check: true,
+                }}
+            >
                 Going
-            </Button>
+            </UIButton>
             <Spacer />
-            <Button w='48%' borderRadius='24px' colorScheme={userEventState === 'notGoing' ? 'dark' : 'light'} variant='subtle' borderWidth='1px' borderColor='#333'
-                leftIcon={<Icon as={MaterialIcons} name='cancel' color={userEventState === 'notGoing' ? 'white' : 'black'} />} onPress={handleEventNotGoing}>
+            <UIButton 
+                w='48%' 
+                borderRadius='24px' 
+                context={userEventState === 'notGoing' ? 'primary' : 'outline'} borderWidth='1px' 
+                borderColor='#333'
+                leftIconProps={{
+                    as: MaterialIcons,
+                    name: 'cancel',
+                }}
+                // leftIcon={<Icon as={MaterialIcons} name='cancel' />} 
+                onPress={handleEventNotGoing}>
                 Not Going
-            </Button>
+            </UIButton>
         </HStack>
 
         {

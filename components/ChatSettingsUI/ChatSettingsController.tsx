@@ -4,8 +4,10 @@ import NotificationsSettings from './NotifcationsSettings';
 import { View } from 'native-base';
 import { MenuPage } from './ExpandedSettingsMenu';
 import LikeButtonSelector from './LikeButtonSelector';
+import UserDetailsModal from './UserDetailsModal';
+import ConversationProfileManager from '../IdentityManagement/ConversationProfileManager';
 
-export type ChatSettingsPanel = 'main' | 'notifications' | 'likeButton';
+export type ChatSettingsPanel = 'main' | 'notifications' | 'likeButton' | 'chatProfile';
 
 export default function ChatSettingsController({
     openExpandedSettings
@@ -22,6 +24,8 @@ export default function ChatSettingsController({
                 return <NotificationsSettings exit={() => setSettingsPanel('main')} />;
             case 'likeButton':
                 return <LikeButtonSelector exit={() => setSettingsPanel('main')}/>;
+            case 'chatProfile':
+                return <ConversationProfileManager exit={() => setSettingsPanel('main')} />;
             default:
                 return <></>;
         }

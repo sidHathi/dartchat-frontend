@@ -11,6 +11,8 @@ import PollResponder from './PollResponder';
 import useRequest from '../../requests/useRequest';
 import Spinner from 'react-native-spinkit';
 import SocketContext from '../../contexts/SocketContext';
+import UIContext from '../../contexts/UIContext';
+import colors from '../colors';
 
 export default function PollDisplay({
     pid
@@ -21,6 +23,7 @@ export default function PollDisplay({
     const { socket } = useContext(SocketContext);
     const { currentConvo } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext);
 
     const [selectedOptionIdx, setSelectedOptionIdx] = useState<number | undefined>();
     const [responderOpen, setResponderOpen] = useState(false);
@@ -212,7 +215,7 @@ export default function PollDisplay({
         selected: boolean,
         winning: boolean
     }): JSX.Element => {
-        return <Box w='100%' bgColor='#fefefe' borderRadius='12px' py='9px' px='12px'
+        return <Box w='100%' bgColor={colors.bgLight[theme]} borderRadius='12px' py='9px' px='12px'
             shadow={
                 selected ? '9' : 'none'
             } style={{
@@ -259,16 +262,16 @@ export default function PollDisplay({
     }, [currentConvo, poll]);
 
     if (!poll) {
-        return <Box p='24px' m='auto'>
+        return <Box p='24px' m='auto' bgColor={colors.message[theme]}>
             <Spinner type='ThreeBounce' />
         </Box>
     }
 
-    return <><Box w='100%' bgColor='#f5f5f5' borderRadius='24px' p='24px'>
-        <Text fontSize='xs' fontWeight='bold' color='gray.500'>
+    return <><Box w='100%' bgColor={colors.message[theme]} borderRadius='24px' p='24px'>
+        <Text fontSize='xs' fontWeight='bold' color={colors.textLightNB[theme]}>
             Poll
         </Text>
-        <Heading fontSize='md'>
+        <Heading fontSize='md' color={colors.textMainNB[theme]}>
             {poll.question}
         </Heading>
         <VStack space={2} mt='12px' w='100%'>

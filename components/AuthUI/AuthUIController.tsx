@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useContext, useState} from "react";
 
 import { Center, Flex, Heading, VStack, Pressable, Text, View, Box } from "native-base";
 import LoginForm from "./LoginForm";
@@ -9,10 +9,13 @@ import { GoogleSignin, statusCodes, GoogleSigninButton } from '@react-native-goo
 import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useKeyboard } from "@react-native-community/hooks";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function AuthUIController(): JSX.Element {
     const [signUp, setSignUp] = useState(false);
     const { keyboardShown } = useKeyboard();
+    const { theme } = useContext(UIContext)
 
     const toggleSignup = () => {
         setSignUp(!signUp);
@@ -32,8 +35,8 @@ export default function AuthUIController(): JSX.Element {
       }
     };
 
-    return <Flex flex={1} bgColor='#fafafa' w='100%' h='100%'>
-        <View bgColor='#222' borderRadius={20} width='90%' m='auto' p='10' shadow='9' mt={keyboardShown ? '40px' : 'auto'}>
+    return <Flex flex={1} bgColor={colors.bgBase[theme]} w='100%' h='100%'>
+        <View bgColor={colors.authCard[theme]} borderRadius={20} width='90%' m='auto' p='10' shadow='9' mt={keyboardShown ? '40px' : 'auto'}>
             <VStack>
                 <Center>
                     <SvgXml xml={DartChatLogoXML} height='20' width='100'/>

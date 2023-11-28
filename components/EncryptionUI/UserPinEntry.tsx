@@ -3,6 +3,8 @@ import { View, Box, Input, Heading, Text, VStack, Button, Center } from 'native-
 import Spinner from 'react-native-spinkit';
 import { useKeyboard } from '@react-native-community/hooks';
 import AuthIdentityContext from '../../contexts/AuthIdentityContext';
+import colors from '../colors';
+import UIContext from '../../contexts/UIContext';
 
 type PinEntryVariant = 'initialization' | 'confirmation';
 
@@ -21,6 +23,8 @@ export default function UserPinEntry({
     const [enteredPin, setEnteredPin] = useState<string | undefined>();
     const [confirmPin, setConfirmPin] = useState<string | undefined>();
     const [error, setError] = useState<string | undefined>();
+
+    const { theme } = useContext(UIContext);
 
     const onPinTextChange = (newPin: string) => {
         if (newPin.length > 0 && !/^\d+/.test(newPin)) return;
@@ -60,13 +64,13 @@ export default function UserPinEntry({
         onSubmit(enteredPin);
     }, [enteredPin, confirmPin]);
 
-    return <View flex='1' bgColor='#fefefe'>
-        <Box w='90%' m='auto' p='24px' bgColor='#f5f5f5' shadow='9' borderRadius='24px' mt={keyboardShown ? '60px' : 'auto'}>
+    return <View flex='1' bgColor={colors.bgBase[theme]}>
+        <Box w='90%' m='auto' p='24px' bgColor={colors.card[theme]} shadow='9' borderRadius='24px' mt={keyboardShown ? '60px' : 'auto'}>
             <VStack space='2'>
-            <Heading mt='12px'>
+            <Heading mt='12px' color={colors.textMainNB[theme]}>
                 {headingText}
             </Heading>
-            <Text fontSize='sm' color='gray.500'>
+            <Text fontSize='sm' color={colors.textLightNB[theme]}>
                 {bodyText}
             </Text>
             
@@ -87,6 +91,7 @@ export default function UserPinEntry({
                 type='password'
                 fontSize='xl'
                 fontWeight='bold'
+                color={colors.textMainNB[theme]}
                 />
 
             {
@@ -109,6 +114,7 @@ export default function UserPinEntry({
                     fontSize='xl'
                     fontWeight='bold'
                     mb='24px'
+                    color={colors.textMainNB[theme]}
                     />
             }
 
@@ -129,7 +135,7 @@ export default function UserPinEntry({
             <Button colorScheme='dark' variant='subtle' borderRadius='24px' w='100%' onPress={handleSubmit} mb='6px'>
                 Submit
             </Button>
-            <Button colorScheme='light' variant='subtle' borderRadius='24px' w='100%' onPress={() => logOut()} mb='12px'>
+            <Button colorScheme='light' variant='ghost' borderRadius='24px' w='100%' onPress={() => logOut()} mb='12px'>
                 Cancel
             </Button>
             </VStack>

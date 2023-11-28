@@ -9,6 +9,9 @@ import { encodeKey, genKeyPair } from "../../../utils/encryptionUtils";
 import SocketContext from "../../../contexts/SocketContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Spinner from "react-native-spinkit";
+import colors from "../../colors";
+import UIContext from "../../../contexts/UIContext";
+import UIButton from "../../generics/UIButton";
 
 export default function ReencryptionModal({
     isOpen,
@@ -22,6 +25,7 @@ export default function ReencryptionModal({
     const { conversationsApi } = useRequest();
     const { secrets, handleNewConversationKey } = useContext(UserSecretsContext);
     const { socket, resetSocket } = useContext(SocketContext);
+    const { theme } = useContext(UIContext);
 
     const [stateReencryptor, setStateReencryptor] = useState<Reencryptor | undefined>();
     const [timeGap, setTimeGap] = useState(1000*60*60*24*30);
@@ -173,35 +177,36 @@ export default function ReencryptionModal({
     // cancel button eventually goes away while the changes get pushed
     // modal auto closes when finished
     return <Modal isOpen={isOpen} onClose={onModalClose} size='xl'>
-        <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px'>
+        <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px' bgColor={colors.solid[theme]}>
             <VStack space={3}>
                 <Center py='12px'>
-                    <MaterialCommunityIcons name="arrow-vertical-lock" size={60} color="black" />
+                    <MaterialCommunityIcons name="arrow-vertical-lock" size={60} color={colors.textMainNB[theme]} />
                 </Center>
 
-                <Text color='gray.700' fontSize='xs'>
+                <Text color={colors.subTextNB[theme]} fontSize='xs'>
                     Changing the chat encryption key will trigger an automatic reencryption of recently sent messages. Messages sent further back than the time gap listed below will be deleted.
                 </Text>
 
                 {
                     (stateReencryptor && !reencryptionComplete) &&
                     <Center>
-                        <Spinner type='ThreeBounce' />
+                        <Spinner type='ThreeBounce' color={colors.spinner[theme]} />
                     </Center>
                 }
 
                 {
                     stateReencryptor &&
                     <Center>
-                        <Text>
+                        <Text color={colors.subTextNB[theme]}>
                             {statusText}
                         </Text>
                     </Center>
                 }
 
                 <Select fontWeight='bold'
-                selectedValue={selectVal} w='100%' h='48px' borderRadius='24px' accessibilityLabel="Choose Poll Duration" placeholder="Choose Poll Duration" borderWidth='0px' bgColor='#f7f7f7' px='24px' mb='12px'
+                selectedValue={selectVal} w='100%' h='48px' borderRadius='24px' accessibilityLabel="Choose Poll Duration" placeholder="Choose Poll Duration" borderWidth='0px' bgColor={colors.select[theme]} color={colors.textMainNB[theme]} px='24px' mb='12px'
                 _selectedItem={{
+                    color: colors.textMainNB[theme],
                     fontWeight: 'bold',
                     borderRadius: '30px',
                     bg: "#f1f1f1",
@@ -225,22 +230,22 @@ export default function ReencryptionModal({
 
                 {
                     !stateReencryptor &&
-                    <Button colorScheme='dark' variant='subtle' borderRadius='full' onPress={startReencryption}
+                    <UIButton context='primary' borderRadius='full' onPress={startReencryption}
                     opacity={socket?.connected ? 1 : 0} disabled={!socket?.connected}>
                         Start encryption key reset
-                    </Button>
+                    </UIButton>
                 }
                 {
                     (dataPulled && !dataReencrypted) &&
-                    <Button colorScheme='light' variant='subtle' borderRadius='full' onPress={cancelReencryption}>
+                    <UIButton context='secondary' borderRadius='full' onPress={cancelReencryption}>
                         Cancel
-                    </Button>
+                    </UIButton>
                 }
                 {
                     reencryptionComplete &&
-                    <Button colorScheme='dark' variant='subtle' borderRadius='full' onPress={onModalClose}>
+                    <UIButton context='primary' borderRadius='full' onPress={onModalClose}>
                         Ok
-                    </Button>
+                    </UIButton>
                 }
             </VStack>
         </Modal.Content>

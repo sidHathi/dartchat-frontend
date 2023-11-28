@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { View, Heading, Box, FlatList, Pressable } from 'native-base';
 import { CalendarEvent } from "../../types/types";
 import { useAppSelector } from "../../redux/hooks";
 import { chatSelector } from "../../redux/slices/chatSlice";
 import EventDisplay from "../EventsUI/EventDisplay";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function EventGallery(): JSX.Element {
     const { currentConvo } = useAppSelector(chatSelector);
+    const { theme } = useContext(UIContext);
 
     const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
 
@@ -30,7 +33,7 @@ export default function EventGallery(): JSX.Element {
     };
 
     return <View flex='1'>
-        <Heading px='24px' pt='24px'>
+        <Heading px='24px' pt='24px' fontSize='lg' color={colors.textMainNB[theme]}>
             Events
         </Heading>
         <FlatList 

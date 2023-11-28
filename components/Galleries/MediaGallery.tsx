@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../redux/hooks';
 import { FlatList, HStack, Box, View, Heading, Spacer, Center } from 'native-base';
 import { chatSelector, pullGallery } from '../../redux/slices/chatSlice';
@@ -12,6 +12,8 @@ import ImageView from 'react-native-image-viewing';
 import { CameraRoll } from "@react-native-camera-roll/camera-roll";
 import FullScreenMediaFrame from '../MessagingUI/MessageMediaControllers/FullScreenMediaFrame';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import colors from '../colors';
+import UIContext from '../../contexts/UIContext';
 
 const imagesPerRow = 3;
 
@@ -27,6 +29,7 @@ export default function MediaGallery(): JSX.Element {
     const dispatch = useAppDispatch();
     const { currentConvo, galleryMessages, galleryCursor, requestLoading } = useAppSelector(chatSelector);
     const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext)
 
     const [selectedMessage, setSelectedMessage] = useState<Message | undefined>();
     const [selectedMessageStartIndex, setSelectedMessageStartIndex] = useState<number>(0);
@@ -108,7 +111,7 @@ export default function MediaGallery(): JSX.Element {
     }
 
     return <View flex='1' w='100%' h='100%'>
-        <Heading px='24px' pt='24px'>
+        <Heading px='24px' pt='24px' color={colors.textMainNB[theme]} fontSize='lg'>
             Gallery
         </Heading>
 

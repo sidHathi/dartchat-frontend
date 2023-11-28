@@ -10,10 +10,15 @@ import IconImage from "../generics/IconImage";
 import { enc } from "react-native-crypto-js";
 import { useAppSelector } from "../../redux/hooks";
 import { userDataSelector } from "../../redux/slices/userDataSlice";
+import UIContext from "../../contexts/UIContext";
+import colors from "../colors";
 
-const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => <Box w='100%' bgColor={searchSelected ? '#fefefe': 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px' style={{shadowOpacity: 0.12}}>
+const SearchContainer = ({children, searchSelected}: PropsWithChildren<{children: ReactNode, searchSelected: boolean}>) => {
+    const { theme } = useContext(UIContext);
+    return <Box w='100%' bgColor={searchSelected ? colors.bgLight[theme] : 'transparent'} p={searchSelected ? '12px' : '0px'} shadow={searchSelected ? '9' : 'none'}borderRadius='12px' style={{shadowOpacity: 0.12}}>
         {children}
     </Box>
+}
 
 export default function ProfilesSearch({
         isGroup,
@@ -32,6 +37,7 @@ export default function ProfilesSearch({
     const { user } = useContext(AuthIdentityContext);
     const { profilesApi } = useRequest();
     const { contacts: contactIds } = useAppSelector(userDataSelector);
+    const { theme } = useContext(UIContext);
 
     const [queryString, setQueryString] = useState<string | undefined>(undefined);
     const [matchingProfiles, setMatchingProfiles] = useState<UserProfile[]>([]);
@@ -136,7 +142,7 @@ export default function ProfilesSearch({
                 1
             }>
                 <FormControl>
-                <Text fontSize='xs' color='coolGray.600'>
+                <Text fontSize='xs' color={colors.textLightNB[theme]}>
                     {isGroup ? 'Add Participants' : 'Select recipient'}
                 </Text>
                 <Input
@@ -152,7 +158,7 @@ export default function ProfilesSearch({
                     marginRight='8px'
                     mt='4px'
                     autoCapitalize='none'
-                    backgroundColor='#f1f1f1'
+                    backgroundColor={colors.message[theme]}
                     onPressOut={() => {
                         if (queryString && queryString.length > 0){
                             setSearchSelected(true)
@@ -161,6 +167,8 @@ export default function ProfilesSearch({
                     onChange={(e: any) => {
                         setCursor(e.target.value)
                     }}
+                    borderColor={colors.textLightNB[theme]}
+                    color={colors.textMainNB[theme]}
                     // variant="underlined"
                 />
                 </FormControl>
@@ -171,8 +179,9 @@ export default function ProfilesSearch({
     const profileSuggestion = ({profile, onSelect}: {
         profile: UserProfile,
         onSelect: () => void
-    }): JSX.Element => (
-        <Button variant='ghost' bgColor='#f5f5f5' onPress={onSelect} w='100%' borderRadius='12px' my='4px' px='6px' maxWidth='100%'>
+    }): JSX.Element => {
+        const { theme } = useContext(UIContext);
+        return <Button variant='ghost' bgColor={colors.message[theme]} onPress={onSelect} w='100%' borderRadius='12px' my='4px' px='6px' maxWidth='100%'>
             <HStack px='0' w='100%' space={3}>
                 {
                 profile.avatar ?
@@ -190,22 +199,22 @@ export default function ProfilesSearch({
                     }}/>
                 }
                 <Box>
-                    <Text fontSize='md' fontWeight='bold' m='0'>
+                    <Text fontSize='md' fontWeight='bold' m='0' color={colors.textMainNB[theme]}>
                         {profile.displayName}
                     </Text>
-                    <Text fontSize='10px' fontWeight='light'>
+                    <Text fontSize='10px' fontWeight='light' color={colors.textMainNB[theme]}>
                         {profile.handle}
                     </Text>
                 </Box>
                 <Spacer />
                 <VStack>
                     <Spacer />
-                    <Entypo name="plus" size={24} color="black" />
+                    <Entypo name="plus" size={24} color={colors.textMainNB[theme]} />
                     <Spacer />
                 </VStack>
             </HStack>
         </Button>
-    );
+    };
     
 
     return <>

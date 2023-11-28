@@ -6,6 +6,10 @@ import KeyInfoDisplay from './KeyInfoDisplay';
 import PrivilegedUsersList from './PrivilegedUsersList';
 import SpacedTabs from '../../generics/SpacedTabs';
 import ReencryptionModal from './ReencryptionModal';
+import UIContext from '../../../contexts/UIContext';
+import colors from '../../colors';
+import UIButton from '../../generics/UIButton';
+
 export default function EncryptionSettings(): JSX.Element {
     /**
      * UI Goals:
@@ -16,6 +20,7 @@ export default function EncryptionSettings(): JSX.Element {
      * - should should display a button that pulls up the re-encryption UI
      */
     const { currentConvo } = useAppSelector(chatSelector);
+    const { theme } = useContext(UIContext);
 
     const [currentMemberList, setCurrentMemberList] = useState(true);
     const [reecnryptionModalOpen, setReencryptionModalOpen] = useState(false);
@@ -38,7 +43,7 @@ export default function EncryptionSettings(): JSX.Element {
             currentConvo?.keyInfo ?
             <KeyInfoDisplay /> :
             <Center h='100%'>
-                <Text>
+                <Text color={colors.textMainNB[theme]}>
                     Unencrypted
                 </Text>
             </Center>
@@ -59,10 +64,10 @@ export default function EncryptionSettings(): JSX.Element {
             </Box>
         }
         <Spacer />
-        <Button colorScheme='dark' borderRadius='full' variant='subtle'
+        <UIButton context='primary' borderRadius='full'
             onPress={handleResetKey} my='12px'>
             Reset encryption key
-        </Button>
+        </UIButton>
         </VStack>
 
         <ReencryptionModal 

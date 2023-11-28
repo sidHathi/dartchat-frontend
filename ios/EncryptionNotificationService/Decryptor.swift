@@ -43,13 +43,13 @@ public class Decryptor {
     let decryptedString = decryptString(secretKey: secretKey!, stringVal: message.encryptedFields!, publicKey: decodedPublicKey!);
     if (decryptedString == nil) {
 //      return DecryptedFields(content: "Secret key " + secretKey!.base64EncodedString());
-//      return nil;
+      return nil;
     }
     do {
       let parsedJSON = try JSONDecoder().decode(DecryptedFields.self, from: decryptedString!.data(using: .utf8)!);
       return parsedJSON;
     } catch {
-//      return DecryptedFields(content: "Final JSON parse failed");
+//      return DecryptedFields(content: "Final JSON parse failed " + decryptedString!);
       return nil;
     }
   }

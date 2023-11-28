@@ -66,13 +66,31 @@ export const storeUpdatedUserConversations = async (newConversations: Conversati
     }
 };
 
+const setNewColorTheme = async (newTheme: 'dark' | 'light') => {
+    try {
+        const existingUser = await getStoredUserData();
+        if (existingUser) {
+            const updatedUser = {
+                ...existingUser,
+                uiTheme: newTheme
+            } as UserData;
+            await storeUserData(updatedUser);
+            return true;
+        }
+    } catch (err) {
+        console.log(err);
+        return false;
+    }
+}
+
 const localStore = {
     storeUserData,
     getStoredUserData,
     deleteStoredUserData,
     setBackgroundUpdateFlag,
     getBackgroundUpdateFlag,
-    storeUpdatedUserConversations
+    storeUpdatedUserConversations,
+    setNewColorTheme
 }
 
 export default localStore;

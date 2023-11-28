@@ -13,7 +13,7 @@ export default function MessageMediaDisplay({
     handleMediaSelect?: (index: number) => void;
 }): JSX.Element {
     const scrollRef = useRef<ScrollView | null>(null);
-    const displayHeight = 300;
+    const displayHeight = 360;
     const screenWidth = Dimensions.get('window').width;
     const mediaWidth: number = media.reduce((acc, curr) => {
         const aspect = curr.height / curr.width;

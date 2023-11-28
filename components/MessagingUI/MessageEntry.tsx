@@ -20,6 +20,8 @@ import PollBuilder from "../Polls/PollBuilder";
 import EventBuilder from "../EventsUI/EventBuilder";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
 import useRequest from "../../requests/useRequest";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function MessageEntry({
     replyMessage, 
@@ -45,6 +47,7 @@ export default function MessageEntry({
     const screenWidth = Dimensions.get('window').width;
     const dispatch = useAppDispatch();
     const { keyboardShown, keyboardHeight } = useKeyboard();
+    const { theme } = useContext(UIContext);
 
     const { user } = useContext(AuthIdentityContext);
     const { socket, disconnected: socketDisconnected, resetSocket } = useContext(SocketContext);
@@ -187,7 +190,7 @@ export default function MessageEntry({
         }
     }, [messageText]);
 
-    return <Box w='100%' paddingBottom={keyboardShown && !eventBuilderOpen && !pollBuilderOpen ? `${keyboardHeight + 12}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor='white' paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible' mt={keyboardShown ? '24px': '0px'}>
+    return <Box w='100%' paddingBottom={keyboardShown && !eventBuilderOpen && !pollBuilderOpen ? `${keyboardHeight + 12}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor={colors.solid[theme]} paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible' mt={keyboardShown ? '24px': '0px'}>
         {
             selectedMediaBuffer &&
             <MediaBufferDisplay
@@ -199,7 +202,7 @@ export default function MessageEntry({
         <HStack w='100%' space='1'>
             <VStack>
                 <Spacer />
-            <IconButton label='plus' size={32} shadow='none' color='black' onPress={() => {
+            <IconButton label='plus' size={32} shadow='none' color={colors.textMainNB[theme]} onPress={() => {
                 openContentMenu && openContentMenu();
                 setPollBuilderOpen(false);
                 setEventBuilderOpen(false);
@@ -221,6 +224,8 @@ export default function MessageEntry({
             <Text color='red.500' fontSize='xs'>{errorMessage}</Text>
             }
             <MentionsInput
+                multiline={true}
+                numberOfLines={3}
                 maxLength={512}
                 onPressIn={() => {
                     checkSocketReconnect()
@@ -236,8 +241,8 @@ export default function MessageEntry({
             <Spacer />
             {!pollBuilderOpen && !eventBuilderOpen && (
                 mediaLoading ? 
-                <Spinner type='ThreeBounce' color="#333" size={40} /> :
-                <IconButton label='send' size={40} onPress={handleMessageSend} color="black" shadow="2" disabled={(!networkConnected || socketDisconnected)} />)
+                <Spinner type='ThreeBounce' color={colors.spinner[theme]} size={40} /> :
+                <IconButton label='send' size={40} onPress={handleMessageSend} color={colors.textMainNB[theme]} shadow="2" disabled={(!networkConnected || socketDisconnected)} />)
             }
             </VStack>
         </HStack>

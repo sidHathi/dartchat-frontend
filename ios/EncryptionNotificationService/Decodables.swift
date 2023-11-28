@@ -40,7 +40,7 @@ public struct ReplyRef: Decodable {
   let id: String;
   let content: String;
   let senderId: String;
-  let media: [String]?;
+  let media: Bool?;
 };
 
 public struct MessageMedia: Decodable {
@@ -82,7 +82,7 @@ public struct EncryptedMessage: Decodable {
 
 public struct DecryptedFields: Decodable {
   var content: String;
-  var media: MessageMedia?;
+  var media: [MessageMedia]?;
 };
 
 public struct EncryptedMessagePacket: Decodable {

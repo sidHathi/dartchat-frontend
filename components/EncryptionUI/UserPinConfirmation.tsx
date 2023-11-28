@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import { View, Box, Heading, Text, Center, Button, HStack } from 'native-base';
 import Spinner from "react-native-spinkit";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { MaterialIcons } from "@expo/vector-icons";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function UserPinConfirmation({
     selectedPin,
@@ -15,8 +17,10 @@ export default function UserPinConfirmation({
     onReject: () => void;
     validationLoading: boolean;
 }): JSX.Element {
-    return <View flex='1' bgColor='#fefefe'>
-        <Box w='90%' m='auto' p='24px' bgColor='#f5f5f5' shadow='9' borderRadius='24px'>
+    const { theme } = useContext(UIContext);
+
+    return <View flex='1' bgColor={colors.bgBase[theme]}>
+        <Box w='90%' m='auto' p='24px' bgColor={colors.card[theme]} shadow='9' borderRadius='24px'>
             <TouchableOpacity onPress={onReject}>
                 <HStack space={2}>
                 <MaterialIcons name="cancel" size={22} color="black" />

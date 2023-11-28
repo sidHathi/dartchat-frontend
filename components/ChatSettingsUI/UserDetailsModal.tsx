@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useMemo } from "react";
-import { Modal, Text, Center, Heading, Button, Icon, Box } from 'native-base';
+import { Modal, Text, Center, Heading, Button, Icon, Box, theme } from 'native-base';
 import { ChatRole, Conversation, UserConversationProfile } from "../../types/types";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import IconImage from "../generics/IconImage";
@@ -15,6 +15,9 @@ import SocketContext from "../../contexts/SocketContext";
 import { buildCProfileForUserProfile } from "../../utils/identityUtils";
 import { getNewConversationKeys } from "../../utils/encryptionUtils";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
+import UIButton from "../generics/UIButton";
 
 export default function UserDetailsModal({
     isOpen,
@@ -38,6 +41,7 @@ export default function UserDetailsModal({
     const { currentConvo } = useAppSelector(chatSelector);
     const { userConversations } = useAppSelector(userDataSelector);
     const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext);
 
     const userProfile = useMemo(() => {
         if (!currentConvo || !user) return undefined;
@@ -106,7 +110,7 @@ export default function UserDetailsModal({
         };
         dispatch(openPrivateMessage(seedConvo, user.id, userConversations, conversationsApi, recipientKeyMap, secretKey));
         if (secretKey && encodedSecretKey && !findPrivateMessageIdForUser(profile, userConversations)) {
-            await handleNewConversationKey(seedConvo.id, secretKey, encodedSecretKey);
+            await handleNewConversationKey(seedConvo.id, secretKey);
         }
         handleClose();
         navToMessages && navToMessages();
@@ -120,7 +124,7 @@ export default function UserDetailsModal({
     </Box>;
 
     return <Modal isOpen={isOpen} onClose={handleClose} size='lg'>
-        <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px'>
+        <Modal.Content borderRadius='24px' shadow='9' style={{shadowOpacity: 0.12}} p='24px' bgColor={colors.card[theme]}>
             <Modal.CloseButton />
             <Center w='100%' py='24px'>
                 {getModalProfileImage()}
@@ -128,7 +132,7 @@ export default function UserDetailsModal({
                     (profile.role && profile.role === 'admin') &&
                     <AdminBadge />
                 }
-                <Heading mt='18px'>
+                <Heading mt='18px' color={colors.textMainNB[theme]}>
                     {profile.displayName || ''}
                 </Heading>
                 {profile.handle &&
@@ -139,27 +143,39 @@ export default function UserDetailsModal({
             </Center>
             { 
                 navToMessages !== undefined &&
-                <Button colorScheme='dark' variant='subtle' w='100%' borderRadius='24px' mb='6px' leftIcon={<Icon as={Feather} name='message-circle' />} onPress={handleMessage}>
+                <UIButton 
+                    context='primary' 
+                    w='100%' 
+                    borderRadius='24px' 
+                    mb='6px'
+                    leftIconProps={{
+                        as: Feather,
+                        name: 'message-circle'
+                    }}
+                    onPress={handleMessage}
+                >
                     Message
-                </Button>
+                </UIButton>
             }
             {
                 showToggleAdminButton &&
-                <Button colorScheme='light' variant='subtle' w='100%' borderRadius='24px' mb='6px' leftIcon={<Icon as={FontAwesome5} name={profile.role === 'admin' ? 'user': 'user-ninja'} />} onPress={handleToggleAdminStatus}>
+                <UIButton context='secondary' w='100%' borderRadius='24px' mb='6px' leftIcon={<Icon as={FontAwesome5} name={profile.role === 'admin' ? 'user': 'user-ninja'} />} onPress={handleToggleAdminStatus}>
                     {
                         profile.role === 'admin' ?
                         'Remove admin status' :
                         'Make group admin'
                     }
-                </Button>
+                </UIButton>
             }
             {
                 handleRemove && permissionToRemove &&
-                <Button colorScheme='dark' variant='ghost' w='100%' borderRadius='24px' mb='12px' onPress={handleRemove}>
-                    <Text color='red.500'>
+                <UIButton context='ghost' w='100%' borderRadius='24px' mb='12px' onPress={handleRemove} textProps={{
+                    color: 'red.500'
+                }}>
+                    {/* <Text color='red.500'> */}
                     Remove from group
-                    </Text>
-                </Button>
+                    {/* </Text> */}
+                </UIButton>
             }
         </Modal.Content>
     </Modal>

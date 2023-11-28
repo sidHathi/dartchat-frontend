@@ -246,8 +246,8 @@ export default function NotificationsController(): JSX.Element {
                 case EventType.DISMISSED:
                     break;
                 case EventType.PRESS:
-                    console.log('NOTIFEE PRESS TRIGGER:')
-                    console.log(detail.notification?.data);
+                    // console.log('NOTIFEE PRESS TRIGGER:')
+                    // console.log(detail.notification?.data);
                     if (detail?.notification?.data) {
                         dispatch(setNotificationLoading(true));
                         await pullUserSecrets();

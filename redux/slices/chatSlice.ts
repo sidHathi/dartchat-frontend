@@ -562,6 +562,27 @@ export const chatSlice = createSlice({
                     }
                 }
             }
+        },
+        handleRecentMessages: (state, action: PayloadAction<Message[]>) => {
+            if (!state.currentConvo) return state;
+            const mIds = state.currentConvo.messages.map((m) => m.id);
+
+            let decryptedMessages = action.payload as DecryptedMessage[];
+            if (state.secretKey) {
+                decryptedMessages = filterEncryptedMessages(decryptedMessages, state.secretKey);
+            }
+            return {
+                ...state,
+                silent: false,
+                currentConvo: {
+                    ...state.currentConvo,
+                    messages: [
+                        ...decryptedMessages.filter((m) =>
+                        !mIds.includes(m.id)),
+                        ...state.currentConvo.messages
+                    ]
+                }
+            };
         }
     }
 });
@@ -603,7 +624,8 @@ export const {
     setPageLoading,
     setNotificationLoading,
     setNotificationSelection,
-    updatePrivUsersForNewKey
+    updatePrivUsersForNewKey,
+    handleRecentMessages
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
@@ -874,6 +896,23 @@ export const pullGallery = (api: ConversationsApi): ThunkAction<void, RootState,
         console.log(err);
     }
 };
+
+export const pullRecentMessages = (api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+
+    if (!currentConvo || currentConvo.messages.length === 0) return;
+    const lastMessage = currentConvo.messages[0];
+    const lastMessageTime = lastMessage.timestamp;
+    try {
+        dispatch(setRequestLoading(true));
+
+        const recentMessages = await api.getConversationMessagesToDate(currentConvo.id, lastMessageTime);
+        dispatch(handleRecentMessages(recentMessages));
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        dispatch(setRequestLoading(false))
+    }
+}
 
 const chatReducer = chatSlice.reducer;
 export const chatSelector = (state: RootState) => state.chatReducer;

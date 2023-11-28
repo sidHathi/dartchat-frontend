@@ -1,5 +1,6 @@
 import React from "react";
 import { HStack, Button, Box, Spacer } from 'native-base';
+import UIButton from "./UIButton";
 
 export default function SpacedTabs({
     options,
@@ -16,17 +17,19 @@ export default function SpacedTabs({
                 {
                     options.map((opt, idx) => {
                         const widthPer = 1/options.length * 100 - 2;
-                        return <Button 
+                        return <UIButton 
                             key={`${opt}-${idx}`}
                             w={`${widthPer}%`} 
                             mx='auto' 
                             borderRadius='24px' 
-                            variant='subtle' 
-                            colorScheme={opt === selectedOption ? 'dark' : 'light'}
+                            context={opt === selectedOption ? 'primary' : 'secondary'}
                             onPress={() => setSelectedOption(opt)}
-                            size='sm'>
+                            size='sm'
+                            textProps={{
+                                fontSize: '12px'
+                            }}>
                             {`${opt}`}
-                        </Button>
+                        </UIButton>
                     })
                 }
             </HStack>

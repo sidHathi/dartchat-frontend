@@ -1,7 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext } from 'react';
 import { Modal, Heading, Text, ScrollView, VStack, Box, HStack, Radio, Checkbox, Spacer, Pressable, Button } from 'native-base';
 import { Poll } from '../../types/types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import UIContext from '../../contexts/UIContext';
+import colors from '../colors';
 
 export default function PollResponder({
     isVisible,
@@ -14,6 +16,7 @@ export default function PollResponder({
     poll: Poll,
     handleSubmit: (selectedIndices: number[]) => void;
 }): JSX.Element {
+    const { theme } = useContext(UIContext);
     const [selectedOptionIndices, setSelectedOptionIndices] = useState<number[]>([]);
 
     const handleSelectOption = useCallback((optIdx: number) => {
@@ -67,7 +70,7 @@ export default function PollResponder({
         }
         size='xl'
     >
-        <Modal.Content borderRadius='24px' p='24px'>
+        <Modal.Content borderRadius='24px' p='24px' bgColor={colors.solid[theme]}>
             <Modal.CloseButton />
             <Heading fontSize='md'>
                 {poll.question}

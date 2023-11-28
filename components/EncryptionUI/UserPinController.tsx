@@ -10,6 +10,8 @@ import { Center, Text, View } from "native-base";
 import Spinner from "react-native-spinkit";
 import UserPinEntry from "./UserPinEntry";
 import UserPinConfirmation from "./UserPinConfirmation";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
 
 export default function UserPinController(): JSX.Element {
     /*
@@ -29,6 +31,7 @@ export default function UserPinController(): JSX.Element {
     const { user, initUserKeyInfo } = useContext(AuthIdentityContext);
     const { secrets, secretsLoading, initUserSecret, handleNewDBSecrets, initPinKey } = useContext(UserSecretsContext);
     const { usersApi } = useRequest();
+    const { theme } = useContext(UIContext)
 
     // const [newKeySalt, setNewKeySalt] = useState<string | undefined>();
     const [validationLoading, setValidationLoading] = useState(false);
@@ -112,10 +115,10 @@ export default function UserPinController(): JSX.Element {
         }
     }, [secrets, secretsLoading, user, userSecretsInitialized]);
 
-    const LoadingScreen = () => <View flex='1' bgColor='#fefefe'>
+    const LoadingScreen = () => <View flex='1' bgColor={colors.bgBase[theme]}>
         <Center flex='1'>
-            <Spinner type='ThreeBounce' />
-            <Text>
+            <Spinner type='ThreeBounce' color={colors.textMainNB[theme]}/>
+            <Text color={colors.textMainNB[theme]}>
                 Verifying encryption status
             </Text>
         </Center>

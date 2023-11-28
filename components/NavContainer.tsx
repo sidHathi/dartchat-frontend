@@ -17,6 +17,7 @@ import SocketContext from "../contexts/SocketContext";
 import UIContext from "../contexts/UIContext";
 import AuthIdentityContext from "../contexts/AuthIdentityContext";
 import IconImage from "./generics/IconImage";
+import colors from "./colors";
 
 export default function NavContainer({ children }: 
     PropsWithChildren<{
@@ -24,7 +25,7 @@ export default function NavContainer({ children }:
     }>): JSX.Element {
     const dispatch = useAppDispatch();
     const { user } = useContext(AuthIdentityContext)
-    const { uiState: navState, navSwitch } = useContext(UIContext);
+    const { uiState: navState, navSwitch, theme } = useContext(UIContext);
     const screenHeight = Dimensions.get('window').height;
     const { networkConnected, apiReachable } = useContext(NetworkContext);
     const { disconnected: socketDisconnected } = useContext(SocketContext); 
@@ -35,9 +36,9 @@ export default function NavContainer({ children }:
         navSwitch('messaging');
     }, [navSwitch, networkConnected]);
 
-    return <View w='100%' h={screenHeight} backgroundColor='#111'>
-        <Box backgroundColor='#fefefe' h='100px' overflow='hidden' zIndex='1001'>
-            <Box backgroundColor='#111' borderBottomRightRadius='24px' h='100px' zIndex='999'>
+    return <View w='100%' h={screenHeight} backgroundColor={colors.navBG[theme]}>
+        <Box backgroundColor={colors.bgLight[theme]} h='100px' overflow='hidden' zIndex='1001'>
+            <Box backgroundColor={colors.navBG[theme]} borderBottomRightRadius='24px' h='100px' zIndex='999'>
                 <HStack w='100%' h='100px' justifyContent='space-between' alignItems='flex-start' paddingTop='50px' paddingX='12px'>
                     <Center paddingTop='0' paddingLeft='6px'>
                         <SvgXml xml={DartChatLogoXML} height='42' width='110'/>
@@ -55,12 +56,12 @@ export default function NavContainer({ children }:
                 </HStack>
             </Box>
         </Box>
-        <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor='#fefefe' borderTopLeftRadius='24px' shadow='9' zIndex='1000' overflow='hidden'>
+        <Box w='100%' h={`${screenHeight - 90} px`} backgroundColor={colors.bgLight[theme]} borderTopLeftRadius='24px' shadow='9' zIndex='1000' overflow='hidden'>
             {children}
         </Box>
         <Center marginTop='-90px' zIndex='1002'>
             <HStack>
-            <Box w='160px' h='60px' backgroundColor='#111' borderRadius='full' shadow='9' marginX='5px'>
+            <Box w='160px' h='60px' backgroundColor={colors.navBG[theme]} borderRadius='full' shadow='9' marginX='5px'>
                 <Center h='60px'>
                     <HStack w='90px'>
                         <Pressable opacity={navState.screen === 'conversations' ? 1 : 0.5} onPress={() => navSwitch('conversations')}>
@@ -74,7 +75,7 @@ export default function NavContainer({ children }:
                     </HStack>
                 </Center>
             </Box>
-            <Box w='60px' h='60px' backgroundColor='#111' borderRadius='full' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
+            <Box w='60px' h='60px' backgroundColor={colors.navBG[theme]} borderRadius='full' shadow='9' marginX='5px' opacity={networkConnected ? '1' : '0.2'}>
                 <Center h='60px'>
                     <Pressable onPress={handleNewMessage}>
                         <MaterialCommunityIcons name="message-draw" size={28} color="white" />

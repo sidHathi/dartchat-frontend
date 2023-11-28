@@ -20,6 +20,9 @@ import { getGroupAvatarFromCropImage, selectProfileImage } from "../../utils/ide
 import { Image } from 'react-native-image-crop-picker';
 import Spinner from "react-native-spinkit";
 import { useKeyboard } from "@react-native-community/hooks";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
+import UIButton from "../generics/UIButton";
 
 export default function ChatBuilder({exit}: {
         exit: () => void
@@ -33,6 +36,7 @@ export default function ChatBuilder({exit}: {
     const { conversationsApi } = useRequest();
     const { userConversations } = useAppSelector(userDataSelector);
     const { keyboardShown } = useKeyboard();
+    const { theme } = useContext(UIContext);
 
     const [isGroup, setIsGroup] = useState(false);
     const [userQuery, setUserQuery] = useState<string | undefined>(undefined);
@@ -199,9 +203,10 @@ export default function ChatBuilder({exit}: {
         fullSize: boolean,
         profile: UserConversationProfile;
         onPress: () => void;
-    }) : JSX.Element => (
-        <Pressable onPress={onPress} mr='4px' mb='8px' overflow='visible'>
-            <Box py={fullSize ? '12px' : '4px'} px='6px' borderRadius='12px' bgColor='#fefefe' shadow='3' w={fullSize ? '100%' : 'auto'}>
+    }) : JSX.Element => {
+        const { theme } = useContext(UIContext);
+        return <Pressable onPress={onPress} mr='4px' mb='8px' overflow='visible'>
+            <Box py={fullSize ? '12px' : '4px'} px='6px' borderRadius='12px' bgColor={colors.bgLight[theme]} shadow='3' w={fullSize ? '100%' : 'auto'}>
                 <HStack w='100%'>
                     {
                     profile.avatar ?
@@ -216,12 +221,12 @@ export default function ChatBuilder({exit}: {
                     }
                     { fullSize ?
                         <Box mr='auto' my='auto'>
-                            <Text fontSize='md' mx='4px' fontWeight='bold'>
+                            <Text fontSize='md' mx='4px' fontWeight='bold' color={colors.textMainNB[theme]}>
                                 {profile.displayName}
                             </Text>
                         </Box> :
                         <Box>
-                            <Text fontSize='sm' mx='4px'>
+                            <Text fontSize='sm' mx='4px' color={colors.textMainNB[theme]}>
                                 {profile.displayName}
                             </Text>
                         </Box>
@@ -233,22 +238,22 @@ export default function ChatBuilder({exit}: {
                 </HStack>
             </Box>
         </Pressable>
-    )
+    }
 
-    return <View w='100%' flex='1' backgroundColor='#111'>
-        <Center h='100%' borderTopLeftRadius='24px' backgroundColor='#fefefe'>
-            <Box w={isGroup ? '96%': '90%'} shadow='9' overflow='hidden' backgroundColor='#f5f5f5' p='20px' marginTop={isGroup ? '-72px' : '-144px'} borderRadius='24px' maxH={`${screenHeight - 190} px`} style={{shadowOpacity: 0.18}}>
+    return <View w='100%' flex='1' backgroundColor={colors.navBG[theme]}>
+        <Center h='100%' borderTopLeftRadius='24px' backgroundColor={colors.bgLight[theme]}>
+            <Box w={isGroup ? '96%': '90%'} shadow='9' overflow='hidden' backgroundColor={colors.message[theme]} p='20px' marginTop={isGroup ? '-72px' : '-144px'} borderRadius='24px' maxH={`${screenHeight - 190} px`} style={{shadowOpacity: 0.18}}>
                 <ScrollView overflow='visible' maxH='100%'>
-                <Heading  marginY='12px' size='md'>
+                <Heading  marginY='12px' size='md' color={colors.textMainNB[theme]}>
                     New {isGroup ? 'Group' : 'Chat'}
                 </Heading>
                 <Button.Group isAttached marginBottom='20px' w='100%'>
-                    <Button borderLeftRadius='30px' colorScheme={isGroup ? 'light' : 'dark'} variant={isGroup ? 'outline' : 'subtle'} onPress={() => setIsGroup(false)} marginX='0' w='50%'>
+                    <UIButton borderLeftRadius='30px' context={isGroup ? 'secondary' : 'primary'} variant={isGroup ? 'outline' : 'subtle'} onPress={() => setIsGroup(false)} marginX='0' w='50%'>
                         Private Message
-                    </Button>
-                    <Button borderRightRadius='30px' colorScheme={!isGroup ? 'light' : 'dark'} variant={!isGroup ? 'outline' : 'subtle'} onPress={() => setIsGroup(true)} marginX='0' w='50%'>
+                    </UIButton>
+                    <UIButton borderRightRadius='30px' context={!isGroup ? 'secondary' : 'primary'} variant={!isGroup ? 'outline' : 'subtle'} onPress={() => setIsGroup(true)} marginX='0' w='50%'>
                         Group Chat
-                    </Button>
+                    </UIButton>
                 </Button.Group>
                
                 <VStack space={1} pb='18px' overflow='visible'>
@@ -256,12 +261,12 @@ export default function ChatBuilder({exit}: {
                         isGroup &&
                         <Box>
                             <Button.Group isAttached marginBottom='20px' w='100%'>
-                                <Button borderLeftRadius='30px' colorScheme={encryptedGroup ? 'light' : 'dark'} variant={encryptedGroup ? 'outline' : 'subtle'} onPress={() => setEncryptedGroup(false)} marginX='0' w='50%'>
+                                <UIButton borderLeftRadius='30px' context={encryptedGroup ? 'secondary' : 'primary'} variant={encryptedGroup ? 'outline' : 'subtle'} onPress={() => setEncryptedGroup(false)} marginX='0' w='50%'>
                                     Public group
-                                </Button>
-                                <Button borderRightRadius='30px' colorScheme={!encryptedGroup ? 'light' : 'dark'} variant={!encryptedGroup ? 'outline' : 'subtle'} onPress={() => setEncryptedGroup(true)} marginX='0' w='50%'>
+                                </UIButton>
+                                <UIButton borderRightRadius='30px' context={!encryptedGroup ? 'secondary' : 'primary'} variant={!encryptedGroup ? 'outline' : 'subtle'} onPress={() => setEncryptedGroup(true)} marginX='0' w='50%'>
                                     Secured group
-                                </Button>
+                                </UIButton>
                             </Button.Group>
                         </Box>
                     } 
@@ -272,7 +277,7 @@ export default function ChatBuilder({exit}: {
                             <Box h='100px' w='100%' overflow='visible'>
                                 <Center w='100%' overflow='visible'>
                                 <Button colorScheme='coolGray' mt='40px' borderRadius='24px' px='12px' variant='solid' onPress={selectImage} py='6px' opacity='0.7' flexShrink='0'>
-                                    <Text fontSize='9px' color='#f5f5f5' fontWeight='medium'>
+                                    <Text fontSize='9px' color={colors.message[theme]} fontWeight='medium'>
                                         Change profile image
                                     </Text>
                                 </Button>
@@ -292,7 +297,7 @@ export default function ChatBuilder({exit}: {
                     {
                         selectedProfiles.length > 0 &&
                         <Box>
-                        <Text color='gray.500' fontSize='xs' mb='4px'>
+                        <Text color={colors.textLightNB[theme]} fontSize='xs' mb='4px'>
                             { isGroup ? 'Selected recipients:' : 'Recipient:' }
                         </Text>
                         <ScrollView style={{overflow: 'visible'}}>
@@ -327,7 +332,7 @@ export default function ChatBuilder({exit}: {
                     {
                         isGroup &&
                         <Box>
-                            <Text fontSize='xs' marginTop='8px' color='coolGray.600'>
+                            <Text fontSize='xs' marginTop='8px' color={colors.textLightNB[theme]}>
                                 Choose Group name
                             </Text>
                             <Input
@@ -347,7 +352,7 @@ export default function ChatBuilder({exit}: {
                         </Box>
                     }{ isGroup &&
                         <Box>
-                            <Text fontSize='xs' marginTop='8px' color='coolGray.600'>
+                            <Text fontSize='xs' marginTop='8px' color={colors.textLightNB[theme]}>
                                 Choose Your Display Name
                             </Text>
                             <Input
@@ -374,12 +379,12 @@ export default function ChatBuilder({exit}: {
                         </Text>
                     </Center>
                 }
-                <Button w='100%' colorScheme='dark' borderRadius='30px' onPress={handleSubmit} variant='subtle' color='white' mb='12px'>
+                <UIButton w='100%' context='primary' borderRadius='30px' onPress={handleSubmit}  mb='12px'>
                     Create Chat
-                </Button>
-                <Button w='100%' colorScheme='coolGray' borderRadius='30px' onPress={exit} variant='subtle' mb={keyboardShown ? '300px': '18px'} >
+                </UIButton>
+                <UIButton w='100%' context='secondary' borderRadius='30px' onPress={exit} mb={keyboardShown ? '300px': '18px'} >
                     Close
-                </Button>
+                </UIButton>
                 </ScrollView>
             </Box>
         </Center>
