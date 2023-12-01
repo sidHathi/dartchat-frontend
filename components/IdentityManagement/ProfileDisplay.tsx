@@ -13,6 +13,7 @@ import { useAppDispatch } from '../../redux/hooks';
 import { setUiTheme } from '../../redux/slices/userDataSlice';
 import localStore from '../../localStore/localStore';
 import colors from '../colors';
+import useRequest from '../../requests/useRequest';
 
 export default function ProfileDisplay({
     handleExit,
@@ -25,11 +26,12 @@ export default function ProfileDisplay({
     const { user, logOut } = useContext(AuthIdentityContext);
     const { theme } = useContext(UIContext);
     const dispatch = useAppDispatch();
+    const { usersApi } = useRequest();
 
     const handleShare = () => {};
 
     const setTheme = useCallback(async (newTheme: 'light' | 'dark') => {
-        dispatch(setUiTheme(newTheme));
+        dispatch(setUiTheme(newTheme, usersApi));
         await localStore.setNewColorTheme(newTheme);
     }, [theme]);
     

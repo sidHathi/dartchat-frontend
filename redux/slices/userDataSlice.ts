@@ -252,7 +252,7 @@ export const userDataSlice = createSlice({
                 userConversations: updatedUserConvos
             }
         },
-        setUiTheme: (state, action: PayloadAction<'light' | 'dark'>) => {
+        handleNewUITheme: (state, action: PayloadAction<'light' | 'dark'>) => {
             return {
                 ...state,
                 uiTheme: action.payload
@@ -281,7 +281,7 @@ export const {
     handleRoleUpdate,
     logOutUser,
     updatePreviewNotifStatus,
-    setUiTheme
+    handleNewUITheme
 } = userDataSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
@@ -340,6 +340,19 @@ export const removeArchivedConvo = (cid: string, usersApi: UsersApi, onComplete?
         dispatch(handleArchiveConvoRemoval(cid));
         dispatch(pullLatestPreviews(usersApi));
         onComplete && onComplete();
+        dispatch(setRequestLoading(false));
+    } catch (err) {
+        dispatch(setRequestLoading(false));
+        console.log(err);
+    }
+};
+
+export const setUiTheme = (newTheme: 'dark' | 'light', usersApi: UsersApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
+    try {
+        dispatch(setRequestLoading(true));
+        await usersApi.updateUiTheme(newTheme);
+        dispatch(setRequestLoading(false));
+        dispatch(handleNewUITheme(newTheme));
     } catch (err) {
         dispatch(setRequestLoading(false));
         console.log(err);

@@ -12,6 +12,7 @@ export type UsersApi = {
     setKeySalt: (salt: string) => Promise<any | never>;
     setUserSecrets: (secret: string) => Promise<any | never>;
     updatePublicKey: (newKey: string) => Promise<any | never>;
+    updateUiTheme: (newTheme: 'dark' | 'light') => Promise<any | never>;
 };
 
 export default function usersApi(apiService: ApiService): UsersApi {
@@ -155,6 +156,22 @@ export default function usersApi(apiService: ApiService): UsersApi {
         })
     };
 
+    const updateUiTheme = (newTheme: 'dark' | 'light'): Promise<any | never> => {
+        return apiService.request({
+            method: 'PUT',
+            url: `/users/me/updateUiTheme`,
+            data: {
+                uiTheme: newTheme
+            }
+        }).then((res) => {
+            if (res && res.data) {
+                return res.data;
+            }
+        }).catch((err) => {
+            return Promise.reject(err);
+        });
+    };
+
     return {
         getCurrentUser,
         createNewUser,
@@ -164,6 +181,7 @@ export default function usersApi(apiService: ApiService): UsersApi {
         readConversationKeyUpdates,
         setKeySalt,
         setUserSecrets,
-        updatePublicKey
+        updatePublicKey,
+        updateUiTheme,
     };
 }
