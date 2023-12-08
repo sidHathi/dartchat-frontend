@@ -214,7 +214,7 @@ export default function ChatSettingsHome({
                 currentConvo && currentConvo.group &&
                 (
                     imageUploading ?
-                    <Spinner type='ThreeBounce' /> :
+                    <Spinner type='ThreeBounce' color={colors.textMainNB[theme]} /> :
                     <UIButton 
                         py='3px' 
                         context={nameAvatarEditing ? 'primary' : 'secondary'} mx='auto' 

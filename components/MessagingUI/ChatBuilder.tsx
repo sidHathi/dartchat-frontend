@@ -13,7 +13,7 @@ import SocketContext from "../../contexts/SocketContext";
 import useRequest from "../../requests/useRequest";
 import { getDownloadUrl } from "../../firebase/cloudStore";
 import IconImage from "../generics/IconImage";
-import { autoGenGroupAvatar } from "../../utils/messagingUtils";
+import { autoGenGroupAvatar, initConvo } from "../../utils/messagingUtils";
 import { getNewConversationKeys } from "../../utils/encryptionUtils";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
 import { getGroupAvatarFromCropImage, selectProfileImage } from "../../utils/identityUtils";
@@ -119,51 +119,31 @@ export default function ChatBuilder({exit}: {
 
     const handleSubmit = useCallback(async () => {
         if (!user || !checkParticipantValidity()) return;
+        const userProfile = {
+            displayName: userDispName || user.displayName || user.handle || user.email,
+            id: user.id || 'test',
+            handle: user.handle,
+            avatar: user.avatar,
+            notifications: 'all',
+            publicKey: user.publicKey,
+            role: isGroup ? 'admin' : undefined
+        } as UserConversationProfile;
         const participants: UserConversationProfile[] = [
             ...selectedProfiles,
-            {
-                displayName: userDispName || user.displayName || user.handle || user.email,
-                id: user.id || 'test',
-                handle: user.handle,
-                avatar: user.avatar,
-                notifications: 'all',
-                publicKey: user.publicKey,
-                role: isGroup ? 'admin' : undefined
-            }
-        ]
-
-        const encrypted = (isGroup && encryptedGroup) || (!isGroup && encryptionPossible);
-        let publicKey: string | undefined = undefined;
-        let recipientKeyMap: {[key: string] : string} | undefined = undefined;
-        let secretKey: Uint8Array | undefined = undefined;
-        let encodedSecretKey: string | undefined = undefined;
-        if (encrypted) {
-            const keys = await getConversationKeys();
-            if (keys && Object.entries(keys.encryptedKeysForUsers).length === selectedProfiles.length) {
-                secretKey = keys.keyPair.secretKey;
-                encodedSecretKey = keys.encodedKeyPair.secretKey;
-                publicKey = keys.encodedKeyPair.publicKey;
-                recipientKeyMap = keys.encryptedKeysForUsers;
-            }
-        }
-
+            userProfile,
+        ];
         const avatar = groupAvatar || await autoGenGroupAvatar(isGroup, participants, user?.id);
-        const newConvo: Conversation = {
-            id: affiliatedCid || uuid.v4() as string,
-            settings: {},
-            participants: participants,
-            name: getGroupName(),
-            messages: [],
-            group: isGroup,
+
+        const { newConvo, recipientKeyMap, secretKey } = await initConvo(
+            selectedProfiles,
+            userProfile,
+            getGroupName(),
+            isGroup,
+            encryptedGroup,
+            encryptionPossible,
+            affiliatedCid,
             avatar,
-            encryptionLevel: encrypted ? 'encrypted' : 'none',
-            publicKey,
-            keyInfo: publicKey ? {
-                createdAt: new Date(),
-                privilegedUsers: participants.map(p => p.id),
-                numberOfMessages: 0
-            } : undefined
-        };
+        );
 
         if (isGroup) {
             dispatch(setConvo({

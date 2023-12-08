@@ -201,7 +201,7 @@ export default function MessageDisplay({
                             </Box> :
                             <></>
                         :
-                    <Box paddingX='12px' paddingY='6px' borderRadius='24px' backgroundColor={(isSystemMessage || message.messageType === 'deletion') ? 'transparent' : colors.message[theme]} w='100%' margin='0px' shadow={
+                    <Box paddingX='15px' paddingY='6px' borderRadius='24px' backgroundColor={(isSystemMessage || message.messageType === 'deletion') ? 'transparent' : colors.message[theme]} w='100%' margin='0px' shadow={
                         (selected && !(isSystemMessage || message.messageType === 'deletion')) ? '3' : 'none'
                     } overflowX='visible' opacity={(sendFailed && !isSystemMessage) ? '0.5' : '1'}>
                         <VStack overflowX='visible'>

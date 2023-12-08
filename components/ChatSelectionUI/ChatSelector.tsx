@@ -164,11 +164,11 @@ export default function ChatSelector({
                     height: '100%'
                 }}>
                 <Box pr='18px' pl='6px' m='auto'>
-                    <Box m='auto' w='50px' bgColor='#f5f5f5' borderRadius='30px' h='50px' display='flex' pt='10px' shadow='0'>
+                    <Box m='auto' w='50px' bgColor={colors.message[theme]} borderRadius='30px' h='50px' display='flex' pt='10px' shadow='0'>
                         {
                             !((deleteLoadingId && chat.cid === deleteLoadingId) || requestLoading) ?
                             <IconButton label={chat.group === undefined || chat.group ? 'leave' : 'delete'} size={30} color='salmon' shadow='none' additionalProps={{margin: 'auto'}}/> :
-                            <Spinner color='black' />
+                            <Spinner color={colors.textMainNB[theme]} />
                         }
                     </Box>
                 </Box>

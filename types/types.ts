@@ -12,12 +12,15 @@ export type UserData = {
     keySalt?: string; // base64 encoded random prime number
     secrets?: string;
     uiTheme?: 'dark' | 'light';
+    devMode?: boolean;
+    systemRole?: 'admin' | 'plebian';
 };
 
 export type UIScreen = 'messaging' |
     'conversations' |
     'social' |
-    'profile';
+    'profile' |
+    'dev';
 
 type MessageType = 'user' | 'system' | 'deletion';
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Button, Center, Modal, VStack, Text, Select, CheckIcon } from "native-base";
+import { Center, Modal, VStack, Text, Select, CheckIcon } from "native-base";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 import { chatSelector, pullConversation, setCCPublicKey, updatePrivUsersForNewKey } from "../../../redux/slices/chatSlice";
 import reencryptor, { Reencryptor } from "../../../utils/reencryptor";

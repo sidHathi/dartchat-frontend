@@ -18,6 +18,7 @@ const initialState: {
     archivedConvos?: string[];
     publicKey?: string;
     uiTheme?: 'light' | 'dark';
+    devMode?: boolean;
 } = {
     id: '',
     userConversations: [],
@@ -230,7 +231,7 @@ export const userDataSlice = createSlice({
                 needsServerSync: false,
                 requestLoading: false,
                 uiTheme: state?.uiTheme
-            }
+            };
         },
         updatePreviewNotifStatus: (state, action: PayloadAction<{
             cid: string,
@@ -250,14 +251,20 @@ export const userDataSlice = createSlice({
             return {
                 ...state,
                 userConversations: updatedUserConvos
-            }
+            };
         },
         handleNewUITheme: (state, action: PayloadAction<'light' | 'dark'>) => {
             return {
                 ...state,
                 uiTheme: action.payload
-            }
-        }
+            };
+        },
+        handleNewDevMode: (state, action: PayloadAction<boolean>) => {
+            return {
+                ...state,
+                devMode: action.payload
+            };
+        },
     }
 });
 
@@ -281,7 +288,8 @@ export const {
     handleRoleUpdate,
     logOutUser,
     updatePreviewNotifStatus,
-    handleNewUITheme
+    handleNewUITheme,
+    handleNewDevMode
 } = userDataSlice.actions;
 
 export const handleConversationDelete = (cid: string, conversationsApi: ConversationsApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
@@ -353,6 +361,18 @@ export const setUiTheme = (newTheme: 'dark' | 'light', usersApi: UsersApi): Thun
         await usersApi.updateUiTheme(newTheme);
         dispatch(setRequestLoading(false));
         dispatch(handleNewUITheme(newTheme));
+    } catch (err) {
+        dispatch(setRequestLoading(false));
+        console.log(err);
+    }
+};
+
+export const setDevMode = (devMode: boolean, usersApi: UsersApi): ThunkAction<void, RootState, any, any> => async (dispatch) => {
+    try {
+        dispatch(setRequestLoading(true));
+        await usersApi.setDevMode(devMode);
+        dispatch(setRequestLoading(false));
+        dispatch(handleNewDevMode(devMode));
     } catch (err) {
         dispatch(setRequestLoading(false));
         console.log(err);

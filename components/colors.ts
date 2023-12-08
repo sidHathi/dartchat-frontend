@@ -76,7 +76,15 @@ const colors: { [key: string]: AdaptingColor } = {
     select: {
         light: '#f7f7f7',
         dark: '#333'
-    }
+    },
+    barSolid: {
+        light: '#333',
+        dark: '#777'
+    },
+    barLight: {
+        light: '#555',
+        dark: '#aaa'
+    },
 };
 
 export default colors;

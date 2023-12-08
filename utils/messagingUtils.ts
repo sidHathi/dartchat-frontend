@@ -4,7 +4,8 @@ import { parseValue } from "react-native-controlled-mentions";
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
 import { launchImageLibrary, Asset } from "react-native-image-picker";
 import { parseConversation, parseSocketEvent, parseSocketMessage } from "./requestUtils";
-import { decodeKey, decryptMessage, encryptMessage } from "./encryptionUtils";
+import { decodeKey, decryptMessage, encryptMessage, getNewConversationKeys } from "./encryptionUtils";
+import uuid from 'react-native-uuid';
 
 export const findPrivateMessageIdForUser = (recipientProfile: UserConversationProfile, userConversations: ConversationPreview[]): string | undefined => {
     const matches = userConversations.filter((preview) => {
@@ -227,3 +228,54 @@ export const constructPreviewForConversation = (convo: Conversation, uid: string
         userRole: userProfile.role
     } as ConversationPreview;
 };
+
+export const initConvo = async (
+    selectedProfiles: UserConversationProfile[],
+    userProfile: UserConversationProfile,
+    groupName: string,
+    isGroup: boolean,
+    encryptedGroup: boolean,
+    encryptionPossible: boolean,
+    affiliatedCid?: string,
+    avatar?: AvatarImage
+) => {
+    const participants: UserConversationProfile[] = [
+        ...selectedProfiles,
+        userProfile,
+    ];
+    const encrypted = (isGroup && encryptedGroup) || (!isGroup && encryptionPossible);
+    let publicKey: string | undefined = undefined;
+    let recipientKeyMap: {[key: string] : string} | undefined = undefined;
+    let secretKey: Uint8Array | undefined = undefined;
+    if (encrypted) {
+        const keys = await getNewConversationKeys(selectedProfiles);
+        if (keys && Object.entries(keys.encryptedKeysForUsers).length === selectedProfiles.length) {
+            secretKey = keys.keyPair.secretKey;
+            publicKey = keys.encodedKeyPair.publicKey;
+            recipientKeyMap = keys.encryptedKeysForUsers;
+        }
+    }
+
+    const newConvo: Conversation = {
+        id: affiliatedCid || uuid.v4() as string,
+        settings: {},
+        participants: participants,
+        name: groupName,
+        messages: [],
+        group: isGroup,
+        avatar,
+        encryptionLevel: encrypted ? 'encrypted' : 'none',
+        publicKey,
+        keyInfo: publicKey ? {
+            createdAt: new Date(),
+            privilegedUsers: participants.map(p => p.id),
+            numberOfMessages: 0
+        } : undefined
+    };
+
+    return {
+        newConvo,
+        recipientKeyMap,
+        secretKey,
+    };
+}

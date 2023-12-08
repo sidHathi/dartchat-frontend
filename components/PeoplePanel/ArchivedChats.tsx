@@ -11,6 +11,9 @@ import SocketContext from "../../contexts/SocketContext";
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import { buildDefaultProfileForUser } from "../../utils/identityUtils";
 import UserSecretsContext from "../../contexts/UserSecretsContext";
+import colors from "../colors";
+import UIContext from "../../contexts/UIContext";
+import UIButton from "../generics/UIButton";
 
 export default function ArchivedChats(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -19,6 +22,7 @@ export default function ArchivedChats(): JSX.Element {
     const { socket } = useContext(SocketContext);
     const { conversationsApi, usersApi } = useRequest();
     const { forgetConversationKeys } = useContext(UserSecretsContext);
+    const { theme } = useContext(UIContext);
 
     const [archivedConvoData, setArchivedConvoData] = useState<Conversation[] | undefined>();
     const [pullRequestLoading, setPullRequestLoading] = useState(false);
@@ -73,7 +77,7 @@ export default function ArchivedChats(): JSX.Element {
     }
 
     const convoCard = (convo: Conversation) => {
-        return <Box w='100%' borderRadius='12px' bgColor='#f5f5f5' p='12px' my='6px'>
+        return <Box w='100%' borderRadius='12px' bgColor={colors.message[theme]} p='12px' my='6px'>
             <HStack px='12px' space={6} py='6px'>
                  <Spacer />
                 <VStack my='6px' w='20%'>
@@ -87,20 +91,20 @@ export default function ArchivedChats(): JSX.Element {
                 <VStack w='80%' space='2'>
                     <Spacer />
                     <Box w='70%'>
-                    <Heading fontSize='md' mt='12px' mx='auto' maxW='100%'>
+                    <Heading fontSize='md' mt='12px' mx='auto' maxW='100%' color={colors.textMainNB[theme]}>
                         {convo.name}
                     </Heading>
-                    <Text fontSize='9px' mx='auto' mb='6px' maxW='100%'>
+                    <Text fontSize='9px' mx='auto' mb='6px' maxW='100%' color={colors.textMainNB[theme]}>
                         {`${convo.participants.length} members`}
                     </Text>
-                    <Button borderRadius='24px' colorScheme='dark' variant='subtle' size='sm' my='6px' onPress={() => rejoinConvo(convo)} mr='auto' w='100%'>
+                    <UIButton borderRadius='24px' context='primary' size='sm' my='6px' onPress={() => rejoinConvo(convo)} mr='auto' w='100%'>
                         Rejoin
-                    </Button>
-                    <Button borderRadius='24px' colorScheme='light' variant='subtle' size='sm' onPress={() => archiveRemove(convo.id)} mr='auto' flexShrink='0' w='100%'>
+                    </UIButton>
+                    <UIButton borderRadius='24px' context='secondary' size='sm' onPress={() => archiveRemove(convo.id)} mr='auto' flexShrink='0' w='100%'>
                         <Text color='error.500' fontSize='xs'>
                             Remove permanently
                         </Text>
-                    </Button>
+                    </UIButton>
                     </Box>
                     <Spacer />
                 </VStack>
@@ -111,13 +115,13 @@ export default function ArchivedChats(): JSX.Element {
     }
 
     return <View flex='1' px='12px'>
-        <Text color='gray.500' fontWeight='bold' fontSize='xs'>
+        <Text color={colors.textLightNB[theme]} fontWeight='bold' fontSize='xs'>
             Chats you left:
         </Text>
         {
             pullRequestLoading &&
             <Center w='100%' h='100%'>
-                <Spinner type='ThreeBounce' />
+                <Spinner type='ThreeBounce' color={colors.textMainNB[theme]} />
             </Center>
         }
         {
@@ -132,7 +136,7 @@ export default function ArchivedChats(): JSX.Element {
                 </VStack>
             </ScrollView> :
             <Center flex='1'>
-                <Text>
+                <Text color={colors.textMainNB[theme]}>
                     Archive empty
                 </Text>
             </Center>

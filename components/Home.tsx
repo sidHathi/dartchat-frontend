@@ -13,6 +13,7 @@ import { View, PanResponder, Pressable } from "react-native";
 import SocketContext from "../contexts/SocketContext";
 import People from "./PeoplePanel/People";
 import UserSecretsContext from "../contexts/UserSecretsContext";
+import TestingController from "./TestingPanel/TestingController";
 
 export default function Home(): JSX.Element {
     const timerId = useRef<NodeJS.Timeout | boolean>(false);
@@ -43,6 +44,12 @@ export default function Home(): JSX.Element {
         <NavContainer>
             <People />
         </NavContainer>
+    );
+
+    const DevView = () : JSX.Element => (
+        <NavContainer>
+            <TestingController />
+        </NavContainer>
     )
 
     const Messaging = useCallback((): JSX.Element => {
@@ -65,6 +72,8 @@ export default function Home(): JSX.Element {
                 return <Messaging />
             case 'profile':
                 return <ProfileScreen />
+            case 'dev':
+                return <DevView />
             default:
                 return <></>
         }

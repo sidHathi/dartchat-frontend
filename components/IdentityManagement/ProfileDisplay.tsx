@@ -9,11 +9,12 @@ import AuthIdentityContext from '../../contexts/AuthIdentityContext';
 import { AntDesign } from '@expo/vector-icons';
 import IconImage from '../generics/IconImage';
 import UIContext from '../../contexts/UIContext';
-import { useAppDispatch } from '../../redux/hooks';
-import { setUiTheme } from '../../redux/slices/userDataSlice';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { setDevMode, setUiTheme, userDataSelector } from '../../redux/slices/userDataSlice';
 import localStore from '../../localStore/localStore';
 import colors from '../colors';
 import useRequest from '../../requests/useRequest';
+import UIButton from '../generics/UIButton';
 
 export default function ProfileDisplay({
     handleExit,
@@ -25,6 +26,7 @@ export default function ProfileDisplay({
     const screenWidth = Dimensions.get('window').width;
     const { user, logOut } = useContext(AuthIdentityContext);
     const { theme } = useContext(UIContext);
+    const { devMode } = useAppSelector(userDataSelector);
     const dispatch = useAppDispatch();
     const { usersApi } = useRequest();
 
@@ -33,7 +35,11 @@ export default function ProfileDisplay({
     const setTheme = useCallback(async (newTheme: 'light' | 'dark') => {
         dispatch(setUiTheme(newTheme, usersApi));
         await localStore.setNewColorTheme(newTheme);
-    }, [theme]);
+    }, [theme, usersApi]);
+
+    const switchDevMode = useCallback(async (newMode: boolean) => {
+        dispatch(setDevMode(newMode, usersApi));
+    }, [usersApi]);
     
     return <View flex='1'>
         <Center width='100%' mt='12px'>
@@ -130,14 +136,45 @@ export default function ProfileDisplay({
                     Color Theme
                 </Text>
                 <Button.Group isAttached borderRadius='24px' w='100%' mt='12px'>
-                    <Button colorScheme='dark' w='50%' variant={theme === 'light' ? 'subtle' : 'ghost'}
-                    leftIcon={<Icon as={Entypo} name="light-up" size="sm" />} onPress={() => setTheme('light')}>
+                    <UIButton w='50%' context={theme === 'light' ? 'primary' : 'ghost'}
+                    leftIconProps={{
+                        as: Entypo,
+                        name: 'light-up',
+                        size: 'sm'
+                    }}
+                    onPress={() => setTheme('light')}>
                         light
-                    </Button>
-                    <Button colorScheme='dark' w='50%'  variant={theme === 'dark' ? 'subtle' : 'solid'}
-                    leftIcon={<Icon as={Entypo} name="moon" size="sm" />} onPress={() => setTheme('dark')}>
+                    </UIButton>
+                    <UIButton w='50%' context={theme === 'dark' ? 'primary' : 'ghost'}
+                    leftIconProps={{
+                        as: Entypo,
+                        name: 'moon',
+                        size: 'sm'
+                    }} onPress={() => setTheme('dark')}>
                         dark
-                    </Button>
+                    </UIButton>
+                </Button.Group>
+
+                <Text fontWeight='bold' color='gray.500' fontSize='xs'>
+                    Dev mode
+                </Text>
+                <Button.Group isAttached borderRadius='24px' w='100%' mt='12px'>
+                    <UIButton w='50%' context={devMode ? 'primary' : 'ghost'}
+                    leftIconProps={{
+                        as: Entypo,
+                        name: 'tools',
+                        size: 'sm'
+                    }}
+                    onPress={() => switchDevMode(true)}>
+                        On
+                    </UIButton>
+                    <UIButton  w='50%' context={!devMode ? 'primary' : 'ghost'} leftIconProps={{
+                        as: Entypo,
+                        name: 'circle-with-minus',
+                        size: 'sm'
+                    }} onPress={() => switchDevMode(false)}>
+                        Off
+                    </UIButton>
                 </Button.Group>
             </Box>
             <Box bgColor={colors.card[theme]} p='24px' borderRadius='24px' mx='auto' w='90%' mt='24px' shadow='9' style={{shadowOpacity: 0.07}}>

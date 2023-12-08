@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Modal, Button, Text, VStack, Heading } from 'native-base';
 import UIContext from '../../contexts/UIContext';
 import colors from '../colors';
+import UIButton from './UIButton';
 
 export default function ConfirmationModal({
     isOpen,
@@ -34,12 +35,12 @@ export default function ConfirmationModal({
                     <Text color={colors.textMainNB[theme]}>{ content }</Text>
 
                     <Button.Group space={2}>
-                    <Button variant="subtle" colorScheme="light" onPress={onClose}px='24px' borderRadius='24px' w='50%'>
+                    <UIButton context='secondary' onPress={onClose} px='24px' borderRadius='24px' w='50%'>
                         Cancel
-                    </Button>
-                    <Button onPress={onConfirm} px='24px' borderRadius='24px' colorScheme='dark' variant='subtle' w='50%'>
+                    </UIButton>
+                    <UIButton onPress={onConfirm} px='24px' borderRadius='24px' context='primary' w='50%'>
                         Confirm
-                    </Button>
+                    </UIButton>
                     </Button.Group>
                 </VStack>
             </Modal.Content>

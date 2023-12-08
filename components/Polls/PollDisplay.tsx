@@ -181,10 +181,10 @@ export default function PollDisplay({
 
         return  <Box 
             borderWidth='1px'
-            borderColor='#333'
+            borderColor={colors.barSolid[theme]}
             borderRadius='9px' h='18px' 
             bgColor={
-                winning ? '#333' : '#555'
+                winning ? colors.barSolid[theme] : colors.barLight[theme]
             } 
             w={`${widthPer*100}%`}
             mt='6px'>
@@ -221,14 +221,14 @@ export default function PollDisplay({
             } style={{
                 shadowOpacity: 0.18
             }}
-            borderColor='#ddd' borderWidth={userOptIndices.includes(option.idx) ? '1px': '0px'}>
+            borderColor={colors.textLightNB[theme]} borderWidth={userOptIndices.includes(option.idx) ? '1px': '0px'}>
             <VStack w='100%'>
                 <HStack w='100%'>
-                    <Text fontSize='sm' maxWidth='90%' fontWeight={winning ? 'bold' : 'medium'}>
+                    <Text fontSize='sm' maxWidth='90%' fontWeight={winning ? 'bold' : 'medium'} color={colors.textMainNB[theme]}>
                         {option.value}
                     </Text>
                     <Spacer />
-                    <Text fontWeight={winning ? 'bold' : 'medium'}>
+                    <Text fontWeight={winning ? 'bold' : 'medium'} color={colors.textMainNB[theme]}>
                         {option.voters.length}
                     </Text>
                 </HStack>

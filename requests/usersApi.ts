@@ -13,6 +13,7 @@ export type UsersApi = {
     setUserSecrets: (secret: string) => Promise<any | never>;
     updatePublicKey: (newKey: string) => Promise<any | never>;
     updateUiTheme: (newTheme: 'dark' | 'light') => Promise<any | never>;
+    setDevMode: (devMode: boolean) => Promise<any | never>;
 };
 
 export default function usersApi(apiService: ApiService): UsersApi {
@@ -172,6 +173,20 @@ export default function usersApi(apiService: ApiService): UsersApi {
         });
     };
 
+    const setDevMode = (devMode: boolean): Promise<any | never> => {
+        return apiService.request({
+            method: 'PUT',
+            url: 'users/me/setDevMode',
+            data: {
+                devMode
+            }
+        }).then((res) => {
+            return res.data;
+        }).catch((err) => {
+            return Promise.reject(err);
+        });
+    };
+
     return {
         getCurrentUser,
         createNewUser,
@@ -183,5 +198,6 @@ export default function usersApi(apiService: ApiService): UsersApi {
         setUserSecrets,
         updatePublicKey,
         updateUiTheme,
+        setDevMode,
     };
 }

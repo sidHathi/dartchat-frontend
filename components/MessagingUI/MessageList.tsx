@@ -11,6 +11,8 @@ import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import useRequest from "../../requests/useRequest";
 import Spinner from "react-native-spinkit";
 import { getDateTimeString } from "../../utils/messagingUtils";
+import UIContext from "../../contexts/UIContext";
+import colors from "../colors";
 
 export default function MessageList({
     setReplyMessage,
@@ -37,6 +39,7 @@ export default function MessageList({
     const { socket } = useContext(SocketContext);
     const { user } = useContext(AuthIdentityContext);
     const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext);
 
     const [indexMap, setIndexMap] = useState<{[id: string]: number}>({});
     const [replyFetch, setReplyFetch] = useState<string | undefined>();
@@ -186,7 +189,7 @@ export default function MessageList({
         ListFooterComponent={(messageCursor || pageLoading) ?
             <View>
                 <Center w='100%' mt='40px' mb='12px'>
-                    <Spinner type='ThreeBounce' color='#111' size={24} />
+                    <Spinner type='ThreeBounce' color={colors.spinner[theme]} size={24} />
                 </Center>
             </View> : null}
         ListHeaderComponent={<Box w='100%' h='84px'></Box>}

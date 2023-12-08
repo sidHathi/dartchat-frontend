@@ -18,13 +18,15 @@ import UIContext from "../contexts/UIContext";
 import AuthIdentityContext from "../contexts/AuthIdentityContext";
 import IconImage from "./generics/IconImage";
 import colors from "./colors";
+import { userDataSelector } from "../redux/slices/userDataSlice";
 
 export default function NavContainer({ children }: 
     PropsWithChildren<{
         children: ReactNode
     }>): JSX.Element {
     const dispatch = useAppDispatch();
-    const { user } = useContext(AuthIdentityContext)
+    const { user } = useContext(AuthIdentityContext);
+    const { devMode } = useAppSelector(userDataSelector);
     const { uiState: navState, navSwitch, theme } = useContext(UIContext);
     const screenHeight = Dimensions.get('window').height;
     const { networkConnected, apiReachable } = useContext(NetworkContext);
@@ -61,9 +63,10 @@ export default function NavContainer({ children }:
         </Box>
         <Center marginTop='-90px' zIndex='1002'>
             <HStack>
-            <Box w='160px' h='60px' backgroundColor={colors.navBG[theme]} borderRadius='full' shadow='9' marginX='5px'>
+            <Box w={devMode ? '200px' : '160px'} h='60px' backgroundColor={colors.navBG[theme]} borderRadius='full' shadow='9' marginX='5px'>
                 <Center h='60px'>
-                    <HStack w='90px'>
+                    <HStack w={devMode ? '180px' : '90px'}>
+                        <Spacer/>
                         <Pressable opacity={navState.screen === 'conversations' ? 1 : 0.5} onPress={() => navSwitch('conversations')}>
                             <Entypo name="home" size={28} color="white" />
                         </Pressable>
@@ -72,6 +75,15 @@ export default function NavContainer({ children }:
                             onPress={() => navSwitch('social')}>
                             <Ionicons name="people" size={28} color="white" />
                         </Pressable>
+                        <Spacer/>
+                        {
+                            devMode &&
+                            <Pressable opacity={navState.screen === 'dev' ? 1 : 0.5}
+                                onPress={() => navSwitch('dev')}>
+                                <Entypo name="tools" size={28} color="white" />
+                            </Pressable>
+                        }
+                        <Spacer/>
                     </HStack>
                 </Center>
             </Box>

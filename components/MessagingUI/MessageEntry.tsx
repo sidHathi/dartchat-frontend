@@ -2,13 +2,13 @@ import React, { useState, useContext, useCallback, useMemo, useEffect } from "re
 import { Box, HStack, VStack, Spacer, Text} from 'native-base';
 import IconButton from "../generics/IconButton";
 import { Dimensions } from "react-native";
-import { DecryptedMessage, Message, MessageMedia, MessageMediaBuffer, ReplyRef, UserConversationProfile } from '../../types/types';
+import { DecryptedMessage, MessageMedia, MessageMediaBuffer, ReplyRef } from '../../types/types';
 import AuthIdentityContext from "../../contexts/AuthIdentityContext";
 import uuid from 'react-native-uuid';
 import SocketContext from "../../contexts/SocketContext";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { chatSelector, sendNewMessage } from "../../redux/slices/chatSlice";
-import { addConversation, handleNewMessage, pullLatestPreviews, userDataSelector } from "../../redux/slices/userDataSlice";
+import { addConversation, handleNewMessage, userDataSelector } from "../../redux/slices/userDataSlice";
 import NetworkContext from "../../contexts/NetworkContext";
 import { useKeyboard } from "@react-native-community/hooks";
 import MediaBufferDisplay from "./MessageMediaControllers/MediaBufferDisplay";

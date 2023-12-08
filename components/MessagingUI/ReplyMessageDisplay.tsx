@@ -9,6 +9,8 @@ import { handlePossiblyEncryptedMessage } from '../../utils/messagingUtils';
 import { Pressable, HStack, Box, Text, VStack, Spacer } from 'native-base';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import MessageTextDisplay from "./Mentions/MentionsTextDisplay";
+import colors from '../colors';
+import UIContext from '../../contexts/UIContext';
 
 export default function ReplyMessageDisplay({
     replyRef,
@@ -20,6 +22,7 @@ export default function ReplyMessageDisplay({
     const { currentConvo } = useAppSelector(chatSelector);
     const { secrets } = useContext(UserSecretsContext);
     const { conversationsApi } = useRequest();
+    const { theme } = useContext(UIContext);
 
     const [pulledMessage, setPulledMessage] = useState<DecryptedMessage | undefined>();
 
@@ -41,24 +44,24 @@ export default function ReplyMessageDisplay({
         <Box paddingTop='12px' paddingX='6px' opacity='0.8'>
             <FontAwesome name="arrows-v" size={20} color="gray" />
         </Box>
-        <Box paddingX='15px' paddingY='4px' borderRadius='12px' backgroundColor='#f7f7f7' marginBottom='3px' opacity='0.7'
+        <Box paddingX='15px' paddingY='6px' borderRadius='24px' backgroundColor={colors.select[theme]} marginBottom='3px' opacity='0.7'
         mr='24px'>
             <VStack>
                 {
                     (pulledMessage && pulledMessage.messageType !== 'system') &&
-                    <Text color='coolGray.600' fontSize='9px'>{pulledMessage.senderProfile?.displayName || ''}</Text>
+                    <Text color={colors.textLightNB[theme]} fontSize='9px'>{pulledMessage.senderProfile?.displayName || ''}</Text>
                 }
                 {
                     (pulledMessage?.media || pulledMessage?.objectRef) &&
                     <HStack space={2} mt='4px'>
                         <FontAwesome5 name="images" size={24} color="gray" />
-                        <Text color='trueGray.600' fontSize='xs' mt='6px' fontWeight='bold'>
+                        <Text color={colors.textLightNB[theme]} fontSize='xs' mt='6px' fontWeight='bold'>
                             Media
                         </Text>
                     </HStack>
                 }
                 {(pulledMessage && pulledMessage.content) &&
-                <MessageTextDisplay message={pulledMessage} fontSize='xs' noOfLines={1} isTruncated />
+                <MessageTextDisplay message={pulledMessage} fontSize='xs' noOfLines={1} isTruncated color={colors.textMainNB[theme]} />
                 }
             </VStack>
         </Box>
