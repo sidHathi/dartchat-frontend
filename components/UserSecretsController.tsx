@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { chatSelector, setSecretKey } from '../redux/slices/chatSlice';
 import NetworkContext from '../contexts/NetworkContext';
 import { storeUserData } from '../localStore/localStore';
+import LogContext from '../contexts/LogContext';
 
 export default function UserSecretsController({
     children
@@ -19,6 +20,7 @@ export default function UserSecretsController({
 }>): JSX.Element {
     const { networkConnected } = useContext(NetworkContext);
     const { user, logOut } = useContext(AuthIdentityContext);
+    const { logEncryptionFailure, logText } = useContext(LogContext);
     const { usersApi } = useRequest();
     const dispatch = useAppDispatch();
     const { currentConvo } = useAppSelector(chatSelector); 
@@ -102,11 +104,13 @@ export default function UserSecretsController({
             } else {
                 console.log('db update failed');
                 console.log(completedSecrets);
+                logEncryptionFailure('updateDBSecrets error: unable to access user secret key');
             }
             return true;
         } catch (err) {
             console.log('db update error');
             console.log(err);
+            logEncryptionFailure(err);
             return false;
         }
     }, [secrets, usersApi, user, userPinKey, validateUserKeys]);
@@ -155,6 +159,8 @@ export default function UserSecretsController({
                 // console.log('STORING SECRETS (153):')
                 // console.log(encodedSecrets);
                 await secureStore.initUserSecretKeyStore(user.id, encodedSecrets);
+            } else {
+                logText('unable to pull user secrets from DB')
             }
             // setSecretsLoading(false);
             setSecretsUpdating(false);
@@ -162,6 +168,7 @@ export default function UserSecretsController({
             console.log(err);
             // setSecretsLoading(false);
             setSecretsUpdating(false);
+            logEncryptionFailure(err);
         }
     }, [usersApi, secrets, user, validateUserKeys]);
     
@@ -201,6 +208,8 @@ export default function UserSecretsController({
             }
             if (await updateDBSecrets(newSecrets, latestUser)) {
                 await usersApi.readConversationKeyUpdates(Object.keys(updates));
+            } else {
+                logEncryptionFailure('checkForUpdates error - Unable to upload new secrets to firebase');
             }
             setSecretsLoading(false);
             return;
@@ -208,6 +217,7 @@ export default function UserSecretsController({
             console.log('secrets update failed');
             setSecretsLoading(false);
             console.log(err);
+            logEncryptionFailure(err);
             return;
         }
     }, [user, updateDBSecrets, validateUserKeys]);
@@ -279,6 +289,7 @@ export default function UserSecretsController({
         } catch (err) {
             console.log('getSecrets failed');
             console.log(err);
+            logEncryptionFailure(err);
             return;
         }
     }, [user, userPinKey, secrets]);
@@ -313,26 +324,30 @@ export default function UserSecretsController({
             return undefined;
         } 
         // this needs to add the secret to locally stored secrets, add the secret to secrets context, and encrypt the new secrets object for addition to the user's database secrets
-        const userSecretKey = secrets.userSecretKey;
-        const decodedPublicKey = decodeKey(publicKey);
-        if (!userSecretKey) return undefined;
-        const decryptedKeyMap = decryptJSON(userSecretKey, encryptedPrivateKey, decodedPublicKey) || {}; // base64
-        if (!decryptedKeyMap.secretKey) return undefined;
-        const decryptedKey = decryptedKeyMap.secretKey;
-        if (secrets && cid in secrets && secrets[cid] === decryptedKey) {
-            return secrets[cid];
-        }
-        const newSecrets = {
-            ...secrets,
-            [cid]: decodeKey(decryptedKey)
-        }
-        if (await updateDBSecrets(newSecrets)) {
-            if (currentConvo?.id === cid) {
-                dispatch(setSecretKey(decryptedKey));
+        try {
+            const userSecretKey = secrets.userSecretKey;
+            const decodedPublicKey = decodeKey(publicKey);
+            if (!userSecretKey) return undefined;
+            const decryptedKeyMap = decryptJSON(userSecretKey, encryptedPrivateKey, decodedPublicKey) || {}; // base64
+            if (!decryptedKeyMap.secretKey) return undefined;
+            const decryptedKey = decryptedKeyMap.secretKey;
+            if (secrets && cid in secrets && secrets[cid] === decryptedKey) {
+                return secrets[cid];
             }
-            return decodeKey(decryptedKey);
-        } else if (newSecrets.userSecretKey) {
-            setSecrets(newSecrets);
+            const newSecrets = {
+                ...secrets,
+                [cid]: decodeKey(decryptedKey)
+            }
+            if (await updateDBSecrets(newSecrets)) {
+                if (currentConvo?.id === cid) {
+                    dispatch(setSecretKey(decryptedKey));
+                }
+                return decodeKey(decryptedKey);
+            } else if (newSecrets.userSecretKey) {
+                setSecrets(newSecrets);
+            }
+        } catch (err) {
+            logEncryptionFailure(err);
         }
         return undefined;
     }, [secrets, secretsLoading, user, userPinKey, updateDBSecrets]);
@@ -356,6 +371,7 @@ export default function UserSecretsController({
             }
             return false;
         } catch (err) {
+            logEncryptionFailure(err);
             console.log(err);
             return false;
         }
@@ -377,6 +393,7 @@ export default function UserSecretsController({
             user && await secureStore.removeKey(user.id, cid);
             return true;
         } catch (err) {
+            logEncryptionFailure(err);
             console.log(err);
             return false;
         }

@@ -39,7 +39,8 @@ export const userDataSlice = createSlice({
             contacts: action.payload.contacts || [],
             archivedConvos: action.payload.archivedConvos || [],
             publicKey: action.payload.publicKey,
-            uiTheme: action.payload.uiTheme
+            uiTheme: action.payload.uiTheme,
+            devMode: action.payload.devMode,
         }),
         setConversations: (state, action: PayloadAction<ConversationPreview[]>) => {
             return ({

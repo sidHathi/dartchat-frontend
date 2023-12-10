@@ -104,6 +104,7 @@ export default function InstanceList({
                     data={instances[testId]}
                     renderItem={InstancePreview}
                     keyExtractor={(item) => item.id}
+                    scrollEnabled={false}
                 />
             }
         </VStack>

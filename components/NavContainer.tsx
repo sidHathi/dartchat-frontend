@@ -66,7 +66,10 @@ export default function NavContainer({ children }:
             <Box w={devMode ? '200px' : '160px'} h='60px' backgroundColor={colors.navBG[theme]} borderRadius='full' shadow='9' marginX='5px'>
                 <Center h='60px'>
                     <HStack w={devMode ? '180px' : '90px'}>
-                        <Spacer/>
+                        {
+                            devMode &&
+                            <Spacer/>
+                        }
                         <Pressable opacity={navState.screen === 'conversations' ? 1 : 0.5} onPress={() => navSwitch('conversations')}>
                             <Entypo name="home" size={28} color="white" />
                         </Pressable>
@@ -75,7 +78,10 @@ export default function NavContainer({ children }:
                             onPress={() => navSwitch('social')}>
                             <Ionicons name="people" size={28} color="white" />
                         </Pressable>
-                        <Spacer/>
+                        {
+                            devMode &&
+                            <Spacer/>
+                        }
                         {
                             devMode &&
                             <Pressable opacity={navState.screen === 'dev' ? 1 : 0.5}
@@ -83,7 +89,10 @@ export default function NavContainer({ children }:
                                 <Entypo name="tools" size={28} color="white" />
                             </Pressable>
                         }
-                        <Spacer/>
+                         {
+                            devMode &&
+                            <Spacer/>
+                        }
                     </HStack>
                 </Center>
             </Box>

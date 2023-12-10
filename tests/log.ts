@@ -6,3 +6,7 @@ export default interface Log {
     error?: string;
     textPreview?: string;
 }
+
+export type StoredLog = Omit<Log, 'timestamp'> & {
+    timestamp: string
+};

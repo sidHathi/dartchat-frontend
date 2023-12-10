@@ -1,5 +1,5 @@
 import Test from "./test";
-import Log from "./log";
+import Log, { StoredLog } from "./log";
 
 export default interface TestInstance {
     id: string;
@@ -11,3 +11,9 @@ export default interface TestInstance {
     succeeded: boolean;
     complete: boolean;
 }
+
+export type StoredTestInstance = Omit<TestInstance, 'startedAt' | 'completedAt' | 'logs'> & {
+    startedAt?: string,
+    completedAt?: string,
+    logs: StoredLog[]
+};

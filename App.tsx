@@ -15,6 +15,7 @@ import { LogBox } from "react-native";
 import { requestUserPermission } from './firebase/pushNotifications';
 import NotificationsController from './components/NotificationsController';
 import UserSecretsController from './components/UserSecretsController';
+import LogController from './components/TestingPanel/LogController';
 
 LogBox.ignoreLogs([
   'In React 18, SSRProvider is not necessary and is a noop. You can remove it from your app.',
@@ -30,20 +31,22 @@ export default function App(): JSX.Element {
     <Provider store={store}>
       <GestureHandlerRootView style={{flex: 1}}>
         <NativeBaseProvider>
-          <NetworkContextProvider>
-            <SocketContextProvider>
-              <UIContextProvider>
-                <AuthIdentityController>
-                  <UserSecretsController>
-                    <NotificationsController />
+          <LogController>
+            <NetworkContextProvider>
+              <SocketContextProvider>
+                <UIContextProvider>
+                  <AuthIdentityController>
+                    <UserSecretsController>
+                      <NotificationsController />
                       <Box flex='1'>
                         <Home />
                       </Box>
-                  </UserSecretsController>
-                </AuthIdentityController>
-              </UIContextProvider>
-            </SocketContextProvider>
-          </NetworkContextProvider>
+                    </UserSecretsController>
+                  </AuthIdentityController>
+                </UIContextProvider>
+              </SocketContextProvider>
+            </NetworkContextProvider>
+          </LogController>
         </NativeBaseProvider>
       </GestureHandlerRootView>
     </Provider>

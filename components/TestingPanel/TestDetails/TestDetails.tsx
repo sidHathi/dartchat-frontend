@@ -11,9 +11,10 @@ import UserSecretsContext from "../../../contexts/UserSecretsContext";
 import TestInstance from "../../../tests/testInstance";
 import uuid from 'react-native-uuid';
 import AuthIdentityContext from "../../../contexts/AuthIdentityContext";
-import { recordTestInstance, testSelector, updateTestInstance } from "../../../redux/slices/testSlice";
+import { addTestLogs, recordTestInstance, testSelector, updateTestInstance } from "../../../redux/slices/testSlice";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 import Spinner from "react-native-spinkit";
+import testStore from "../../../localStore/testStore";
 
 export default function TestDetails({
     test,
@@ -26,7 +27,7 @@ export default function TestDetails({
     const { theme } = useContext(UIContext);
     const { user } = useContext(AuthIdentityContext);
     const { handleNewConversationKey, forgetConversationKeys } = useContext(UserSecretsContext);
-    const { instances } = useAppSelector(testSelector);
+    const { unitTests, integrationTests, recentLogs, instances } = useAppSelector(testSelector);
 
     const [runtimeError, setRuntimeError] = useState<string | undefined>();
     const [testRunning, setTestRunning] = useState(false);
@@ -39,10 +40,6 @@ export default function TestDetails({
         };
     }, [handleNewConversationKey, forgetConversationKeys, user]);
 
-    useEffect(() => {
-        console.log(instances);
-    }, [instances])
-
     const runTest = useCallback(async () => {
         // store the test in state as current test
         // create a new instance for the test
@@ -51,6 +48,7 @@ export default function TestDetails({
         // store the logs for the test as they come up???
         // display any errors and the final result
         if (!test) return;
+
         test.init(testParams);
         setRuntimeError(undefined);
         const instanceId = uuid.v4().toString();
@@ -79,7 +77,6 @@ export default function TestDetails({
                     complete: true
                 }
             }));
-            console.log(test);
             setTestRunning(false);
         } catch (err) {
             console.log('TEST ERROR');
@@ -98,8 +95,10 @@ export default function TestDetails({
             }));
             setTestRunning(false);
             console.log(err);
+        } finally {
+            dispatch(addTestLogs(test.logs));
         }
-    }, [test, testParams])
+    }, [test, testParams]);
     
     return <ScrollView flex='1' p='12px'>
         <VStack space='2'>

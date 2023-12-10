@@ -17,7 +17,7 @@ import IntegrationTests from '../../tests/IntegrationTests';
 export default function TestingController(): JSX.Element {
     const { theme } = useContext(UIContext);
     const dispatch = useAppDispatch();
-    const { unitTests, integrationTests, instances, recentLogs } = useAppSelector(testSelector);
+    const { unitTests, integrationTests, recentLogs, instances } = useAppSelector(testSelector);
 
     const [currentTab, setCurrentTab] = useState<'tests' | 'logs'>('tests');
     const [testDetailViewOpen, setTestDetailViewOpen] = useState(false);
@@ -34,25 +34,13 @@ export default function TestingController(): JSX.Element {
     }, [setSelectedTest, setTestDetailViewOpen]);
 
     useEffect(() => {
-        const storeSnapshot = async () => {
-            await testStore.storeLogSnapshot({
-                unitTests,
-                integrationTests,
-                instances,
-                recentLogs,
-            });
-        }
-        storeSnapshot();
-    }, [currentTab]);
-
-    useEffect(() => {
         // needs to:
         // 1. pull the instance list from storage
         // 2. pull the test list from the code file
         // 4. pull the log list from storage
         // 3. put both into redux 
         const pullLocalTests = async () => {
-            const snapshot = await testStore.getTestSnapshot();
+            const snapshot = await testStore.getTestSnapshot() as any;
             if (snapshot) {
                 dispatch(initTestStore(snapshot));
             }
@@ -65,6 +53,18 @@ export default function TestingController(): JSX.Element {
         }
         pullLocalTests();
     }, []);
+
+    useEffect(() => {
+        const storeSnapshot = async () => {
+            await testStore.storeLogSnapshot({
+                unitTests,
+                integrationTests,
+                instances,
+                recentLogs
+            })
+        };
+        storeSnapshot();
+    }, [recentLogs, instances]);
 
     if (testDetailViewOpen && selectedTest) {
         return <TestDetails 

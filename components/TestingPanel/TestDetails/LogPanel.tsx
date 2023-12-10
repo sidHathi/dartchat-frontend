@@ -39,7 +39,9 @@ export default function LogPanel({
         <FlatList
             maxHeight={expanded ? 'auto' : '300px'}
             data={logs}
+            scrollEnabled={false}
             renderItem={({item}) => <ILogCard log={item} />}
+            ListFooterComponent={<Box h='12px' />}
         />
         <Center mt='12px'>
             <ExpandButton />

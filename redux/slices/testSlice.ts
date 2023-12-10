@@ -45,14 +45,13 @@ export const testSlice = createSlice({
             integrationTests: Test[]
         }>) => {
             return {
+                ...state,
                 unitTests: Object.fromEntries(
                     action.payload.unitTests.map((test) => [test.id, test])
                 ),
                 integrationTests: Object.fromEntries(
                     action.payload.integrationTests.map((test) => [test.id, test])
                 ),
-                instances: {},
-                recentLogs: [],
             }
         },
         recordTestInstance: (state, action: PayloadAction<TestInstance>) => {
@@ -91,13 +90,35 @@ export const testSlice = createSlice({
             }
         },
         recordLog: (state, action: PayloadAction<Log>) => {
+            if (state.recentLogs.length > 1 && state.recentLogs.find((l) => l.timestamp.getTime() === action.payload.timestamp.getTime())) return state;
             return {
                 ...state,
                 recentLogs: [
+                    action.payload,
                     ...state.recentLogs,
-                    action.payload
                 ]
             }
+        },
+        addTestLogs: (state, action: PayloadAction<Log[]>) => {
+            const sortedLogs = [...action.payload].sort((a, b) => {
+                if (a.timestamp.getTime() > b.timestamp.getTime()) return -1;
+                else if (b.timestamp.getTime() > a.timestamp.getTime()) return 1;
+                return 0;
+            });
+            if (state.recentLogs.length === 0) {
+                return {
+                    ...state,
+                    recentLogs: sortedLogs,
+                }
+            }
+            const mostRecentLogTime = state.recentLogs[0].timestamp.getTime();
+            return {
+                ...state,
+                recentLogs: [
+                    ...sortedLogs.filter((log) => log !== undefined && log.timestamp.getTime() > mostRecentLogTime),
+                    ...state.recentLogs
+                ]
+            };
         }
     }
 });
@@ -108,6 +129,7 @@ export const {
     recordTestInstance,
     recordLog,
     updateTestInstance,
+    addTestLogs
 } = testSlice.actions;
 
 const testReducer = testSlice.reducer;

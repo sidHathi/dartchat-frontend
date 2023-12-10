@@ -1,4 +1,4 @@
-import Log from "./log";
+import Log, { StoredLog } from "./log";
 
 export default interface Test {
     id: string;
@@ -9,4 +9,8 @@ export default interface Test {
     logs: Log[];
     errors: string[];
     run: () => Promise<void>;
+};
+
+export type StoredTest = Omit<Test, 'logs'> & {
+    logs: StoredLog[]
 }

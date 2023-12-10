@@ -55,7 +55,7 @@ export default function ConnectionDashboard(): JSX.Element {
                             <Text fontWeight='bold' textTransform='uppercase' fontSize='10px' color={colors.textLightNB[theme]}>
                                 Socket Status
                             </Text>
-                            <Text fontWeight='bold' color={colors.textMainNB[theme]} fontSize='lg'>
+                            <Text fontWeight='bold' color={colors.textMainNB[theme]} fontSize='md'>
                                 {socketStatus}
                             </Text>
                         </Box>
@@ -74,7 +74,7 @@ export default function ConnectionDashboard(): JSX.Element {
                     <Text textTransform='uppercase' fontSize='10px' color={colors.textLightNB[theme]} fontWeight='bold'>
                         Network Status
                     </Text>
-                    <Text fontWeight='bold' color={colors.textMainNB[theme]} fontSize='lg'>
+                    <Text fontWeight='bold' color={colors.textMainNB[theme]} fontSize='md'>
                         {networkConnected ? 'Connected' : 'Disconnected'}
                     </Text>
                 </Box>

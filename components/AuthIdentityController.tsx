@@ -88,6 +88,7 @@ export default function AuthIdentityController(props: PropsWithChildren<{childre
     const initAppUser = useCallback((newUser: UserData) => {
         setUser(newUser);
         setNeedsSetup(false);
+        console.log(newUser);
         dispatch(initReduxUser(newUser));
         if (socketRef.current) {
             try {
