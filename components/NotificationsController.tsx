@@ -18,12 +18,14 @@ import UserSecretsContext from '../contexts/UserSecretsContext';
 import notifee, { EventType } from '@notifee/react-native';
 import notificationStore from '../localStore/notificationStore';
 import secureStore from '../localStore/secureStore';
+import LogContext from '../contexts/LogContext';
 
 export default function NotificationsController(): JSX.Element {
     const dispatch = useAppDispatch();
     const { conversationsApi, usersApi } = useRequest();
     const { currentConvo } = useAppSelector(chatSelector);
     const { resetSocket, socket, disconnected: socketDisconnected } = useContext(SocketContext);
+    const { logEncryptionFailure } = useContext(LogContext);
     const { user } = useContext(AuthIdentityContext);
     const { userConversations } = useAppSelector(userDataSelector);
     const { navSwitch } = useContext(UIContext);
@@ -129,8 +131,11 @@ export default function NotificationsController(): JSX.Element {
                                         if (parsedPNS.cid === currentConvo?.id && secretKey) {
                                             dispatch(setSecretKey(secretKey))
                                         }   
-                                    } 
+                                    } else {
+                                        logEncryptionFailure('Pushed secrets error - keys missing');
+                                    }
                                 } catch (err) {
+                                    logEncryptionFailure(err);
                                     console.log(err);
                                 }
                             }

@@ -155,7 +155,7 @@ export const filterEncryptedMessages = (messages: Message[], convoSecretKey: Uin
     }
 };
 
-export const handlePossiblyEncryptedMessage = (message: Message, convoSecretKey?: Uint8Array) => {
+export const handlePossiblyEncryptedMessage = (message: Message, convoSecretKey?: Uint8Array, errorCallback?: (err: unknown) => void) => {
     try {
         if (!convoSecretKey || !message.encryptionLevel || message.encryptionLevel === 'none') {
             return message as DecryptedMessage;
@@ -167,6 +167,7 @@ export const handlePossiblyEncryptedMessage = (message: Message, convoSecretKey?
         if (!decrypted || (!decrypted.content && !decrypted.objectRef && !decrypted.media)) return undefined;
         return decrypted;
     } catch (err) {
+        errorCallback && errorCallback(err);
         console.log(err);
         return undefined;
     }

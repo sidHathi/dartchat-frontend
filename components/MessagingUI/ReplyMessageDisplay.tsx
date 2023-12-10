@@ -11,6 +11,7 @@ import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import MessageTextDisplay from "./Mentions/MentionsTextDisplay";
 import colors from '../colors';
 import UIContext from '../../contexts/UIContext';
+import LogContext from '../../contexts/LogContext';
 
 export default function ReplyMessageDisplay({
     replyRef,
@@ -23,6 +24,7 @@ export default function ReplyMessageDisplay({
     const { secrets } = useContext(UserSecretsContext);
     const { conversationsApi } = useRequest();
     const { theme } = useContext(UIContext);
+    const { logEncryptionFailure } = useContext(LogContext);
 
     const [pulledMessage, setPulledMessage] = useState<DecryptedMessage | undefined>();
 
@@ -32,7 +34,7 @@ export default function ReplyMessageDisplay({
         const getMessage = async () => {
             const messageRes = await conversationsApi.getMessage(currentConvo.id, replyRef.id);
             const convoSecretKey = secrets ? secrets[currentConvo.id] : undefined;
-            const decryptedMessageRes = handlePossiblyEncryptedMessage(messageRes, convoSecretKey);
+            const decryptedMessageRes = handlePossiblyEncryptedMessage(messageRes, convoSecretKey, logEncryptionFailure);
             setPulledMessage(decryptedMessageRes);
         }
         getMessage();

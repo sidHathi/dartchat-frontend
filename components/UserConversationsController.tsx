@@ -14,11 +14,13 @@ import { getUserData, updateUserConversations } from '../utils/identityUtils';
 import { autoGenGroupAvatar, constructNewConvo } from '../utils/messagingUtils';
 import UserSecretsContext from '../contexts/UserSecretsContext';
 import NetworkContext from '../contexts/NetworkContext';
+import LogContext from '../contexts/LogContext';
 
 export default function UserConversationsController({
     children
 }: PropsWithChildren<{children: ReactNode}>): JSX.Element {
     const { socket, disconnected: socketDisconnected } = useContext(SocketContext);
+    const { logError, logEncryptionFailure } = useContext(LogContext);
     const { navSwitch } = useContext(UIContext);
     const { apiReachable } = useContext(NetworkContext);
     const { secrets, handleNewEncryptedConversation, forgetConversationKeys, pullUserSecrets } = useContext(UserSecretsContext);
@@ -85,22 +87,26 @@ export default function UserConversationsController({
         if (!socket || !user) return;
         socket.emit('joinRoom', userConversations.map(c => c.cid));
         socket.on('newMessage', async (cid: string, newMessage: SocketMessage) => {
-            const message = parseSocketMessage(newMessage) as DecryptedMessage;
+            try {
+                const message = parseSocketMessage(newMessage) as DecryptedMessage;
 
-            const messageForCurrent: boolean = message.senderId === user?.id ||(currentConvo !== undefined && currentConvo.id === cid && currentConvo.messages.filter(m => m.id === message.id).length < 1);
-            // console.log(messageForCurrent);
-            if (messageForCurrent) {
-                socket.emit('messagesRead', currentConvo?.id);
-                dispatch(receiveNewMessage({message, cid}));
+                const messageForCurrent: boolean = message.senderId === user?.id ||(currentConvo !== undefined && currentConvo.id === cid && currentConvo.messages.filter(m => m.id === message.id).length < 1);
+                // console.log(messageForCurrent);
+                if (messageForCurrent) {
+                    socket.emit('messagesRead', currentConvo?.id);
+                    dispatch(receiveNewMessage({message, cid}));
+                }
+                const secretKey = secrets ? secrets[cid] : undefined;
+
+                dispatch(handleNewMessage({
+                    cid,
+                    message,
+                    messageForCurrent,
+                    secretKey
+                }));
+            } catch (err) {
+                logError(err);
             }
-            const secretKey = secrets ? secrets[cid] : undefined;
-
-            dispatch(handleNewMessage({
-                cid,
-                message,
-                messageForCurrent,
-                secretKey
-            }));
         });
 
         return () => {
@@ -120,6 +126,7 @@ export default function UserConversationsController({
                 }
                 forgetConversationKeys(cid);
             } catch (err) {
+                logError(err);
                 console.log(err);
             }
         });
@@ -175,6 +182,7 @@ export default function UserConversationsController({
                 }
                 dispatch(pullLatestPreviews(usersApi));
             } catch (err) {
+                logError(err);
                 console.log(err);
             }
         });
@@ -229,8 +237,11 @@ export default function UserConversationsController({
                 if (userKeyMap && user.id in userKeyMap && updatedConvo.publicKey) {
                     await handleNewEncryptedConversation(updatedConvo.id, userKeyMap[user.id], updatedConvo.publicKey);
                     await pullUserSecrets();
+                } else {
+                    logEncryptionFailure('keyChange socket event failure - user id not found in new key map');
                 }
             } catch (err) {
+                logError(err);
                 console.log(err);
             }
         });
