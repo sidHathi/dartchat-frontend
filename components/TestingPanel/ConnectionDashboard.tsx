@@ -9,12 +9,14 @@ import UIContext from "../../contexts/UIContext";
 import { FontAwesome, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 
 export default function ConnectionDashboard(): JSX.Element {
-    const { socket } = useContext(SocketContext);
+    const { socket, isEnabled, enable, disable } = useContext(SocketContext);
     const { networkConnected } = useContext(NetworkContext);
     const { theme } = useContext(UIContext);
 
     const socketStatus = useMemo(() => {
-        if (!socket) {
+        if (!isEnabled) {
+            return 'Disabled'
+        } else if (!socket) {
             return 'Uninitialized'
         } else if (!socket.connected) {
             return 'Disconnected'
@@ -43,8 +45,12 @@ export default function ConnectionDashboard(): JSX.Element {
     };
 
     const toggleSocket = useCallback(() => {
-        
-    }, []);
+        if (!isEnabled) {
+            enable();
+        } else {
+            disable();
+        }
+    }, [isEnabled, enable, disable]);
 
     return <Box w='100%' mx='auto' bgColor={colors.card[theme]} borderRadius='24px' py='12px'>
         <VStack space='2' my='6px'>
@@ -61,8 +67,8 @@ export default function ConnectionDashboard(): JSX.Element {
                         </Box>
                         <Spacer />
                         <StatusButton
-                            icon={<Icon as={MaterialIcons} name={socketStatus !== 'Uninitialized' ? 'toggle-on' : 'toggle-off'} size='md' color={colors.textMainNB[theme]} />}
-                            active={socketStatus !== 'Uninitialized'}
+                            icon={<Icon as={MaterialIcons} name={socketStatus !== 'Disabled' ? 'toggle-on' : 'toggle-off'} size='md' color={colors.textMainNB[theme]} />}
+                            active={socketStatus === 'Connected'}
                             onPress={toggleSocket}
                             my='auto'
                         />

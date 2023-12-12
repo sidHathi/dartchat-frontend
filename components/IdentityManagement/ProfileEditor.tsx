@@ -12,6 +12,9 @@ import IconImage from '../generics/IconImage';
 import { storeProfileImage, getDownloadUrl } from '../../firebase/cloudStore';
 import { AvatarImage, UserData } from '../../types/types';
 import { selectProfileImage } from '../../utils/identityUtils';
+import colors from '../colors';
+import UIContext from '../../contexts/UIContext';
+import UIButton from '../generics/UIButton';
 
 export default function ProfileEditor({
     handleExit
@@ -19,6 +22,7 @@ export default function ProfileEditor({
     handleExit: () => void;
 }) : JSX.Element {
     const { user, modifyUser } = useContext(AuthIdentityContext);
+    const { theme } = useContext(UIContext);
     
     const [handle, setHandle] = useState<string | undefined>(undefined);
     const [displayName, setDisplayName] = useState<string | undefined>(undefined);
@@ -41,10 +45,12 @@ export default function ProfileEditor({
         keyboardType?: KeyboardTypeOptions;
     }): JSX.Element => {
         return <Box w='100%'>
-            <Text fontSize='11px' color='coolGray.600'>
+            <Text fontSize='11px' color={colors.textLightNB[theme]}>
                 {prompt}
             </Text>
             <Input
+                color={colors.textMainNB[theme]}
+                backgroundColor={colors.input[theme]}
                 placeholder={prompt}
                 value={value}
                 onChangeText={setValue}
@@ -56,7 +62,6 @@ export default function ProfileEditor({
                 keyboardType={keyboardType}
                 fontWeight='bold'
                 fontSize='md'
-                bgColor='#f1f1f1'
                 my='6px'
             />
         </Box>
@@ -127,12 +132,12 @@ export default function ProfileEditor({
                     <Spacer />
                     <TouchableOpacity onPress={handleExit}>
                         <HStack space={2}>
-                        <MaterialIcons name="cancel" size={22} color="black" />
-                        <Text fontWeight='bold'>Cancel</Text>
+                        <MaterialIcons name="cancel" size={22} color={colors.textMainNB[theme]} />
+                        <Text fontWeight='bold' color={colors.textMainNB[theme]}>Cancel</Text>
                         </HStack>
                     </TouchableOpacity>
                 </HStack>
-                <Box w='90%' mx='auto' borderRadius='24px' bgColor='#f5f5f5' p='24px' shadow={9}>
+                <Box w='90%' mx='auto' borderRadius='24px' bgColor={colors.message[theme]} p='24px' shadow={9}>
                     <Center w='100%' mb='20px' h='90px'>
                             {
                                 ((selectedProfile && selectedProfile.sourceURL) || user?.avatar?.mainUri) ?
@@ -168,11 +173,9 @@ export default function ProfileEditor({
 
                     </VStack>
 
-                    <Button colorScheme='dark' my='6px' borderRadius='24px' px='24px' variant='subtle' onPress={onSubmit}>
-                        <Text fontSize='xs' color='#f5f5f5' fontWeight='medium'>
-                            Save changes
-                        </Text>
-                    </Button>
+                    <UIButton context='primary' my='6px' borderRadius='24px' px='24px' onPress={onSubmit} textProps={{fontWeight: 'bold'}}>
+                        Save changes
+                    </UIButton>
                     {
                     imageUploading &&
                     <Progress colorScheme='light' value={imageUploadProgress * 100} />

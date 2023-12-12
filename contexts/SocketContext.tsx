@@ -5,17 +5,24 @@ import Config from 'react-native-config';
 import auth from '@react-native-firebase/auth';
 import NetworkContext from './NetworkContext';
 import { AppState } from 'react-native';
+import { useFocus } from 'native-base/lib/typescript/components/primitives';
 // import ReconnectingWebSocket from 'reconnecting-websocket';
 
 type SocketContextType = {
     socket?: Socket,
     disconnected: boolean,
     resetSocket: () => void,
+    disable: () => void,
+    enable: () => void,
+    isEnabled: boolean,
 };
 
 const SocketContext = createContext<SocketContextType>({
     disconnected: false,
     resetSocket: () => {return;},
+    disable: () => {},
+    enable: () => {},
+    isEnabled: true,
 });
 
 const heartCheck: any = {
@@ -48,6 +55,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
 
     const [socket, setSocket] = useState<Socket | undefined>();
     const [disconnected, setDisconnected] = useState(true);
+    const [isEnabled, setIsEnabled] = useState(true);
 
     const socketRef = useRef(socket);
 
@@ -56,6 +64,10 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     }, [socket]);
 
     const resetSocket = useCallback(async (): Promise<void> => {
+        if (!isEnabled) {
+            setSocket(undefined);
+            return;
+        };
         if (!(socket?.connected) && (!socket?.active) && auth().currentUser && networkConnected) {
             setDisconnected(true);
             const newSocket = io(Config.REACT_APP_API_URL || '', {
@@ -80,7 +92,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
         if (!socketRef.current?.connected) {
             setDisconnected(true);
         }
-    }, [networkConnected, socket, socketRef]);
+    }, [networkConnected, socket, socketRef, isEnabled]);
 
     useEffect(() => {
         if (auth().currentUser && networkConnected) {
@@ -125,7 +137,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     }, [socket]);
 
     useEffect(() => {
-        if (!socket || !networkConnected) return;
+        if (!socket || !networkConnected || !isEnabled) return;
 
         socket.on('disconnect', async () => {
             setDisconnected(true);
@@ -158,7 +170,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     }, [networkConnected, socket]);
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !isEnabled) return;
 
         socket.on('pong', async () => {
             await new Promise((res) => setTimeout(res, 5000));
@@ -171,7 +183,7 @@ export function SocketContextProvider({children} :PropsWithChildren<{
     }, [networkConnected, socket]);
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !isEnabled) return;
 
         socket.on('authFailure', async () => {
             await resetSocket();
@@ -189,10 +201,28 @@ export function SocketContextProvider({children} :PropsWithChildren<{
             setDisconnected(false);
             heartCheck.reset(heartCheck).start(heartCheck, socket);
         });
-    }, [socket])
+    }, [socket]);
+
+    useEffect(() => {
+        resetSocket();
+        if (!isEnabled) {
+            setDisconnected(true);
+            setSocket(undefined);
+        }
+    }, [isEnabled]);
+
+    const enable = () => setIsEnabled(true);
+    const disable = () => setIsEnabled(false);
 
     return (
-        <SocketContext.Provider value={{socket, disconnected, resetSocket}}>
+        <SocketContext.Provider value={{
+            socket, 
+            disconnected, 
+            resetSocket, 
+            enable, 
+            disable, 
+            isEnabled
+        }}>
             {children}
         </SocketContext.Provider>
     );
