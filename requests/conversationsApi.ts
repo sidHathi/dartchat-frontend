@@ -51,6 +51,7 @@ export type ConversationsApi = {
     }) => Promise<any | never>;
     deleteMessage: (cid: string, mid: string) => Promise<any | never>;
     updateUserRole: (cid: string, uid: string, newStatus: ChatRole) => Promise<any | never>;
+    updateMessageDisappearTime: (cid: string, newTime: number | null) => Promise<any | never>;
 }
 
 export default function conversationsApi(apiService: ApiService): ConversationsApi {
@@ -467,6 +468,21 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         .catch((err) => Promise.reject(err));
     };
 
+    const updateMessageDisappearTime = (cid: string, newTime: number | null) => {
+        return apiService.request({
+            method: 'PUT',
+            url: `conversations/${cid}/updateMessageDisappearTime`,
+            data: {
+                newTime
+            }
+        })
+        .then((res) => res.data)
+        .catch((err) => {
+            console.log(err);
+            return Promise.reject(err);
+        })
+    }
+
     return {
         getConversation,
         getConversationInfo,
@@ -493,6 +509,7 @@ export default function conversationsApi(apiService: ApiService): ConversationsA
         changeEncryptionKey,
         pushReencryptedMessages,
         deleteMessage,
-        updateUserRole
+        updateUserRole,
+        updateMessageDisappearTime
     }
 }

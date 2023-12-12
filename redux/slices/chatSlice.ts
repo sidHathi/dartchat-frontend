@@ -583,6 +583,25 @@ export const chatSlice = createSlice({
                     ]
                 }
             };
+        },
+        handleNewMessageDisappearTime: (state, action: PayloadAction<number | null>) => {
+            if (!state.currentConvo) return state;
+            if (action.payload == null) {
+                return {
+                    ...state,
+                    currentConvo: {
+                        ...state.currentConvo,
+                        messageDisappearTime: undefined
+                    }
+                }
+            }
+            return {
+                ...state,
+                currentConvo: {
+                    ...state.currentConvo,
+                    messageDisappearTime: action.payload
+                }
+            }
         }
     }
 });
@@ -625,7 +644,8 @@ export const {
     setNotificationLoading,
     setNotificationSelection,
     updatePrivUsersForNewKey,
-    handleRecentMessages
+    handleRecentMessages,
+    handleNewMessageDisappearTime
  } = chatSlice.actions;
 
 export const pullConversation = (cid: string, api: ConversationsApi, secretKey?: Uint8Array, onComplete?: () => void, onFailure?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
@@ -911,6 +931,21 @@ export const pullRecentMessages = (api: ConversationsApi): ThunkAction<void, Roo
         dispatch(setRequestLoading(false));
     } catch (err) {
         dispatch(setRequestLoading(false))
+    }
+}
+
+export const setMessageDisappearTime = (newTime: number | null, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+    const { currentConvo } = getState().chatReducer;
+    if (!currentConvo) return;
+
+    dispatch(setRequestLoading(true));
+    try {
+        await api.updateMessageDisappearTime(currentConvo.id, newTime);
+        dispatch(handleNewMessageDisappearTime(newTime));
+        setRequestLoading(false);
+    } catch (err) {
+        dispatch(setRequestLoading(false));
+        console.log(err);
     }
 }
 

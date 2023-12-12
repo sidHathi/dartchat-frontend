@@ -9,6 +9,7 @@ import ReencryptionModal from './ReencryptionModal';
 import UIContext from '../../../contexts/UIContext';
 import colors from '../../colors';
 import UIButton from '../../generics/UIButton';
+import AutoDeleteOptions from './AutoDeleteOptions';
 
 export default function EncryptionSettings(): JSX.Element {
     /**
@@ -50,7 +51,11 @@ export default function EncryptionSettings(): JSX.Element {
         }
         {
             currentConvo?.keyInfo &&
-            <Box flexGrow='1' flexShrink='0' mb='6px' mt='24px'>
+            <AutoDeleteOptions />
+        }
+        {
+            currentConvo?.keyInfo &&
+            <Box flexGrow='1' flexShrink='0' mb='6px' mt='12px'>
                 <SpacedTabs
                     options={['Current members', 'Former members']}
                     selectedOption={

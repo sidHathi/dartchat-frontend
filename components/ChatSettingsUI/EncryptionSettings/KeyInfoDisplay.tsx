@@ -25,7 +25,7 @@ export default function KeyInfoDisplay(): JSX.Element {
             <Text fontSize='xs' color={colors.textLightNB[theme]}>
                 Security status
             </Text>
-            <Heading fontSize='lg' color={colors.textMainNB[theme]}>
+            <Heading fontSize='md' color={colors.textMainNB[theme]}>
                 Encrypted 
             </Heading>
 
@@ -37,23 +37,15 @@ export default function KeyInfoDisplay(): JSX.Element {
         <Text fontSize='xs' color={colors.textLightNB[theme]}>
             Key creation date:
         </Text>
-        <Heading fontSize='lg' color={colors.textMainNB[theme]}>
+        <Heading fontSize='md' color={colors.textMainNB[theme]}>
             {getDateTimeString(keyInfo.createdAt)}
-        </Heading>
-        </Box>
-        <Box>
-        <Text fontSize='xs' color={colors.textLightNB[theme]}>
-            Users with access to the key:
-        </Text>
-        <Heading fontSize='lg' color={colors.textMainNB[theme]}>
-            {`${keyInfo.privilegedUsers.length} users`}
         </Heading>
         </Box>
         <Box>
         <Text fontSize='xs' color={colors.textLightNB[theme]}>
             Messages encrypted with this key
         </Text>
-        <Heading fontSize='lg' color={colors.textMainNB[theme]}>
+        <Heading fontSize='md' color={colors.textMainNB[theme]}>
             {`${keyInfo.numberOfMessages} messages`}
         </Heading>
         </Box>

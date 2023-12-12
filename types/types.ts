@@ -106,6 +106,7 @@ export type Conversation = {
     publicKey?: string;
     keyInfo?: KeyInfo;
     adminIds?: string[];
+    messageDisappearTime?: number; // hours
 };
 
 export type DecryptedConversation = Omit<Conversation, 'messages'> & {
