@@ -934,7 +934,7 @@ export const pullRecentMessages = (api: ConversationsApi): ThunkAction<void, Roo
     }
 }
 
-export const setMessageDisappearTime = (newTime: number | null, api: ConversationsApi): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
+export const setMessageDisappearTime = (newTime: number | null, api: ConversationsApi, onComplete?: () => void): ThunkAction<void, RootState, unknown, any> => async (dispatch, getState) => {
     const { currentConvo } = getState().chatReducer;
     if (!currentConvo) return;
 
@@ -943,6 +943,7 @@ export const setMessageDisappearTime = (newTime: number | null, api: Conversatio
         await api.updateMessageDisappearTime(currentConvo.id, newTime);
         dispatch(handleNewMessageDisappearTime(newTime));
         setRequestLoading(false);
+        onComplete && onComplete();
     } catch (err) {
         dispatch(setRequestLoading(false));
         console.log(err);

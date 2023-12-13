@@ -13,6 +13,7 @@ import Spinner from "react-native-spinkit";
 import { getDateTimeString } from "../../utils/messagingUtils";
 import UIContext from "../../contexts/UIContext";
 import colors from "../colors";
+import { useKeyboard } from "@react-native-community/hooks";
 
 export default function MessageList({
     setReplyMessage,
@@ -40,6 +41,7 @@ export default function MessageList({
     const { user } = useContext(AuthIdentityContext);
     const { conversationsApi } = useRequest();
     const { theme } = useContext(UIContext);
+    const { keyboardShown } = useKeyboard();
 
     const [indexMap, setIndexMap] = useState<{[id: string]: number}>({});
     const [replyFetch, setReplyFetch] = useState<string | undefined>();
@@ -192,7 +194,7 @@ export default function MessageList({
                     <Spinner type='ThreeBounce' color={colors.spinner[theme]} size={24} />
                 </Center>
             </View> : null}
-        ListHeaderComponent={<Box w='100%' h='84px'></Box>}
+        ListHeaderComponent={<Box w='100%' h={keyboardShown ? '110px' : '84px'}></Box>}
         horizontal={false}
      />
 }

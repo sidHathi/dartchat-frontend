@@ -190,7 +190,7 @@ export default function MessageEntry({
         }
     }, [messageText]);
 
-    return <Box w='100%' paddingBottom={keyboardShown && !eventBuilderOpen && !pollBuilderOpen ? `${keyboardHeight + 12}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor={colors.solid[theme]} paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible' mt={keyboardShown ? '24px': '0px'}>
+    return <Box w='100%' paddingBottom={keyboardShown && !eventBuilderOpen && !pollBuilderOpen ? `${keyboardHeight + 12}px` : '30px'} paddingTop='12px' borderTopRadius={replyMessage ? '0' : '24px'} backgroundColor={colors.solid[theme]} paddingX='12px' shadow={replyMessage ? '0': '9'} overflow='visible'>
         {
             selectedMediaBuffer &&
             <MediaBufferDisplay

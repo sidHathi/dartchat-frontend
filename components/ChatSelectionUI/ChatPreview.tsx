@@ -5,7 +5,7 @@ import { Box, HStack, Spacer, Pressable, Center, Heading, Text, VStack } from 'n
 import { Image, Dimensions } from 'react-native';
 import IconImage from '../generics/IconImage';
 import MentionsTextDisplay from '../MessagingUI/Mentions/MentionsTextDisplay';
-import { getTimeString, handlePossiblyEncryptedMessage } from '../../utils/messagingUtils';
+import { getTimeGapForConversationPreview, getTimeString, handlePossiblyEncryptedMessage } from '../../utils/messagingUtils';
 import UserSecretsContext from '../../contexts/UserSecretsContext';
 import { decryptJSON } from '../../utils/encryptionUtils';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -22,7 +22,7 @@ export default function ChatPreview({
     const screenWidth = Dimensions.get('window').width;
     const { theme } = useContext(UIContext);
     const { secrets, pullUserSecrets } = useContext(UserSecretsContext);
-    const lastMessageTimeStr = getTimeString(chat.lastMessageTime);
+    const lastMessageTimeStr = getTimeGapForConversationPreview(chat.lastMessageTime);
 
     const safeLastMessageContent = useMemo(() => {
         const secretKey = secrets ? secrets[chat.cid] : undefined;

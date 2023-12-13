@@ -279,4 +279,20 @@ export const initConvo = async (
         recipientKeyMap,
         secretKey,
     };
-}
+};
+
+export const getTimeGapForConversationPreview = (lastMessageTime: Date): string => {
+    const timeGap = ((new Date()).getTime() - lastMessageTime.getTime())/(1000 * 60 * 60 * 24);
+    if (timeGap <= 1) {
+        return getTimeString(lastMessageTime);
+    } else if (timeGap < 365) {
+        return lastMessageTime.toLocaleDateString([], {
+            month: 'short',
+            day: '2-digit'
+        });
+    } else {
+        return lastMessageTime.toLocaleDateString([], {
+            year: 'numeric'
+        });
+    }
+};

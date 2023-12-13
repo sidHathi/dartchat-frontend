@@ -101,6 +101,25 @@ export const parsePNRC = (stringifiedBody: string | undefined): {
     }
 };
 
+export const parsePNMDTC = (stringifiedBody: string | undefined): {
+    cid: string,
+    newTime: number | null
+} | undefined => {
+    if (!stringifiedBody) return undefined;
+    try {
+        const parsed = JSON.parse(stringifiedBody);
+        if ('cid' in parsed && 'newTime' in parsed) {
+            return parsed as {
+                cid: string,
+                newTime: number | null
+            }
+        }
+    } catch (err) {
+        console.log(err);
+        return undefined;
+    }
+};
+
 export const parsedPNDelete = (stringifiedBody: string | undefined):{
     cid: string,
     mid: string

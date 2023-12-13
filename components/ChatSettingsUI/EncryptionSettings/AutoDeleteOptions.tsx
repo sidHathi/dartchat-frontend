@@ -7,6 +7,7 @@ import useRequest from '../../../requests/useRequest';
 import { Box, Button, Spacer, Text, VStack, HStack, Center, Switch, Select, CheckIcon } from 'native-base';
 import colors from '../../colors';
 import AuthIdentityContext from '../../../contexts/AuthIdentityContext';
+import SocketContext from '../../../contexts/SocketContext';
 
 export default function AutoDeleteOptions(): JSX.Element {
     const dispatch = useAppDispatch();
@@ -14,6 +15,7 @@ export default function AutoDeleteOptions(): JSX.Element {
     const { currentConvo } = useAppSelector(chatSelector);
     const { theme } = useContext(UIContext);
     const { conversationsApi } = useRequest();
+    const { socket } = useContext(SocketContext);
 
     const hasPermission = useMemo(() => {
         if (!currentConvo || !user) return false;
@@ -36,19 +38,26 @@ export default function AutoDeleteOptions(): JSX.Element {
             if (newTime != null && newTime < 6) {
                 return;
             }
-            dispatch(setMessageDisappearTime(newTime, conversationsApi));
+            dispatch(setMessageDisappearTime(newTime, conversationsApi, () => {
+                socket && socket.emit('messageDisappearTimeChanged', currentConvo.id, newTime);
+            }));
         } catch (err) {
             console.log(err);
         }
-    }, [conversationsApi, currentConvo]);
+    }, [conversationsApi, currentConvo, socket]);
 
     const onToggleDisappear = useCallback(async () => {
+        if (!currentConvo) return;
         if (autoDeleteEnabled) {
-            dispatch(setMessageDisappearTime(null, conversationsApi));
+            dispatch(setMessageDisappearTime(null, conversationsApi, () => {
+                socket && socket.emit('messageDisappearTimeChanged', currentConvo.id, null);
+            }));
         } else {
-            dispatch(setMessageDisappearTime(12, conversationsApi));
+            dispatch(setMessageDisappearTime(12, conversationsApi, () => {
+                socket && socket.emit('messageDisappearTimeChanged', currentConvo.id, 12);
+            }));
         }
-    }, [setNewDisappearTime, autoDeleteEnabled, conversationsApi]);
+    }, [setNewDisappearTime, autoDeleteEnabled, conversationsApi, socket, currentConvo]);
 
     const selectVal = useMemo(() => {
         if (!autoDeleteEnabled || !currentConvo) return 0;

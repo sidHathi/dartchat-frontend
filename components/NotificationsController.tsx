@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { AppState } from 'react-native';
 import useRequest from '../requests/useRequest';
-import { chatSelector, exitConvo, handleMessageDelete, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConversationLoading, setConvo, setNotificationLoading, setNotificationSelection, setSecretKey, updateUserRole } from '../redux/slices/chatSlice';
+import { chatSelector, exitConvo, handleMessageDelete, handleNewMessageDisappearTime, pullConversation, receiveNewLike, receiveNewMessage, setCCPublicKey, setConversationLoading, setConvo, setNotificationLoading, setNotificationSelection, setSecretKey, updateUserRole } from '../redux/slices/chatSlice';
 import { getUserData } from '../utils/identityUtils';
 import { addConversation, handleNewMessage, handleRoleUpdate, pullLatestPreviews, setConversations, userDataSelector } from '../redux/slices/userDataSlice';
 import { getBackgroundUpdateFlag, getStoredUserData, setBackgroundUpdateFlag } from '../localStore/localStore';
@@ -10,7 +10,7 @@ import messaging from '@react-native-firebase/messaging';
 import SocketContext from '../contexts/SocketContext';
 import { PNPacket, PNType } from '../types/types';
 import { constructNewConvo, handlePossiblyEncryptedMessage } from '../utils/messagingUtils';
-import { extractMentionNotification, parsePNLikeEvent, parsePNMessage, parsePNNewConvo, parsePNRC, parsePNSecrets, parsedPNDelete } from '../utils/notificationUtils';
+import { extractMentionNotification, parsePNLikeEvent, parsePNMDTC, parsePNMessage, parsePNNewConvo, parsePNRC, parsePNSecrets, parsedPNDelete } from '../utils/notificationUtils';
 import AuthIdentityContext from '../contexts/AuthIdentityContext';
 import UIContext from '../contexts/UIContext';
 import { ConversationPreview, DecryptedMessage } from '../types/types';
@@ -158,6 +158,15 @@ export default function NotificationsController(): JSX.Element {
                                     uid && dispatch(updateUserRole({uid, newRole}));
                                 }
                                 dispatch(handleRoleUpdate({cid, newRole}))
+                            }
+                            break;
+                        case 'messageDisappearTimeChanged':
+                            const parsedPNMDTC = parsePNMDTC(messageData.stringifiedBody);
+                            if (parsedPNMDTC && user) {
+                                const { cid, newTime } = parsedPNMDTC;
+                                if (currentConvo?.id === cid) {
+                                    dispatch(handleNewMessageDisappearTime(newTime));
+                                }
                             }
                             break;
                         case 'addedToConvo':

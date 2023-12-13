@@ -7,7 +7,7 @@ import { SocketMessage } from '../types/rawTypes';
 import UIContext from '../contexts/UIContext';
 import { parseSocketMessage } from '../utils/requestUtils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered, setCCPublicKey, setSecretKey, handleMessageDelete, updateUserRole } from '../redux/slices/chatSlice';
+import { chatSelector, receiveNewMessage, exitConvo, receiveNewLike, pullConversationDetails, handleAddUsers, handleRemoveUser, handleMessageDelivered, setCCPublicKey, setSecretKey, handleMessageDelete, updateUserRole, handleNewMessageDisappearTime } from '../redux/slices/chatSlice';
 import { addConversation, userDataSelector, handleNewMessage, deleteConversation as reduxDelete, handleConversationDelete, pullLatestPreviews, setPublicKey, handleRoleUpdate, setConversations } from '../redux/slices/userDataSlice';
 import useRequest from '../requests/useRequest';
 import { getUserData, updateUserConversations } from '../utils/identityUtils';
@@ -279,6 +279,19 @@ export default function UserConversationsController({
             socket.off('userRoleChanged');
         }
     }, [socket, currentConvo, user]);
+
+    useEffect(() => {
+        if (!socket) return;
+        socket.on('messageDisappearTimeChanged', (cid: string, newTime: number | null) => {
+            if (cid === currentConvo?.id) {
+                dispatch(handleNewMessageDisappearTime(newTime));
+            }
+        });
+
+        return () => {
+            socket.off('messageDisappearTimeChanged');
+        }
+    }, [socket, currentConvo]);
 
     return <>
         {children}

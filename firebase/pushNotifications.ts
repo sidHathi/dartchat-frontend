@@ -83,7 +83,7 @@ export const setBackgroundNotifications = () => messaging().setBackgroundMessage
     if (!remoteMessage.data) return;
     try {
         if (remoteMessage.data.type === 'secrets') {
-            const parsedPNS: any = parsePNSecrets(remoteMessage.data.stringifiedBody);
+            const parsedPNS: any = parsePNSecrets(remoteMessage.data.stringifiedBody as string);
             try {
                 const user = await getStoredUserData();
                 if (!user) return;
