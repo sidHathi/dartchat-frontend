@@ -137,11 +137,11 @@ export default function EventBuilder({
         if (!eventDate) return null;
         const eventDateString = getDateTimeString(eventDate);
         return <Box w='100%' my='12px'>
-            <Text fontSize='xs' color='gray.500'>
+            <Text fontSize='xs' color={colors.textLightNB[theme]}>
                 Scheduled for
             </Text>
             <Box py='12px' borderBottomColor='#777' borderBottomWidth='1px'>
-            <Heading fontSize='md'>
+            <Heading fontSize='md' color={colors.textMainNB[theme]}>
                 {eventDateString}
             </Heading>
             </Box>
@@ -242,7 +242,7 @@ export default function EventBuilder({
                 {`${eventDate !== undefined ? 'Change': 'Select'} event date`}
             </UIButton>
 
-            <Text fontSize='sm' fontWeight='bold' mt='12px'>
+            <Text fontSize='sm' fontWeight='bold' mt='12px' color={colors.textMainNB[theme]}>
                 Remind me
             </Text>
             <ScrollView showsVerticalScrollIndicator={true} flexGrow='0' flexShrink='1' maxH={`${screenHeight/2}px`}>

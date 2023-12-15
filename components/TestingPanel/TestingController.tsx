@@ -40,21 +40,34 @@ export default function TestingController(): JSX.Element {
         // 4. pull the log list from storage
         // 3. put both into redux 
         const pullLocalTests = async () => {
-            const snapshot = await testStore.getTestSnapshot() as any;
-            if (snapshot) {
-                dispatch(initTestStore(snapshot));
-            }
             const codedUnitTests = UnitTests;
             const codedIntegrationTests = IntegrationTests;
-            dispatch(initTests({
-                unitTests: codedUnitTests,
-                integrationTests: codedIntegrationTests
-            }));
+            const snapshot = await testStore.getTestSnapshot() as any;
+            console.log(snapshot);
+            if (snapshot && Object.keys(snapshot).length > 1) {
+                dispatch(initTestStore({
+                    ...snapshot,
+                    codedTests: {
+                        unitTests: codedUnitTests,
+                        integrationTests: codedIntegrationTests
+                    }
+                }));
+            } else {
+                dispatch(
+                    initTests({
+                        unitTests: codedUnitTests,
+                        integrationTests: codedIntegrationTests
+                    })
+                )
+            }
         }
         pullLocalTests();
     }, []);
 
     useEffect(() => {
+        if (recentLogs.length < 1 || Object.keys(instances).length < 1) {
+            return;
+        }
         const storeSnapshot = async () => {
             await testStore.storeLogSnapshot({
                 unitTests,
@@ -64,7 +77,7 @@ export default function TestingController(): JSX.Element {
             })
         };
         storeSnapshot();
-    }, [recentLogs, instances]);
+    }, [recentLogs, instances, unitTests, integrationTests]);
 
     if (testDetailViewOpen && selectedTest) {
         return <TestDetails 

@@ -36,9 +36,25 @@ export const testSlice = createSlice({
             instances: {
                 [id: string]: TestInstance[]
             },
-            recentLogs: Log[]
+            recentLogs: Log[],
+            codedTests?: {
+                unitTests: Test[],
+                integrationTests: Test[]
+            }
         }>) => {
-            return action.payload;
+            if (!action.payload.codedTests) {
+                return action.payload;
+            } else {
+                return {
+                    ...action.payload,
+                    unitTests: Object.fromEntries(
+                        action.payload.codedTests.unitTests.map((test) => [test.id, test])
+                    ),
+                    integrationTests: Object.fromEntries(
+                        action.payload.codedTests.integrationTests.map((test) => [test.id, test])
+                    ),
+                }
+            }
         },
         initTests: (state, action: PayloadAction<{
             unitTests: Test[],
@@ -81,6 +97,7 @@ export const testSlice = createSlice({
                 }
                 return inst;
             });
+            console.log(state.instances);
             return {
                 ...state,
                 instances: {

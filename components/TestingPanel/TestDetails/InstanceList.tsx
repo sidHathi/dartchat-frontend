@@ -54,7 +54,7 @@ export default function InstanceList({
             if (!item.startedAt || !item.completedAt) {
                 return 0;
             }
-            return Math.ceil(1000*Math.abs(item.completedAt.getTime() - item.startedAt.getTime()));
+            return (1/1000)*Math.abs(item.completedAt.getTime() - item.startedAt.getTime());
         };
 
         return <Box bgColor={colors.bgLight[theme]} p='12px' borderRadius='12px' mt='6px'>
@@ -72,7 +72,7 @@ export default function InstanceList({
                     {
                         item.completedAt &&
                             <Text fontSize='xs' color={colors.textMainNB[theme]}>
-                            {`Duration: ${getDuration().toString()}`}
+                            {`Duration: ${getDuration().toString()} sec`}
                         </Text>
                     }
                 </Box>
